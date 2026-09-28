@@ -13,7 +13,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 | [`maximalist-pop`](skills/maximalist-pop/SKILL.md) | an indie record cover: hand-drawn bubble and curl lettering, one-line writing, stamps, printed paper | [Sweet William](skills/maximalist-pop/reference.html) | `hand.js` |
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | a picture after something happened to the file: macroblocks and sorted drips, 1-bit tears, scanner drag, mojibake, tiles that did not load | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed maps in one to three spot inks, with knockouts, overprint and misregistration | [Low Water](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
-| [`indigo-grain`](skills/indigo-grain/SKILL.md) | cyanotype sun prints: Prussian blue, botanicals, soft contact edges, grain | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
+| [`indigo-grain`](skills/indigo-grain/SKILL.md) | a blue board made of grain: cyanotype botanicals and sun-printed photographs, light forms out of navy-black, blurred butterflies, marbling, spray and halftone | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
 | [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign: flowers shot too close, motion blur, lens haze | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
 
 Every artist, label, place and brand on the reference pages is invented.
@@ -87,7 +87,10 @@ the full account.
 The Riso ink colours follow the ink table published with p5.riso. The map methods
 (marching squares, fractal noise, branching growth) and the cyanotype chemistry are
 textbook. Anna Atkins's *Photographs of British Algae* (1843) is the historical reference
-for the sun print.
+for the sun print. The indigo engines solve marbling backward after Lu, Jaffer, Jin, Zhao
+and Mao, "Mathematical Marbling" (2012). They use Steven Worley's cellular noise for the
+marble lace and pool light, Ken Perlin's improved noise, the voxel-landscape column scan
+for the lit relief, and the printer's halftone screen.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
 WebGPU or C++. The skills here are 2D canvas without WebGL, so none of them fed into
