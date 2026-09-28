@@ -52,6 +52,8 @@
   figcaption b { font-weight: 500; }
   figcaption .what { width: 100%; color: var(--dim); }
 
+  .board2 { margin-top: clamp(64px, 9vw, 112px); }
+  .board2 .bh { grid-column: 1 / -1; margin: 0 0 18px; font: 800 clamp(32px, 5vw, 72px)/.85 'Archivo', sans-serif; letter-spacing: -.04em; }
   .strip { height: clamp(56px, 8vw, 96px); margin: clamp(64px, 9vw, 112px) 0 0; }
 
   /* the programme, printed like a listing: line numbers, times in teal, notes in pink */
@@ -184,6 +186,104 @@
     </div>
   </section>
 
+  <section class="board board2" aria-label="Four more machines">
+    <h2 class="bh">four more machines</h2>
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="fall" data-seed="3" data-mode="alpine" style="aspect-ratio: 1 / 1"><canvas aria-label="A valley of lime forest and blue shade whose columns run down in curtains from the ridges and the tree line."></canvas></div>
+        <figcaption>
+          <b>VIII — fall.dng</b>
+          <span class="ctrl"><button type="button" data-mode="alpine" aria-pressed="true">alpine</button><button type="button" data-mode="ink" aria-pressed="false">ink</button><button type="button" data-mode="violet" aria-pressed="false">violet</button><button type="button" data-again>another</button><label for="f8">+ photograph</label><input type="file" id="f8" accept="image/*"></span>
+          <span class="what">the valley read column by column, run down from its edges</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="mosh" data-seed="2" data-mode="melt" style="aspect-ratio: 2 / 3"><canvas aria-label="The coast melted along swirling motion vectors into oil-film fringes of teal, pink and orange, with square blocks leaking in."></canvas></div>
+        <figcaption>
+          <b>X — mosh.avi</b>
+          <span class="ctrl"><button type="button" data-mode="melt" aria-pressed="true">melt</button><button type="button" data-mode="burst" aria-pressed="false">burst</button><button type="button" data-mode="patch" aria-pressed="false">patch</button><button type="button" data-again>another</button><label for="f9">+ photograph</label><input type="file" id="f9" accept="image/*"></span>
+          <span class="what">the key frame is gone; the vectors keep moving what is left</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="weave" data-seed="5" data-mode="blocks" style="aspect-ratio: 1 / 1"><canvas aria-label="A pale grey valley rebuilt from blocks: big flat squares where it is calm, small ones where it is busy, stale slabs drifting over."></canvas></div>
+        <figcaption>
+          <b>XI — weave_blocks.hevc</b>
+          <span class="ctrl"><button type="button" data-mode="plaid" aria-pressed="false">plaid</button><button type="button" data-mode="blocks" aria-pressed="true">blocks</button><button type="button" data-mode="grid" aria-pressed="false">grid</button><button type="button" data-again>another</button><label for="f10">+ photograph</label><input type="file" id="f10" accept="image/*"></span>
+          <span class="what">partitioned like a codec, each block kept as its mean or copied stale</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="band" data-seed="7" data-mode="foil" style="aspect-ratio: 4 / 5"><canvas aria-label="Pale paint on a dark board smeared into horizontal bands, their edges split into rainbow fringes."></canvas></div>
+        <figcaption>
+          <b>IX — band_foil.vhs</b>
+          <span class="ctrl"><button type="button" data-mode="tape" aria-pressed="false">tape</button><button type="button" data-mode="foil" aria-pressed="true">foil</button><button type="button" data-again>another</button><label for="f11">+ photograph</label><input type="file" id="f11" accept="image/*"></span>
+          <span class="what">paint on a board, pulled through a head that lost tracking</span>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="fall" data-seed="4" data-mode="ink" style="aspect-ratio: 9 / 16"><canvas aria-label="Misted grey-teal ridges run down in long vertical streaks, a few blocks slipped out of place."></canvas></div>
+        <figcaption>
+          <b>VIII — fall_ink.dng</b>
+          <span class="ctrl"><button type="button" data-mode="alpine" aria-pressed="false">alpine</button><button type="button" data-mode="ink" aria-pressed="true">ink</button><button type="button" data-mode="violet" aria-pressed="false">violet</button><button type="button" data-again>another</button><label for="f12">+ photograph</label><input type="file" id="f12" accept="image/*"></span>
+          <span class="what">ridges in mist, run down, a few blocks slipped</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="band" data-seed="3" data-mode="tape" style="aspect-ratio: 1 / 1"><canvas aria-label="A pale grey-teal valley smeared sideways in bands of held and stretched rows, split into tiles with light seams."></canvas></div>
+        <figcaption>
+          <b>IX — band.vhs</b>
+          <span class="ctrl"><button type="button" data-mode="tape" aria-pressed="true">tape</button><button type="button" data-mode="foil" aria-pressed="false">foil</button><button type="button" data-again>another</button><label for="f13">+ photograph</label><input type="file" id="f13" accept="image/*"></span>
+          <span class="what">a tape that lost tracking: each band holds, stretches or slips</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="mosh" data-seed="9" data-mode="patch" style="aspect-ratio: 3 / 4"><canvas aria-label="Blocky pieces of a valley slid apart among flat coral and grey, some cut to black-and-white contour stripes that smear into zebra moiré."></canvas></div>
+        <figcaption>
+          <b>X — mosh_patch.avi</b>
+          <span class="ctrl"><button type="button" data-mode="melt" aria-pressed="false">melt</button><button type="button" data-mode="burst" aria-pressed="false">burst</button><button type="button" data-mode="patch" aria-pressed="true">patch</button><button type="button" data-again>another</button><label for="f14">+ photograph</label><input type="file" id="f14" accept="image/*"></span>
+          <span class="what">regions slide apart; contour stripes smear into moiré</span>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="weave" data-seed="2" data-mode="plaid" style="aspect-ratio: 4 / 5"><canvas aria-label="A tartan of yellow-green, blue and near-black threads, each one a pixel of the valley read along a slit."></canvas></div>
+        <figcaption>
+          <b>XI — weave.jpg</b>
+          <span class="ctrl"><button type="button" data-mode="plaid" aria-pressed="true">plaid</button><button type="button" data-mode="blocks" aria-pressed="false">blocks</button><button type="button" data-mode="grid" aria-pressed="false">grid</button><button type="button" data-again>another</button><label for="f15">+ photograph</label><input type="file" id="f15" accept="image/*"></span>
+          <span class="what">warp and weft each read from the picture, crossed two over two</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="mosh" data-seed="4" data-mode="burst" style="aspect-ratio: 3 / 4"><canvas aria-label="A violet valley pulled outward from one point into radial shards of blue and lilac."></canvas></div>
+        <figcaption>
+          <b>X — mosh_burst.avi</b>
+          <span class="ctrl"><button type="button" data-mode="melt" aria-pressed="false">melt</button><button type="button" data-mode="burst" aria-pressed="true">burst</button><button type="button" data-mode="patch" aria-pressed="false">patch</button><button type="button" data-again>another</button><label for="f16">+ photograph</label><input type="file" id="f16" accept="image/*"></span>
+          <span class="what">every vector points away from one spot, a zoom that never lands</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="fall" data-seed="8" data-mode="violet" style="aspect-ratio: 2 / 3"><canvas aria-label="Violet and brown slopes under a teal sky, run down into streaks."></canvas></div>
+        <figcaption>
+          <b>VIII — fall_violet.dng</b>
+          <span class="ctrl"><button type="button" data-mode="alpine" aria-pressed="false">alpine</button><button type="button" data-mode="ink" aria-pressed="false">ink</button><button type="button" data-mode="violet" aria-pressed="true">violet</button><button type="button" data-again>another</button><label for="f17">+ photograph</label><input type="file" id="f17" accept="image/*"></span>
+          <span class="what">the same valley in another light, run down</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="weave" data-seed="6" data-mode="grid" style="aspect-ratio: 4 / 5"><canvas aria-label="The coast cut into cells, each holding every third row like a blind, a little out of step, with dark seams."></canvas></div>
+        <figcaption>
+          <b>XI — weave_grid.mov</b>
+          <span class="ctrl"><button type="button" data-mode="plaid" aria-pressed="false">plaid</button><button type="button" data-mode="blocks" aria-pressed="false">blocks</button><button type="button" data-mode="grid" aria-pressed="true">grid</button><button type="button" data-again>another</button><label for="f18">+ photograph</label><input type="file" id="f18" accept="image/*"></span>
+          <span class="what">cut into cells, each a blind a little out of step</span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
   <div class="plate strip" data-kind="smear" data-seed="8" aria-hidden="true"><canvas></canvas></div>
   <section class="listing" aria-label="Programme">
     <h2>programme</h2>
@@ -205,14 +305,14 @@
   <div class="deck-strip" aria-hidden="true"></div>
   <section class="deck" aria-labelledby="deck-h">
     <h2 id="deck-h">slitdeck</h2>
-    <p class="sub">the desk the weekend's visuals run from (a fictional tool). Hover, press, scroll.</p>
+    <p class="sub">the desk the weekend's visuals run from (a fictional tool). Hover, press, scroll. With a mouse, a slit follows the pointer.</p>
     <div class="deck-grid">
       <div>
         <div class="screen" id="screen"><span class="tag" id="clipname">I — smear.mov</span></div>
         <div class="row">
-          <button type="button" class="lbtn" id="burst"><span>burst</span></button>
-          <button type="button" class="lbtn" id="next"><span>next clip</span></button>
-          <button type="button" class="lbtn" id="export"><span>export</span></button>
+          <button type="button" class="lbtn" id="burst"><span><i class="ic" data-icon="lightning"></i> burst</span></button>
+          <button type="button" class="lbtn" id="next"><span><i class="ic" data-icon="shuffle"></i> next clip</span></button>
+          <button type="button" class="lbtn" id="export"><span><i class="ic" data-icon="export"></i> export</span></button>
         </div>
       </div>
       <div class="panel" role="group" aria-label="Desk controls">
@@ -303,8 +403,10 @@
 
   ui.transition($('.deck-strip'));
   ui.focusRing();
+  ui.cursor($('.deck'));
+  document.querySelectorAll('.deck .ic').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 21 + i }));
   const screen = ui.card($('#screen'), { mode: 'smear', seed: 3, scene: SCENE, sweep: 1, clickPulse: true });
-  const CLIPS = [['smear', null, 'I — smear.mov'], ['wave', 'ripple', 'II — wave.mov'], ['drip', 'dusk', 'VI — drip.mp4'], ['scan', null, 'VII — scan.tif'], ['collage', 'night', 'IV — collage.psd']];
+  const CLIPS = [['smear', null, 'I — smear.mov'], ['wave', 'ripple', 'II — wave.mov'], ['drip', 'dusk', 'VI — drip.mp4'], ['scan', null, 'VII — scan.tif'], ['collage', 'night', 'IV — collage.psd'], ['fall', 'ink', 'VIII — fall_ink.dng'], ['band', 'tape', 'IX — band.vhs'], ['mosh', 'melt', 'X — mosh.avi'], ['weave', 'grid', 'XI — weave_grid.mov']];
   let clip = 0;
   ui.button($('#burst')); ui.button($('#next'), { seed: 4 }); ui.button($('#export'), { seed: 8 });
   $('#burst').addEventListener('click', () => { const r = $('#screen').getBoundingClientRect(); screen && screen.pulse(r.width * (0.2 + Math.random() * 0.6), r.height * (0.2 + Math.random() * 0.6), 1); });

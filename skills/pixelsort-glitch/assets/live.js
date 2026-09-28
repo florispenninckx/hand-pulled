@@ -27,7 +27,7 @@
   if (!G || !PS) throw new Error('live.js: load pixelsort.js and glitch.js first');
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false, addEventListener() {} };
-  const PLATES = ['smear', 'wave', 'drip', 'shatter', 'collage', 'scan', 'type'];
+  const PLATES = ['smear', 'wave', 'drip', 'shatter', 'collage', 'scan', 'type', 'fall', 'band', 'mosh', 'weave'];
   // motion options: changing these never re-renders the still
   const MOTION = {
     sweep: 1, speed: 1, lo: 0.25, hi: 0.95, mosh: 1, tear: 0.8, radius: 0.18, lag: 0.12, hand: null, clickPulse: false,
@@ -567,6 +567,10 @@ void main() {
     live.parity({ mode: 'wave', variant: 'ripple', seed: 2, scene: 6 }),
     live.parity({ mode: 'drip', seed: 4, scene: 6 }),
     live.parity({ mode: 'sorted', seed: 3, scene: 6, width: 320, height: 96 }),
+    live.parity({ mode: 'fall', variant: 'ink', seed: 4, scene: 6 }),
+    live.parity({ mode: 'band', variant: 'tape', seed: 3, scene: 6 }),
+    live.parity({ mode: 'mosh', variant: 'melt', seed: 2, scene: 6 }),
+    live.parity({ mode: 'weave', variant: 'plaid', seed: 2, scene: 6 }),
   ].map(r => Object.assign(r, { pass: live.pass(r) }));
   G.live = live;
 })(typeof window !== 'undefined' ? window : globalThis);

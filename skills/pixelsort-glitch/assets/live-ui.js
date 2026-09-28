@@ -11,10 +11,12 @@
  *   const ui = Glitch.ui;
  *   ui.background(section);   ui.button(btn);   ui.card(el, { mode: 'wave', variant: 'ripple' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
- *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
+ *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.cursor(area);   ui.icon(span, 'shuffle');
  *
  * Every function returns the live controller (or a small object holding it) so a page can set()
- * it further. Original code, MIT.
+ * it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
+ * https://phosphoricons.com; the path data below was generated from @phosphor-icons/core, never
+ * fetched at run time. The rest is original code, MIT.
  */
 (function (root) {
   'use strict';
@@ -23,6 +25,20 @@
   const live = G.live;
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+
+  // Phosphor Icons, light weight (MIT). 256 viewBox, filled outlines, generated from the package's SVGs.
+  const P = (...ds) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">${ds.map(d => `<path d="${d}"/>`).join('')}</svg>`;
+  const ICONS = {
+    lightning: P('M213.84,118.63a6,6,0,0,0-3.73-4.25L150.88,92.17l15-75a6,6,0,0,0-10.27-5.27l-112,120a6,6,0,0,0,2.28,9.71l59.23,22.21-15,75a6,6,0,0,0,3.14,6.52A6.07,6.07,0,0,0,96,246a6,6,0,0,0,4.39-1.91l112-120A6,6,0,0,0,213.84,118.63ZM106,220.46l11.85-59.28a6,6,0,0,0-3.77-6.8l-55.6-20.85,91.46-98L138.12,94.82a6,6,0,0,0,3.77,6.8l55.6,20.85Z'),
+    shuffle: P('M236.24,179.76a6,6,0,0,1,0,8.48l-24,24a6,6,0,0,1-8.48-8.48L217.52,190H200.94a70.16,70.16,0,0,1-57-29.31l-41.71-58.4A58.11,58.11,0,0,0,55.06,78H32a6,6,0,0,1,0-12H55.06a70.16,70.16,0,0,1,57,29.31l41.71,58.4A58.11,58.11,0,0,0,200.94,178h16.58l-13.76-13.76a6,6,0,0,1,8.48-8.48Zm-92.06-74.41a5.91,5.91,0,0,0,3.48,1.12,6,6,0,0,0,4.89-2.51l1.19-1.67A58.11,58.11,0,0,1,200.94,78h16.58L203.76,91.76a6,6,0,1,0,8.48,8.48l24-24a6,6,0,0,0,0-8.48l-24-24a6,6,0,0,0-8.48,8.48L217.52,66H200.94a70.16,70.16,0,0,0-57,29.31L142.78,97A6,6,0,0,0,144.18,105.35Zm-32.36,45.3a6,6,0,0,0-8.37,1.39l-1.19,1.67A58.11,58.11,0,0,1,55.06,178H32a6,6,0,0,0,0,12H55.06a70.16,70.16,0,0,0,57-29.31l1.19-1.67A6,6,0,0,0,111.82,150.65Z'),
+    export: P('M214,112v96a14,14,0,0,1-14,14H56a14,14,0,0,1-14-14V112A14,14,0,0,1,56,98H80a6,6,0,0,1,0,12H56a2,2,0,0,0-2,2v96a2,2,0,0,0,2,2H200a2,2,0,0,0,2-2V112a2,2,0,0,0-2-2H176a6,6,0,0,1,0-12h24A14,14,0,0,1,214,112ZM92.24,68.24,122,38.49V136a6,6,0,0,0,12,0V38.49l29.76,29.75a6,6,0,1,0,8.48-8.48l-40-40a6,6,0,0,0-8.48,0l-40,40a6,6,0,1,0,8.48,8.48Z'),
+    scissors: P('M159.38,112a6,6,0,0,1,1.57-8.34l67.66-46.31a6,6,0,0,1,6.78,9.91l-67.67,46.3a6,6,0,0,1-8.34-1.56ZM237,197.09a6,6,0,0,1-8.34,1.56L136,135.27,91,166.06A34,34,0,1,1,84,156a1.8,1.8,0,0,0,.19.2L125.37,128,84.23,99.84,84,100a34,34,0,1,1,7-10.1l144.38,98.8A6,6,0,0,1,237,197.09ZM75.56,91.55a22,22,0,1,0-31.12,0,21.88,21.88,0,0,0,31.12,0ZM82,180a22,22,0,1,0-6.44,15.56h0A21.88,21.88,0,0,0,82,180Z'),
+    film: P('M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42ZM38,86h84v84H38Zm96-12V54h36V74Zm-12,0H86V54h36Zm0,108v20H86V182Zm12,0h36v20H134Zm0-12V86h84v84ZM218,56V74H182V54h34A2,2,0,0,1,218,56ZM40,54H74V74H38V56A2,2,0,0,1,40,54ZM38,200V182H74v20H40A2,2,0,0,1,38,200Zm178,2H182V182h36v18A2,2,0,0,1,216,202Z'),
+    play: P('M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z'),
+    pause: P('M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z'),
+    broken: P('M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14h64a6,6,0,0,0,5.69-4.1l15.12-45.36,37.42-15a6,6,0,0,0,3.34-3.34l15-37.42L225.9,93.69A6,6,0,0,0,230,88V56A14,14,0,0,0,216,42ZM117.77,154.43a6,6,0,0,0-3.46,3.67L99.68,202H40a2,2,0,0,1-2-2V171.17l52.58-52.58a2,2,0,0,1,2.83,0L126,151.15ZM218,83.68,174.1,98.31a6,6,0,0,0-3.67,3.46l-15.05,37.61L138.1,146.3l-36.2-36.2a14,14,0,0,0-19.8,0L38,154.2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2Zm9.51,33.18a6,6,0,0,0-5.41-.82L198.3,124a6,6,0,0,0-3.67,3.47L180,164l-36.56,14.63A6,6,0,0,0,140,182.3L132,206.1a6,6,0,0,0,5.69,7.9H216a14,14,0,0,0,14-14V121.73A6,6,0,0,0,227.51,116.86ZM218,200a2,2,0,0,1-2,2H146.06l4.42-13.26,36.37-14.55a6,6,0,0,0,3.34-3.34l14.55-36.37L218,130.06Z'),
+    waveform: P('M54,96v64a6,6,0,0,1-12,0V96a6,6,0,0,1,12,0ZM88,26a6,6,0,0,0-6,6V224a6,6,0,0,0,12,0V32A6,6,0,0,0,88,26Zm40,32a6,6,0,0,0-6,6V192a6,6,0,0,0,12,0V64A6,6,0,0,0,128,58Zm40,32a6,6,0,0,0-6,6v64a6,6,0,0,0,12,0V96A6,6,0,0,0,168,90Zm40-16a6,6,0,0,0-6,6v96a6,6,0,0,0,12,0V80A6,6,0,0,0,208,74Z'),
+  };
 
   let styled = false;
   function style() {
@@ -36,7 +52,10 @@
 .pg-track>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;image-rendering:pixelated}
 .pg-track>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .pg-track:has(input:focus-visible){outline:2px solid var(--pg-focus,#3fd0c9);outline-offset:2px}
-.pg-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;image-rendering:pixelated}`;
+.pg-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;image-rendering:pixelated}
+.pg-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;image-rendering:pixelated}
+.pg-icon{display:inline-block;position:relative;vertical-align:-.2em;width:1.25em;height:1.25em}
+.pg-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;image-rendering:pixelated}`;
     document.head.appendChild(s);
   }
   function backdrop(host) {
@@ -190,5 +209,83 @@
     return live(backdrop(el), Object.assign({ mode: 'smear', scene: 6, seed: 8, develop: 'scroll', sweep: 0.6, own: false, hand: el }, opts));
   }
 
-  G.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition };
+  /**
+   * A slit that trails the mouse inside `area`: a short strip of sorted rows, streaking, that
+   * sits behind the pointer on the side it came from, and bursts on a press. The system cursor
+   * stays. Mouse only: hidden for touch and pen, and with reduced motion.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ w: 120, h: 12, lag: 0.08, seed: 17 }, opts);
+    style();
+    const c = document.createElement('canvas');
+    c.className = 'pg-cursor'; c.setAttribute('aria-hidden', 'true');
+    Object.assign(c.style, { width: o.w + 'px', height: o.h + 'px' });
+    document.body.appendChild(c);
+    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0, dir = 1;
+    const show = v => { c.style.display = v ? 'block' : 'none'; };
+    area.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
+      tx = e.clientX; ty = e.clientY;
+      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, strip({ pixel: 1, seed: o.seed, sweep: 1, speed: 3, lo: 0.1, alive: true })); }
+    }, { passive: true });
+    area.addEventListener('pointerleave', () => { on = false; show(false); });
+    area.addEventListener('pointerdown', e => { if (ctl && e.pointerType === 'mouse') ctl.pulse(o.w / 2, o.h / 2, 1); });
+    if (RM.addEventListener) RM.addEventListener('change', () => { if (RM.matches) { on = false; show(false); } });
+    tick(now => {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+      if (!on) return;
+      const k = 1 - Math.exp(-dt / o.lag), vx = tx - x;
+      x += vx * k; y += (ty - y) * k;
+      if (Math.abs(vx) > 2) dir = vx > 0 ? 1 : -1;
+      c.style.transform = `translate(${Math.round(dir > 0 ? x - o.w - 6 : x + 6)}px,${Math.round(y + 12)}px)`;
+    });
+    return { get ctl() { return ctl; }, canvas: c };
+  }
+
+  /**
+   * iconMask(svg, { pad, weight }): an icon's SVG (one or more <path d>, any viewBox) as a
+   * `shape` for the sorted strip: the paths fill white, and only what they cover is kept.
+   * `weight` strokes the outline too (viewBox units), so light icons stay legible.
+   */
+  function iconMask(svg, opts) {
+    const o = Object.assign({ pad: 0.06, weight: 0 }, opts);
+    const vb = ((svg.match(/viewBox="([^"]+)"/) || [0, '0 0 256 256'])[1]).split(/[\s,]+/).map(Number);
+    const paths = Array.from(svg.matchAll(/\sd="([^"]+)"/g), m => new Path2D(m[1]));
+    return (ctx, w, h) => {
+      const s = Math.min(w, h) * (1 - 2 * o.pad) / Math.max(vb[2], vb[3]);
+      ctx.save();
+      ctx.translate((w - vb[2] * s) / 2 - vb[0] * s, (h - vb[3] * s) / 2 - vb[1] * s); ctx.scale(s, s);
+      ctx.fillStyle = ctx.strokeStyle = '#fff'; ctx.lineWidth = o.weight; ctx.lineJoin = 'round';
+      for (const p of paths) { ctx.fill(p); if (o.weight) ctx.stroke(p); }
+      ctx.restore();
+    };
+  }
+
+  /**
+   * An icon cut from the sorted picture: its outline keeps the sorted rows and drops the rest.
+   * At rest it holds still; when its control is hovered or focused the sweep runs, and the rows
+   * streak out past the outline; a press bursts. `name` is a key of ICONS or an SVG string.
+   * The element sets the size (CSS width/height; default 1.25em).
+   */
+  function icon(el, name, opts) {
+    const svg = ICONS[name] || name;
+    const o = Object.assign({ seed: 21, weight: 8 }, opts);
+    style();
+    el.classList.add('pg-icon'); if (!el.hasAttribute('aria-hidden')) el.setAttribute('aria-hidden', 'true');
+    const c = document.createElement('canvas'); el.appendChild(c);
+    const ctl = live(c, strip({ pixel: 1, seed: o.seed, lo: 0.08, hi: 1, sweep: 0, speed: 2, alive: false, shape: iconMask(svg, { weight: o.weight }), crop: [0.5, 0.54, 1.6] }));
+    const host = el.closest('button,a,label,[tabindex]') || el;
+    if (ctl) {
+      const on = v => ctl.set(v ? { sweep: 1, alive: true } : { sweep: 0, alive: false });
+      host.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') on(true); });
+      host.addEventListener('pointerleave', () => on(false));
+      host.addEventListener('focus', () => on(host.matches(':focus-visible')));
+      host.addEventListener('blur', () => on(false));
+      host.addEventListener('pointerdown', () => { const r = el.getBoundingClientRect(); ctl.pulse(r.width / 2, r.height / 2, 1); });
+    }
+    return ctl;
+  }
+
+  G.iconMask = iconMask;
+  G.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS };
 })(typeof window !== 'undefined' ? window : globalThis);
