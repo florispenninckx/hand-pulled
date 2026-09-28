@@ -134,6 +134,32 @@ a faint halo of the other.
   image fills the sheet; the type sits on it in white or pale blue: a small line across
   the top, a title, a two-column list low down, a rule of ticks. Every name is invented.
 
+## Type
+
+Display type uses the skill's own faces in `fonts/`. They are made by `tools/foundry.py` from OFL
+fonts, under the SIL OFL 1.1, and loaded from the skill itself:
+
+```html
+<link rel="stylesheet" href="fonts/fonts.css">
+```
+
+| Face | Look | Axis | Use it for |
+|---|---|---|---|
+| **Sunprint** | letters laid on cyanotype paper and exposed; strokes swell and pool as the light creeps under | `'EXPO'` 0–1000, default 300 (Contact 0, Regular 300, Long 1000) | titles, section heads, one big word over a field |
+| **Sunprint Halo** | the halation alone: a soft swollen ghost with a grainy edge | static | set it behind Sunprint at the same size and tracking (the advances match), in a paler ink of the ramp |
+
+```css
+.title      { position: relative; font-family: 'Sunprint'; font-variation-settings: 'EXPO' 300; }
+.title::before { content: attr(data-text); position: absolute; inset: 0; font-family: 'Sunprint Halo';
+                 color: var(--pale); opacity: .55; z-index: -1; }
+```
+
+- Use it for display type only. Facts, captions and running text stay in the page's sans or mono.
+- The axis is the exposure. Keep one value per role. With live mode, tie `EXPO` to the section's
+  develop progress (register `@property --expo` and animate it), animate one element at most, and
+  never under `prefers-reduced-motion`.
+- Never give the glow with a CSS text-shadow: the halo is the Halo face or the engine's own light.
+
 ## Build it
 
 Copy both engines into the project. They are dependency-free classic scripts that set
