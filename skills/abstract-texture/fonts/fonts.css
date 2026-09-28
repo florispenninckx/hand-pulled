@@ -1,0 +1,4 @@
+/* The abstract-texture faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Tideline: An echo-contour face: a heavy grotesk trailed by outline copies of itself, like a shape dragged through a slow shutter. At ECHO 0 the copies hide inside the letter; as ECHO rises they fan out down and to the right, each ring thinner than the last. Axis 'ECHO' 0–1000, default 0. */
+@font-face { font-family: 'Tideline'; src: url('tideline.woff2') format('woff2'); font-display: swap; }
