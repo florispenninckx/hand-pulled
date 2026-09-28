@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Indigo Grain</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;1,9..144,420&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #07070d; }
+  body { font: 400 13px/1.4 'Space Mono', monospace; color: #fff; overflow-x: hidden; }
+
+  .mark {
+    position: fixed; top: 14px; left: 16px; z-index: 6;
+    font: 700 11px/1 'Space Mono', monospace; letter-spacing: .18em; text-transform: uppercase;
+    color: #fff; mix-blend-mode: difference; pointer-events: none;
+  }
+
+  main { display: block; }
+  .plate { position: relative; width: 100%; height: 100vh; height: 100svh; overflow: hidden; }
+  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .plate[data-kind="print-pos"]::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    border: 2.6vmin solid #faf9f4;
+  }
+
+  .loading {
+    position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
+    background: #07070d; color: #8288a8; font: italic 400 13px/1 'Fraunces', serif; letter-spacing: .02em;
+  }
+  @media (prefers-reduced-motion: no-preference) { .loading { transition: opacity .35s ease; } }
+  .loading.hide { opacity: 0; pointer-events: none; }
+
+  .cap {
+    position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px;
+    color: #fff; mix-blend-mode: difference;
+  }
+  .cap .name { font: italic 400 16px/1 'Fraunces', serif; letter-spacing: 0; }
+  .cap .ctrl { display: flex; gap: 16px; font: 400 11px/1 'Space Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+  .cap button, .cap label.upload {
+    background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit;
+    cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;
+  }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  :focus-visible { outline: 1.5px solid #fff; outline-offset: 2px; }
+
+  @media (max-width: 480px) {
+    .cap .name { font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mark">Indigo Grain</div>
+
+<main>
+  <section class="plate" data-kind="field" data-palette="cobalt">
+    <div class="loading">developing</div>
+    <canvas aria-label="A grain-gradient field: deep ultramarine dissolving into white, coarse stochastic grain."></canvas>
+    <div class="cap">
+      <span class="name">I — cobalt field</span>
+      <span class="ctrl"><button type="button" data-again>another</button></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="field" data-palette="nightglow">
+    <div class="loading">developing</div>
+    <canvas aria-label="A violet-pink-blue glow on near-black, entirely grain."></canvas>
+    <div class="cap">
+      <span class="name">II — night glow</span>
+      <span class="ctrl"><button type="button" data-again>another</button></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="print-neg" data-palette="navy">
+    <div class="loading">developing</div>
+    <canvas aria-label="A spider lily photogram, white on navy, soft focus, fine grain."></canvas>
+    <div class="cap">
+      <span class="name">III — lily, photogram</span>
+      <span class="ctrl"><button type="button" data-again>another</button></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="print-pos" data-palette="paperblue">
+    <div class="loading">developing</div>
+    <canvas aria-label="A profile silhouette printed in ultramarine on white, coarse grain falling off at the edge."></canvas>
+    <div class="cap">
+      <span class="name">IV — profile, printed</span>
+      <span class="ctrl"><button type="button" data-again>another</button></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="tone" data-palette="lily">
+    <div class="loading">developing</div>
+    <canvas aria-label="A soft cyanotype-blue photograph, grain everywhere; drop in your own to print it the same way."></canvas>
+    <div class="cap">
+      <span class="name">V — your print</span>
+      <span class="ctrl">
+        <button type="button" data-again>another</button>
+        <label class="upload" for="photoFile">+ photograph</label>
+        <input type="file" id="photoFile" accept="image/*">
+      </span>
+    </div>
+  </section>
+</main>
+
+<script src="assets/cyanotype.js"></script>
+<script src="assets/botanica.js"></script>
+<script>
+(function () {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+
+  const grey = (g, a) => `rgba(${g * 255 | 0},${g * 255 | 0},${g * 255 | 0},${a == null ? 1 : a})`;
+  // III: two spider-lily stems laid on the paper, umbels at two heights, stems
+  // crossing off the bottom; a faint lighter fold down the middle of the ground.
+  function spiderLayout(ctx, w, h, rand) {
+    const fold = ctx.createLinearGradient(0, 0, w, 0);
+    fold.addColorStop(0, grey(1, 0)); fold.addColorStop(0.5, grey(1, 0.07)); fold.addColorStop(1, grey(1, 0));
+    ctx.fillStyle = fold; ctx.fillRect(0, 0, w, h);
+    const size = Math.min(0.13 * h, 0.23 * w), bx = w * (0.47 + (rand() - 0.5) * 0.06);
+    Botanica.nerine(ctx, rand, { x: bx + size * 0.12, y: h * 1.03, tx: bx + size * (0.5 + rand() * 0.7), ty: h * (0.25 + rand() * 0.04), size });
+    Botanica.nerine(ctx, rand, { x: bx - size * 0.12, y: h * 1.03, tx: bx - size * (0.5 + rand() * 0.8), ty: h * (0.53 + rand() * 0.05), size: size * 0.95 });
+  }
+  // IV: a head in profile, large and cropped, the face near the right edge looking
+  // right; the paper in front of it is speckled, densest high on the right.
+  function profileLayout(ctx, w, h, rand) {
+    const land = w > h, S = land ? 0.72 * h : Math.min(0.46 * h, 0.9 * w);
+    const noseX = w * (land ? 0.63 : 0.78);
+    Botanica.profile(ctx, rand, { x: noseX - 0.46 * S, y: h * (land ? 0.13 : 0.1), scale: S, hair: 0.9 + rand() * 0.3 });
+  }
+  const speckle = (u, v) => 0.1 + 0.55 * Math.max(0, 1 - u / 0.3) + 0.36 * Math.exp(-((u - 1) ** 2 + (v + 0.05) ** 2) / 0.14);
+  // V: trumpet lilies at three depths. The ground layer is diffuse light with
+  // strap leaves and stems in shadow; one bloom is sharp, the rest are not.
+  function trumpetLayers(w, h, rand, accents) {
+    const L = Math.min(0.28 * h, 0.42 * w), j = (a, b) => a + rand() * (b - a);
+    const hero = { x: w * j(0.16, 0.28), y: h * j(0.58, 0.66), angle: j(-0.6, -0.3), tilt: j(0.1, 0.3) };
+    const second = { x: hero.x + L * j(1.2, 1.6), y: hero.y + L * j(-0.1, 0.3), angle: j(-1.55, -1.15), tilt: j(0.25, 0.45) };
+    const corner = { x: w * j(-0.02, 0.06), y: h * j(-0.02, 0.05), angle: j(0.5, 1.0), tilt: j(0.4, 0.58) };
+    const far = [0, 1, 2].map(() => ({ x: w * j(0.05, 0.95), y: h * j(0.1, 0.9), angle: j(-2.5, -0.6), tilt: j(-0.3, 0.6) }));
+    const leaves = [0, 1, 2].map(i => ({ x: w * (0.15 + 0.35 * i + j(-0.1, 0.1)), y: h * 1.05, angle: -Math.PI / 2 + j(-0.35, 0.35), length: h * j(0.45, 0.8), width: L * j(0.16, 0.26), bend: j(-0.5, 0.5) }));
+    const edge = { x: w * j(0.9, 1.02), y: h * j(0.3, 0.45), angle: j(2.2, 2.8), tilt: j(0.2, 0.4) };
+    const stemTo = (ctx, b, bend) => {   // down and back from the base of a bloom, off the bottom of the frame
+      const h0 = b.angle + Math.PI, dt = Math.PI / 2 - h0 + bend;
+      const pts = Botanica.walk(b.x, b.y, (h - b.y) * 1.2 + L * 0.5, h0, u => dt * 2 * (1 - u), 40);
+      Botanica.ribbon(ctx, pts, u => L * (0.026 + 0.014 * u));
+    };
+    return [
+      { focus: 1.3, haze: 2.6, soft: 0.85, objects: (ctx, ww, hh, r2) => {
+        const g = ctx.createLinearGradient(0, 0, w * 0.5, h);
+        g.addColorStop(0, grey(0.52)); g.addColorStop(1, grey(0.33));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = grey(0.62, 0.5);
+        for (const f of far) { ctx.beginPath(); ctx.ellipse(f.x, f.y, L * j(0.4, 0.8), L * j(0.2, 0.5), f.angle, 0, Math.PI * 2); ctx.fill(); }
+        for (const f of far.slice(0, 2)) Botanica.trumpet(ctx, r2, Object.assign({ size: L * 0.8, shade: [0.55, 0.78] }, f));
+      } },
+      { mode: 'multiply', focus: 1.1, haze: 2.2, soft: 0.75, objects: (ctx, ww, hh, r2) => {
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = grey(0.5);
+        for (const lf of leaves) Botanica.leaf(ctx, r2, lf);
+      } },
+      { mode: 'multiply', focus: 0.35, haze: 1.0, soft: 0.4, objects: (ctx, ww, hh, r2) => {
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = grey(0.42);
+        for (const b of [hero, second]) stemTo(ctx, b, (r2() - 0.5) * 0.3);
+      } },
+      { focus: 0.8, haze: 1.5, soft: 0.6, objects: (ctx, ww, hh, r2) => {
+        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 1.15 }, corner));
+        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 1.05, shade: [0.6, 0.9] }, edge));
+      } },
+      { focus: 0.3, haze: 0.9, soft: 0.4, objects: (ctx, ww, hh, r2) => {
+        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 0.95 }, second));
+      } },
+      { focus: 0.1, haze: 0.35, soft: 0.18, objects: (ctx, ww, hh, r2) => {
+        const t = Botanica.trumpet(ctx, r2, Object.assign({ size: L }, hero));
+        accents.push({ x: t.x, y: t.y, r: L * 0.42, a: 0.34 });
+      } },
+    ];
+  }
+  const plates = $$('.plate').map(section => ({
+    section,
+    canvas: $('canvas', section),
+    loading: $('.loading', section),
+    kind: section.dataset.kind,
+    palette: section.dataset.palette,
+    seed: 1 + Math.floor(Math.random() * 9999),
+    photo: null,
+  }));
+
+  function sizeOf(section) {
+    const r = section.getBoundingClientRect();
+    return { w: Math.max(2, Math.round(r.width * dpr)), h: Math.max(2, Math.round(r.height * dpr)) };
+  }
+
+  function renderPlate(p) {
+    p.loading.classList.remove('hide');
+    const { w, h } = sizeOf(p.section);
+    requestAnimationFrame(() => {
+      if (p.kind === 'field') {
+        Cyanotype.field(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, grain: 1.2, coarse: p.palette === 'cobalt' ? 0.85 : 0 });
+      } else if (p.kind === 'print-neg') {
+        // crisp Lycoris umbel: pale lilac florets, flat mid-cobalt ground, fine grain
+        Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'negative', focus: 0.05, haze: 0.10, soft: 0.16, grain: 0.5, objects: spiderLayout });
+      } else if (p.kind === 'print-pos') {
+        // crisp silhouette edge; the ink-to-paper wash is a coarse dithered gradient, not a blur
+        Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'positive', focus: 0.14, haze: 0.3, soft: 0.2, grain: 1.0, coarse: 0.7, bg: speckle, bgDither: 0.85, objects: profileLayout });
+      } else if (p.kind === 'tone') {
+        if (p.photo) {
+          Cyanotype.tone(p.canvas, p.photo, { width: w, height: h, seed: p.seed, palette: p.palette, focus: 0.55, haze: 1.2, soft: 0.6, grain: 1.1 });
+        } else {
+          const layoutRand = Cyanotype.mulberry32((p.seed * 7 + 11) >>> 0);
+          const accents = [];
+          const layers = trumpetLayers(w, h, layoutRand, accents);
+          Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'negative', grain: 1.15, layers, accents });
+        }
+      }
+      p.loading.classList.add('hide');
+    });
+  }
+
+  plates.forEach(p => {
+    $('[data-again]', p.section).addEventListener('click', () => {
+      p.seed = 1 + Math.floor(Math.random() * 9999);
+      renderPlate(p);
+    });
+  });
+
+  const photoPlate = plates.find(p => p.kind === 'tone');
+  const fileInput = $('#photoFile');
+  fileInput.addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+    photoPlate.photo = img;
+    renderPlate(photoPlate);
+  });
+
+  plates.forEach(renderPlate);
+
+  let resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => plates.forEach(renderPlate), 200);
+  });
+})();
+</script>
+</body>
+</html>
