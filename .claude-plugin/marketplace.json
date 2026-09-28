@@ -1,0 +1,15 @@
+{
+  "name": "hand-pulled",
+  "owner": { "name": "Floris Penninckx" },
+  "metadata": {
+    "description": "Graphic-design skills for Claude that make pages look drawn, sorted, printed, exposed or lit rather than generated."
+  },
+  "plugins": [
+    {
+      "name": "hand-pulled",
+      "source": "./",
+      "description": "Hand-lettered maximalist pop, pixel-sort glitch, risograph cartography, indigo grain (cyanotype) and ethereal haze, each with an original engine and a live reference page.",
+      "version": "0.1.0"
+    }
+  ]
+}

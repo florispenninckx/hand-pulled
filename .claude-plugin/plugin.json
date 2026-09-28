@@ -1,0 +1,25 @@
+{
+  "name": "hand-pulled",
+  "version": "0.1.0",
+  "description": "Five graphic-design skills that build styles from their real processes instead of filters: hand-lettered maximalist pop, pixel-sort glitch, risograph cartography, cyanotype indigo grain, ethereal haze. Each ships an original dependency-free engine and a live reference page.",
+  "author": {
+    "name": "Floris Penninckx"
+  },
+  "homepage": "https://florispenninckx.github.io/hand-pulled/",
+  "repository": "https://github.com/florispenninckx/hand-pulled",
+  "license": "MIT",
+  "keywords": [
+    "design",
+    "frontend",
+    "graphic-design",
+    "risograph",
+    "map",
+    "glitch",
+    "pixel-sort",
+    "cyanotype",
+    "ethereal",
+    "maximalist",
+    "hand-lettering",
+    "canvas"
+  ]
+}

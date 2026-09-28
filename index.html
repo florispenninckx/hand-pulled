@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hand-pulled — five graphic processes for Claude</title>
+<meta name="description" content="Five Claude skills that make pages look drawn, sorted, printed, exposed or lit rather than generated: maximalist pop, pixel-sort glitch, risograph cartography, cyanotype indigo grain, ethereal haze. Original engines, live reference pages.">
+<meta property="og:title" content="hand-pulled — five graphic processes for Claude">
+<meta property="og:description" content="Design skills built on the process, not a filter: riso drums, pixel sorting, sun prints, scattered light, paper and glue.">
+<meta property="og:image" content="https://florispenninckx.github.io/hand-pulled/plates/riso-cartography.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23111' stroke-width='2'/%3E%3Cpath d='M16 2v28M2 16h28' stroke='%23111' stroke-width='2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #efeadf; --paper-2: #e6e0d2; --ink: #181612; --ink-2: #5d574c; --pencil: #8a8376;
+    --rule: rgba(24, 22, 18, .22); --mark: #d8327a;
+    --display: 'Libre Caslon Display', 'Libre Caslon Text', Georgia, serif;
+    --text: 'Libre Caslon Text', Georgia, serif;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    --gut: clamp(16px, 4.5vw, 72px);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --paper: #16140f; --paper-2: #1f1c16; --ink: #ebe5d8; --ink-2: #aaa293; --pencil: #7d7668; --rule: rgba(235, 229, 216, .2); --mark: #ff5c9d; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--paper); }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 400 17px/1.55 var(--text); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  /* paper tooth, printed once, very light */
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .5; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .41 0 0 0 0 .34 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  :root[data-theme="dark"] { --paper: #16140f; --paper-2: #1f1c16; --ink: #ebe5d8; --ink-2: #aaa293; --pencil: #7d7668; --rule: rgba(235, 229, 216, .2); --mark: #ff5c9d; color-scheme: dark; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body::before { mix-blend-mode: screen; opacity: .35; } }
+  :root[data-theme="dark"] body::before { mix-blend-mode: screen; opacity: .35; }
+  main, header, footer { position: relative; z-index: 1; }
+  a { color: inherit; }
+  .mono { font: 500 11px/1.5 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  :focus-visible { outline: 2px solid var(--mark); outline-offset: 3px; }
+
+  /* ---------- rail + masthead ---------- */
+  .rail { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 18px var(--gut); border-bottom: 1px solid var(--rule); color: var(--ink-2); }
+  .mast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 380px); gap: 40px var(--gut); padding: clamp(48px, 7vh, 90px) var(--gut) clamp(32px, 5vh, 64px); align-items: end; }
+  .mast h1 { margin: 0; font: 400 clamp(64px, 15.5vw, 250px)/.8 var(--display); font-style: italic; letter-spacing: -.035em; margin-left: -.04em; }
+  .mast h1 span { display: block; font: 500 clamp(11px, 1vw, 13px)/1 var(--mono); font-style: normal; letter-spacing: .3em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 clamp(16px, 3vh, 32px) .35em; }
+  .standfirst { margin: 0; font-size: 19px; line-height: 1.45; }
+  .standfirst em { font-style: italic; }
+  .contents { list-style: none; margin: 0 var(--gut); padding: 0; border-top: 2px solid var(--ink); }
+  .contents li { border-bottom: 1px solid var(--rule); }
+  .contents a { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 16px; align-items: baseline; padding: 12px 0 11px; text-decoration: none; }
+  .contents a:hover .t { font-style: italic; }
+  .contents .n { font: 400 22px/1 var(--display); }
+  .contents .t { font: 400 clamp(22px, 2.6vw, 34px)/1.1 var(--display); letter-spacing: -.01em; }
+  .contents .t small { font: 400 16px/1 var(--text); font-style: italic; color: var(--ink-2); margin-left: .6em; letter-spacing: 0; }
+  .contents .p { color: var(--ink-2); text-align: right; }
+
+  /* ---------- plates ---------- */
+  .plate { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(250px, 330px); gap: 0 clamp(20px, 3vw, 48px); padding: clamp(80px, 12vh, 150px) var(--gut) 0; }
+  .plate > .margin { padding-top: 6px; }
+  .plate .num { font: 400 64px/.9 var(--display); letter-spacing: -.02em; }
+  .plate .pencil { font: 400 12px/1.5 var(--mono); color: var(--pencil); margin-top: 14px; }
+  .plate h2 { margin: 0 0 4px; font: 400 clamp(34px, 4.2vw, 60px)/.95 var(--display); letter-spacing: -.02em; }
+  .plate h2 i { font-style: italic; }
+  .plate .kicker { margin: 0 0 22px; color: var(--ink-2); }
+  .sample { position: relative; display: block; margin: 0; padding: 14px; background: var(--paper-2); border: 1px solid var(--rule); }
+  .sample img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+  /* crop marks at the four corners of the sample */
+  .sample::before, .sample::after, .sample i::before, .sample i::after { content: ""; position: absolute; width: 22px; height: 22px; border: 0 solid var(--ink); pointer-events: none; }
+  .sample::before { top: -9px; left: -9px; border-top-width: 1px; border-left-width: 1px; }
+  .sample::after { bottom: -9px; right: -9px; border-bottom-width: 1px; border-right-width: 1px; }
+  .sample i::before { top: -9px; right: -9px; border-top-width: 1px; border-right-width: 1px; }
+  .sample i::after { bottom: -9px; left: -9px; border-bottom-width: 1px; border-left-width: 1px; }
+  .sample .live { position: absolute; right: 26px; bottom: 26px; background: var(--ink); color: var(--paper); padding: 7px 10px 6px; opacity: 0; transform: translateY(4px); transition: opacity .2s, transform .2s; }
+  .sample:hover .live, .sample:focus-visible .live { opacity: 1; transform: none; }
+  .caption { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-top: 12px; color: var(--ink-2); }
+  .caption a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .spec { font-size: 15.5px; line-height: 1.5; }
+  .spec p { margin: 0 0 16px; }
+  .spec dl { margin: 0; border-top: 1px solid var(--ink); }
+  .spec dt { margin: 0; padding-top: 11px; color: var(--ink-2); }
+  .spec dd { margin: 3px 0 0; padding-bottom: 11px; border-bottom: 1px solid var(--rule); }
+  .spec ul { margin: 0; padding: 0; list-style: none; }
+  .spec li { padding-left: 1.1em; text-indent: -1.1em; }
+  .spec li::before { content: "— "; color: var(--pencil); }
+  .spec .no li::before { content: "✕ "; font-family: var(--mono); font-size: 12px; color: var(--mark); }
+  .chips { display: flex; flex-wrap: wrap; gap: 0; margin-top: 6px; }
+  .chips span { width: 34px; height: 34px; background: var(--c); border: 1px solid var(--rule); margin-right: -1px; position: relative; }
+  .chips span:hover::after, .chips span:focus::after { content: attr(title); position: absolute; left: 0; top: 38px; font: 500 10px/1 var(--mono); letter-spacing: .06em; white-space: nowrap; color: var(--ink-2); }
+  .spec code, .install code { font: 400 13.5px/1.5 var(--mono); }
+
+  /* ---------- install + colophon ---------- */
+  .install { display: grid; grid-template-columns: 120px minmax(0, 1fr) minmax(250px, 330px); gap: 0 clamp(20px, 3vw, 48px); padding: clamp(96px, 16vh, 190px) var(--gut) 0; }
+  .install h2 { margin: 0 0 18px; font: 400 clamp(34px, 4.2vw, 60px)/.95 var(--display); font-style: italic; letter-spacing: -.02em; }
+  .install pre { margin: 0 0 22px; padding: 16px 18px; background: var(--ink); color: var(--paper); overflow-x: auto; font: 400 14px/1.7 var(--mono); }
+  .install pre .c { color: var(--pencil); }
+  .install ol { margin: 0; padding-left: 1.3em; }
+  .install ol li { margin-bottom: 10px; }
+  .install aside { font-size: 15.5px; }
+  .install aside p { margin: 0 0 14px; }
+  footer { margin-top: clamp(96px, 16vh, 190px); padding: 28px var(--gut) 40px; border-top: 2px solid var(--ink); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 40px; font-size: 14.5px; color: var(--ink-2); }
+  footer h3 { margin: 0 0 8px; color: var(--ink); }
+  footer p { margin: 0 0 10px; }
+
+  @media (max-width: 1100px) {
+    .plate, .install { grid-template-columns: 70px minmax(0, 1fr); }
+    .plate .num { font-size: 44px; }
+    .plate .spec, .install aside { grid-column: 2; margin-top: 30px; }
+  }
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .mast { grid-template-columns: minmax(0, 1fr); padding-top: 40px; }
+    .mast h1 { font-size: 27vw; }
+    .contents a { grid-template-columns: 34px minmax(0, 1fr); }
+    .contents .p { display: none; }
+    .contents .t small { display: block; margin: 4px 0 0; }
+    .plate, .install { grid-template-columns: minmax(0, 1fr); padding-top: 72px; }
+    .plate > .margin { display: flex; align-items: baseline; gap: 14px; }
+    .plate .pencil { margin: 0; }
+    .plate .spec, .install aside { grid-column: 1; }
+    .install .margin { display: none; }
+    .sample { padding: 8px; }
+    .sample .live { opacity: 1; transform: none; right: 14px; bottom: 14px; }
+    footer { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) { .sample .live { transition: none; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="rail mono"><span>hand-pulled · a sample book</span><span>five processes · v0.1.0 · 2026</span></div>
+  <div class="mast">
+    <h1><span>skills for Claude</span>hand-<br>pulled</h1>
+    <p class="standfirst">Five graphic-design skills that build a look the way the look was first made: <em>a pen that curls every loose end, pixels sorted by brightness, ink through a drum, iron salts left in the sun, light through wet air</em>. They do not lay a filter over a template. Each one is a short brief for Claude, an original engine with no dependencies, and a live reference page that sets the bar.</p>
+  </div>
+  <ol class="contents" aria-label="Plates">
+    <li><a href="#maximalist-pop"><span class="n">I</span><span class="t">Maximalist pop <small>lettering drawn by hand</small></span><span class="p mono">plate i</span></a></li>
+    <li><a href="#pixelsort-glitch"><span class="n">II</span><span class="t">Pixel-sort glitch <small>what a file does to a picture</small></span><span class="p mono">plate ii</span></a></li>
+    <li><a href="#riso-cartography"><span class="n">III</span><span class="t">Risograph cartography <small>one estuary, three drums at most</small></span><span class="p mono">plate iii</span></a></li>
+    <li><a href="#indigo-grain"><span class="n">IV</span><span class="t">Indigo grain <small>the cyanotype sun print</small></span><span class="p mono">plate iv</span></a></li>
+    <li><a href="#ethereal-haze"><span class="n">V</span><span class="t">Ethereal haze <small>soft focus, slow shutter, film grain</small></span><span class="p mono">plate v</span></a></li>
+  </ol>
+</header>
+
+<main>
+
+  <section class="plate" id="maximalist-pop" aria-labelledby="h-max">
+    <div class="margin"><div class="num">I</div><div class="pencil">skills/<br>maximalist-pop</div></div>
+    <div>
+      <h2 id="h-max">Maximalist <i>pop</i></h2>
+      <p class="kicker mono">the hand-lettered record · hand.js, 38 kB</p>
+      <a class="sample" href="skills/maximalist-pop/reference.html"><i></i>
+        <img src="plates/maximalist-pop.jpg" width="1440" height="900" loading="lazy" alt="An olive album cover for a fictional folk-pop record: “Sweet William” written by hand in a fine cream line whose loose ends curl, with a small hand-written line above and below it and a perforated stamp in the corner.">
+        <span class="live mono">open the live page ↗</span></a>
+      <div class="caption mono"><span>“Sweet William”, a fictional LP</span><a href="skills/maximalist-pop/SKILL.md">read the brief</a></div>
+    </div>
+    <div class="spec">
+      <p>An indie record lettered by one hand, four ways. The cover curls every loose end, the prints carry ink balls on the stroke ends, the tour poster is fat white bubble writing with stamps stuck around it, and the single is one line that never lifts from the paper, looping over a grainy photograph. It is maximal in the hand, not in the palette: one paper, one ink.</p>
+      <dl>
+        <dt class="mono">Paper and ink</dt>
+        <dd><div class="chips"><span style="--c:#8e8c2d" title="olive #8e8c2d" tabindex="0"></span><span style="--c:#f2efb6" title="cream #f2efb6" tabindex="0"></span><span style="--c:#8c9a3b" title="moss #8c9a3b" tabindex="0"></span><span style="--c:#8a7b1e" title="khaki #8a7b1e" tabindex="0"></span><span style="--c:#b9cde2" title="pale blue #b9cde2" tabindex="0"></span><span style="--c:#b4c4d8" title="powder blue #b4c4d8" tabindex="0"></span><span style="--c:#0b0b0b" title="black #0b0b0b" tabindex="0"></span></div></dd>
+        <dt class="mono">Type</dt>
+        <dd>one alphabet drawn point by point, finished as curl, ink ball, chunky or one line; Courier Prime and EB Garamond only for typed facts</dd>
+        <dt class="mono">Made of</dt>
+        <dd><ul><li>seeded bounce, lean and wobble per letter</li><li>the pen drawing each stroke on</li><li>stamps, stars and a grainy b/w photo, all in code</li></ul></dd>
+        <dt class="mono">Refuses</dt>
+        <dd><ul class="no"><li>handwriting fonts standing in for lettering</li><li>more than one ink per surface</li><li>real artists’ names or covers</li></ul></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="plate" id="pixelsort-glitch" aria-labelledby="h-px">
+    <div class="margin"><div class="num">II</div><div class="pencil">skills/<br>pixelsort-glitch</div></div>
+    <div>
+      <h2 id="h-px">Pixel-sort <i>glitch</i></h2>
+      <p class="kicker mono">the broken file · glitch.js + pixelsort.js, 44 kB</p>
+      <a class="sample" href="skills/pixelsort-glitch/reference.html"><i></i>
+        <img src="plates/pixelsort-glitch.jpg" width="1440" height="900" loading="lazy" alt="The Stale Vector hero: on mint, a picture breaking into brown and slate macroblocks, dust drifting up and its columns dripping down in sorted teal and white, with STALE VECTOR set large in the corner.">
+        <span class="live mono">open the live page ↗</span></a>
+      <div class="caption mono"><span>“Stale Vector”, a fictional weekend of broken files</span><a href="skills/pixelsort-glitch/SKILL.md">read the brief</a></div>
+    </div>
+    <div class="spec">
+      <p>Five plates, each made by doing to a picture what a file or a machine does. A codec loses its motion vectors and the columns drip. A one-bit line overruns. A sheet moves in the scanner. A JPEG opens as MacRoman. Tiles fail to load. Every mark comes from the picture underneath, so it reads as broken, not decorated.</p>
+      <dl>
+        <dt class="mono">Flat colour</dt>
+        <dd><div class="chips"><span style="--c:#cdeeed" title="mint #cdeeed" tabindex="0"></span><span style="--c:#27353a" title="slate #27353a" tabindex="0"></span><span style="--c:#8c7652" title="block brown #8c7652" tabindex="0"></span><span style="--c:#efede6" title="paper #efede6" tabindex="0"></span><span style="--c:#ff72b6" title="scanner pink #ff72b6" tabindex="0"></span><span style="--c:#b8552a" title="rust band #b8552a" tabindex="0"></span><span style="--c:#e3e64b" title="highlighter #e3e64b" tabindex="0"></span><span style="--c:#c8c6e2" title="lavender tile #c8c6e2" tabindex="0"></span></div></dd>
+        <dt class="mono">Type</dt>
+        <dd>IBM Plex Mono for everything small, Archivo 800 in caps for anything large</dd>
+        <dt class="mono">Made of</dt>
+        <dd><ul><li>macroblocks, then columns stretched down and interval-sorted</li><li>real JPEG bytes decoded as MacRoman</li><li>your own photo, text file or any file, dropped in</li></ul></dd>
+        <dt class="mono">Refuses</dt>
+        <dd><ul class="no"><li>RGB-split <code>text-shadow</code> on headings</li><li>glitch that ignores the picture under it</li><li>soft pixels, neon on black</li></ul></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="plate" id="riso-cartography" aria-labelledby="h-riso">
+    <div class="margin"><div class="num">III</div><div class="pencil">skills/<br>riso-cartography</div></div>
+    <div>
+      <h2 id="h-riso">Risograph <i>cartography</i></h2>
+      <p class="kicker mono">the duplicator · riso.js + cartography.js + atlas.js, 47 kB</p>
+      <a class="sample" href="skills/riso-cartography/reference.html"><i></i>
+        <img src="plates/riso-cartography.jpg" width="1440" height="900" loading="lazy" alt="An almanac page: the title Low Water in large italic serif beside a risograph sheet of an estuary seen from above, printed in grainy aqua with white branching creeks outlined in black, fluorescent green dots and small printed type.">
+        <span class="live mono">open the live page ↗</span></a>
+      <div class="caption mono"><span>“Low Water”, a fictional almanac in four sheets</span><a href="skills/riso-cartography/SKILL.md">read the brief</a></div>
+    </div>
+    <div class="spec">
+      <p>A risograph pushes one translucent ink at a time through a stencil onto uncoated paper. So you never pick a fill colour: you pick a drum, and white is where it has no ink. The engine simulates the press. Four seeded map sheets go through it: an aerial estuary with its creeks knocked out, stepped photo windows ruled in red, a yellow-and-grey island chart with rock insets, and one green drum of type spread soft over clouds.</p>
+      <dl>
+        <dt class="mono">Inks</dt>
+        <dd><div class="chips"><span style="--c:#5ec8e5" title="aqua #5ec8e5" tabindex="0"></span><span style="--c:#44d62c" title="fluorescent green #44d62c" tabindex="0"></span><span style="--c:#00a95c" title="green #00a95c" tabindex="0"></span><span style="--c:#f15060" title="bright red #f15060" tabindex="0"></span><span style="--c:#ffe800" title="yellow #ffe800" tabindex="0"></span><span style="--c:#88898a" title="light grey #88898a" tabindex="0"></span><span style="--c:#925f52" title="brown #925f52" tabindex="0"></span></div></dd>
+        <dt class="mono">Type</dt>
+        <dd>Instrument Serif italic for titles, Instrument Sans in small caps for printed blocks, Plex Mono for typed notes</dd>
+        <dt class="mono">Made of</dt>
+        <dd><ul><li>per-drum masters, grain screens, multiply overprint</li><li>misregistration, drum mottle, starved specks</li><li>creeks that fork and thin, rock drawn from its own height field</li></ul></dd>
+        <dt class="mono">Refuses</dt>
+        <dd><ul class="no"><li>a noise PNG on a flat design</li><li>white fills where paper should show</li><li>a fourth ink, perfect registration</li></ul></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="plate" id="indigo-grain" aria-labelledby="h-indigo">
+    <div class="margin"><div class="num">IV</div><div class="pencil">skills/<br>indigo-grain</div></div>
+    <div>
+      <h2 id="h-indigo">Indigo <i>grain</i></h2>
+      <p class="kicker mono">the cyanotype · cyanotype.js + botanica.js, 37 kB</p>
+      <a class="sample" href="skills/indigo-grain/reference.html"><i></i>
+        <img src="plates/indigo-grain.jpg" width="1440" height="900" loading="lazy" alt="A head in profile printed in ultramarine on white paper: a crisp face edge, fine strands where the hair meets the paper, and blue specks thinning across the paper in front of the face.">
+        <span class="live mono">open the live page ↗</span></a>
+      <div class="caption mono"><span>“Indigo Grain”, five plates</span><a href="skills/indigo-grain/SKILL.md">read the brief</a></div>
+    </div>
+    <div class="spec">
+      <p>Blue that is only grain: a cobalt pool dissolving into white, a violet glow on black, a spider lily laid on the paper as a photogram, a profile printed in ultramarine with the paper speckled in front of it, trumpet lilies in soft focus. Every speck is a colour from the same ramp, so the hue never drifts.</p>
+      <dl>
+        <dt class="mono">Tones</dt>
+        <dd><div class="chips"><span style="--c:#56c8ff" title="cyan #56c8ff" tabindex="0"></span><span style="--c:#1c7fc4" title="cobalt #1c7fc4" tabindex="0"></span><span style="--c:#4a3db2" title="violet #4a3db2" tabindex="0"></span><span style="--c:#e7d0ee" title="pink glow #e7d0ee" tabindex="0"></span><span style="--c:#2c3c8c" title="navy ground #2c3c8c" tabindex="0"></span><span style="--c:#c4cbf2" title="lilac #c4cbf2" tabindex="0"></span><span style="--c:#2d3aa8" title="ultramarine ink #2d3aa8" tabindex="0"></span><span style="--c:#faf9f4" title="paper #faf9f4" tabindex="0"></span></div></dd>
+        <dt class="mono">Type</dt>
+        <dd>Fraunces italic for plate names, Space Mono for the controls, and nothing else on the image</dd>
+        <dt class="mono">Made of</dt>
+        <dd><ul><li>grain as a shift along the colour ramp, never RGB noise</li><li>photogram masks, blurred at two depths, one layer sharp</li><li>lilies modelled in 3-D and projected, a bezier-traced profile</li></ul></dd>
+        <dt class="mono">Refuses</dt>
+        <dd><ul class="no"><li>a smooth mesh gradient with noise on top</li><li>radially symmetric star flowers</li><li>clip-art silhouettes</li></ul></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="plate" id="ethereal-haze" aria-labelledby="h-haze">
+    <div class="margin"><div class="num">V</div><div class="pencil">skills/<br>ethereal-haze</div></div>
+    <div>
+      <h2 id="h-haze">Ethereal <i>haze</i></h2>
+      <p class="kicker mono">the soft-focus photograph · haze.js, 28 kB</p>
+      <a class="sample" href="skills/ethereal-haze/reference.html"><i></i>
+        <img src="plates/ethereal-haze.jpg" width="1440" height="900" loading="lazy" alt="Pink petals so close to the lens that only their colour and soft overlapping edges remain, on dusty rose air with fine grain, and the word FAYE in a small white serif in the middle.">
+        <span class="live mono">open the live page ↗</span></a>
+      <div class="caption mono"><span>“Faye”, a fictional perfume house</span><a href="skills/ethereal-haze/SKILL.md">read the brief</a></div>
+    </div>
+    <div class="spec">
+      <p>Photographs the lens could not keep: petals held too close to focus, poppies moving past a slow shutter, a branch left on green sun-print paper, a figure smeared in sepia. The blur is optical, a disc for defocus and a line for motion, with the near things sharper than the far. One small serif word sits in the middle.</p>
+      <dl>
+        <dt class="mono">Four looks</dt>
+        <dd><div class="chips"><span style="--c:#d9ccc4" title="blush air #d9ccc4" tabindex="0"></span><span style="--c:#c6848c" title="petal #c6848c" tabindex="0"></span><span style="--c:#ecd2d2" title="milky pink #ecd2d2" tabindex="0"></span><span style="--c:#d2472b" title="poppy #d2472b" tabindex="0"></span><span style="--c:#7b9451" title="stem #7b9451" tabindex="0"></span><span style="--c:#b3b467" title="sun-print olive #b3b467" tabindex="0"></span><span style="--c:#e2d49e" title="leaf pale #e2d49e" tabindex="0"></span><span style="--c:#766140" title="sepia #766140" tabindex="0"></span></div></dd>
+        <dt class="mono">Type</dt>
+        <dd>one thin serif wordmark (Marcellus), small and centred; Jost for the tiny line under it and the captions</dd>
+        <dt class="mono">Made of</dt>
+        <dd><ul><li>disc defocus and line motion blur, at two depths</li><li>tissue petals that deepen where they overlap</li><li>midtone film grain at full resolution; your photo, developed</li></ul></dd>
+        <dt class="mono">Refuses</dt>
+        <dd><ul class="no"><li>mesh gradients and blurred blobs posing as photographs</li><li>outlined or star-shaped flowers</li><li>more than one word on a plate</li></ul></dd>
+      </dl>
+    </div>
+  </section>
+
+  <section class="install" id="install" aria-labelledby="h-install">
+    <div class="margin"></div>
+    <div>
+      <h2 id="h-install">Put them in a session</h2>
+<pre><span class="c"># in Claude Code: add this repository as a plugin marketplace, then install</span>
+/plugin marketplace add florispenninckx/hand-pulled
+/plugin install hand-pulled@hand-pulled
+
+<span class="c"># or take one style only</span>
+git clone https://github.com/florispenninckx/hand-pulled
+cp -r hand-pulled/skills/riso-cartography ~/.claude/skills/</pre>
+      <ol>
+        <li>Ask for the page in plain words: <em>“the site for my ceramics studio, printed like a two-colour riso poster”</em>. Claude picks the skill by its description.</li>
+        <li>The skill tells Claude to read its reference page first, copy the engine into your project, and build with the process.</li>
+        <li>Each brief ends in a checklist that Claude runs against a real screenshot before it calls the work done.</li>
+      </ol>
+    </div>
+    <aside>
+      <p class="mono">Works with</p>
+      <p>Plain HTML, React, Next, Svelte or anything else with a DOM. Each engine is a single classic script that sets a global (<code>Riso</code>, <code>Carto</code>, <code>PixelSort</code>, <code>Cyanotype</code>, <code>Botanica</code>, <code>Haze</code>, <code>Hand</code>). There is no build step, no npm and no network call, and the pages open straight from disk.</p>
+      <p class="mono">Deterministic</p>
+      <p>Every engine is seeded, so the same seed gives the same print. A good result can be named by its settings and pulled again.</p>
+    </aside>
+  </section>
+
+</main>
+
+<footer>
+  <div>
+    <h3 class="mono">Colophon</h3>
+    <p>Set in Libre Caslon Display and Text, with IBM Plex Mono. The plates are screenshots of the live reference pages, taken headless at 1440 × 900.</p>
+  </div>
+  <div>
+    <h3 class="mono">Credits</h3>
+    <p>All engine code is original. The ideas came from open work by many people, credited in each brief and in the <a href="https://github.com/florispenninckx/hand-pulled#credits">README</a>. Code under GPL or without a licence was read for ideas only.</p>
+  </div>
+  <div>
+    <h3 class="mono">Note</h3>
+    <p>Every artist, label, place and record on these pages is invented. No real album art, logo or likeness is reproduced, and the skills tell Claude not to.</p>
+  </div>
+</footer>
+
+</body>
+</html>
