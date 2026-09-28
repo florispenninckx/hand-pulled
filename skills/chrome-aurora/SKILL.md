@@ -1,6 +1,6 @@
 ---
 name: chrome-aurora
-description: Design pages in the chrome aurora style of liquid light on black. A pool of mercury catches a warm lamp on one side and a cool one on the other, with oil-film bands in its fold. Paint trails are dragged across charcoal with a crisp front and a smeared tail. Glossy fluid swirls carry one hot colour. Strip lights on wet glass split into fringes. Soft aurora light sits out of focus. Each plate is shaded per pixel in WebGL, with a 2D fallback, grained, with tiny mono type in the corners. Use it for club nights, electronic and ambient releases, festivals and light installations, audio hardware, galleries, night events, fragrance or tech launches with a futurist edge. Also use it when the user asks for chrome, liquid metal, mercury, iridescent, holographic, oil-slick, thin-film, dichroic, wet glass, dispersion, chromatic aberration, aurora or lens-flare visuals, or for a hero that should be a lit surface rather than a mesh gradient.
+description: Design pages in the chrome aurora style of liquid light on black. A pool of mercury catches a warm lamp on one side and a cool one on the other, with oil-film bands in its fold. Paint trails are dragged across charcoal with a crisp front and a smeared tail. Glossy fluid swirls carry one hot colour. Strip lights on wet glass split into fringes. Soft aurora light sits out of focus. Each plate is shaded per pixel in WebGL, with a 2D fallback, grained, with tiny mono type in the corners. Use it for club nights, electronic and ambient releases, festivals and light installations, audio hardware, galleries, night events, fragrance or tech launches with a futurist edge. Also use it when the user asks for chrome, liquid metal, mercury, iridescent, holographic, oil-slick, thin-film, dichroic, wet glass, dispersion, chromatic aberration, aurora or lens-flare visuals, or for a hero that should be a lit surface rather than a mesh gradient. A live mode moves it for interfaces.
 ---
 
 # Chrome aurora: liquid light on black
@@ -183,6 +183,129 @@ never set type in chrome.
 - A dark scrim or a heavy shadow to rescue type. A faint halo on 10 px corner type is
   fine, but move the words into the black for anything larger.
 
+## Live
+
+`assets/live.js` makes a plate move, for real interfaces and apps, and `assets/live-ui.js`
+builds controls from it. Load them after `mercury.js`: they attach `Mercury.live` and
+`Mercury.ui`. Both are classic scripts with no dependencies. They need WebGL2 and fall back
+to the still plate without it.
+
+**How it works (capture-first).** A view runs `mercury.js` once, at the canvas's device
+size, to get the finished plate with its grain. It runs it a second time at half size for one
+of its own passes: `layer: 'normal'` on the film plate, `layer: 'height'` on the others. Both
+are uploaded as textures. A WebGL2 fragment shader then reads them every frame and adds the
+motion. Every motion term is exactly zero at clock 0 with the default options, so frame 0 is
+the still. The still engine is not forked or ported, and no hook was added to it: its
+`layer` option already exposes the passes.
+
+The motion is liquid metal:
+
+| motion | input | what it does | options |
+|---|---|---|---|
+| **sheen** | pointer (lagged) | A lamp is held over the pointer and mirrored by the captured normals. The highlight slides over the folds, tinted by the metal under it. | `pointer` (0..1, 0.9), `radius` (share of the short side, 0.55), `lag` (s, 0.12), `hand` (element that takes pointer events; default the canvas's parent) |
+| **ripple** | click/tap, `pulse()` | A ring spreads out and slows down in the mercury. It bends the normals, the plate is re-sampled through them, and a crest catches the light. Up to 4 at once. | `clickPulse` (true) |
+| **aurora** | time | Three hues drift slowly across the chrome and are screened onto its highlights. They fade in over the first seconds. | `drift` (0..1, 1), `speed` (1), `hues` (three hex, `['#35f0c8', '#7b5cff', '#ff4fa0']`) |
+| **tilt** | scroll | The reflected room tilts as the canvas moves through the viewport, measured from where it sat on its first frame. | `tilt` (1) |
+| level | hover, scroll | The brightness of the whole plate, eased. `rise: true` brings it up out of black the first time the view scrolls in. `scroll: true` ties it to the view's position. | `level` (1), `rise`, `riseMs` (1400), `scroll`, `ease` (s, 0.16) |
+| fill | value | The plate is polished between `from` and `to` (0..1 across) and dull and unlit outside. Sliders, switches and progress use it. | `fill: [from, to, soft]` (null) |
+
+Still options are the plate's own: `plate` ('film' | 'trail' | 'ribbon' | 'glass' |
+'aurora'), `look`, `seed`, `grain`, `image`. Setting them re-runs the capture. Two options
+belong to the capture itself. `zoom` (280 device px): a canvas whose short side is smaller,
+or that is longer than 2:1, sees a window onto the middle of a bigger plate, so a 36 px
+button shows one smooth fold instead of a whole pour shrunk down. `resolution` (1) is the
+share of the device size, with DPR capped at 2 and the capture capped at 4.2 MP.
+
+```js
+const ctl = Mercury.live(canvas, { plate: 'film', look: 'oxide', seed: 7,   // still options
+                                   drift: 1, pointer: 0.9, tilt: 1 });       // motion options
+ctl.set({ level: 0.6 });       // motion options ease; still options re-capture
+ctl.load({ plate: 'glass', look: 'eye' });   // a new plate, motion options kept
+ctl.pulse(x, y, 0.8);          // a ripple at CSS px of the canvas
+ctl.point(x, y); ctl.point(null);            // hold the lamp yourself, or put it down
+ctl.pause(); ctl.resume(); ctl.destroy();
+ctl.state();   // { mode: 'gpu'|'still', path: 'own'|'bitmap'|'copy'|'cpu', frames, visible, expose, clock, size, ready, reduced }
+ctl.bench(60); // { sync, pipelined, size, path } in ms per frame, every term on
+Mercury.live.parity({ plate: 'glass', look: 'eye', seed: 3 });   // frame 0 vs the still
+```
+
+**UI pieces** (`Mercury.ui`). Each one keeps the native control. The canvas sits behind it
+with `aria-hidden`, and every function returns the controller (or `{ ctl, … }`).
+
+| piece | call | behaviour |
+|---|---|---|
+| live background | `ui.background(section, opts)` | Film · oxide. The lamp follows the pointer, clicks ripple, the aurora drifts and scrolling tilts the room. |
+| button | `ui.button(btn, opts)` | Black chrome (glass · eye). Dim at rest (`rest` 0.55). On hover or `:focus-visible` it brightens (`hover` 1) and the lamp follows the pointer. A press, Enter or Space drops a ripple. |
+| card | `ui.card(el, opts)` | Rises out of black the first time it scrolls in, then drifts. The lamp follows the pointer. |
+| toggle | `ui.toggle(checkbox)` | Wraps the checkbox in a track and adds `role=switch`. The half the thumb sits on is polished. Flipping slides the polish across and ripples. |
+| slider | `ui.slider(range)` | Wraps the range. The strip is polished up to the value. |
+| progress | `const p = ui.progress(el); p.set(0.4)` | `role=progressbar` with `aria-valuenow`. Polished up to p, and it ripples when it reaches 1. |
+| loader | `const l = ui.loader(el); l.stop()` | `role=status`. A chrome bead with a lamp circling over it. It holds still under reduced motion. |
+| focus ring | `ui.focusRing()` | One ring for the page: a band of drifting chrome cut out with a CSS mask round whatever has `:focus-visible`. Keep a 1px CSS outline as well, for the fallback and for forced colours. |
+| section transition | `ui.transition(strip)` | A strip of aurora light (aurora · ember) that brightens out of black as it scrolls up, with its reflection tilting. |
+
+A minimal page (copy it, then change the plate, look and the pieces):
+
+```html
+<section id="hero" style="position:relative;height:80vh;color:#ebe7df">
+  <h1 style="position:absolute;left:24px;bottom:24px;font:300 72px/0.9 sans-serif">Night shift</h1>
+</section>
+<button id="go" style="background:#000;color:#ebe7df;border:1px solid #444;border-radius:999px;padding:12px 22px">Go</button>
+<input type="checkbox" id="on"> <input type="range" id="lvl" value="60">
+<script src="assets/mercury.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
+<script>
+  const ui = Mercury.ui;
+  ui.background(document.getElementById('hero'), { plate: 'film', look: 'oxide', seed: 7 });
+  ui.button(document.getElementById('go'));
+  ui.toggle(document.getElementById('on'));
+  ui.slider(document.getElementById('lvl'));
+  ui.focusRing();
+</script>
+```
+
+Keep label text on chrome controls light, with a dark `text-shadow`. Chrome is bright in
+places and dark in others, and the shadow is what keeps a label readable on both.
+
+**Fallbacks.**
+- `prefers-reduced-motion`: the still frame, clock 0, no lamp, no ripples, no drift, no tilt.
+  `set()` jumps straight to its target, and a view draws only when something changed. The
+  engine listens for the setting to change.
+- No WebGL2, or the shader fails: the still plate from `mercury.js`, with level and fill
+  applied as flat darkening. It changes state but does not animate. A lost context is
+  rebuilt on `webglcontextrestored`.
+- Offscreen: an IntersectionObserver pauses the view, and `visibilitychange` stops the one
+  shared rAF loop. A paused view still draws its first frame.
+- Contexts: canvases of 0.9 MP or more get their own WebGL2 context. Smaller ones share one
+  OffscreenCanvas context and get their frames through `transferToImageBitmap`. Pass
+  `own: true | false` to override.
+
+**Parity** (frame 0 against the still, 480×320 and 320×400, headless Chrome, 28 Sep 2026).
+The captured still is sampled texel for texel with every term at zero, so parity holds by
+construction. `check.sh` still measures it on every run:
+
+| case | mean cpu/gpu | dMean | dSdRel | dGrainRel | MAD (levels) | within 2 |
+|---|---|---|---|---|---|---|
+| film · oxide · 7 | 0.1643 / 0.1643 | 0 | 0 | 0 | 0 | 100 % |
+| glass · eye · 3 | 0.2409 / 0.2409 | 0 | 0 | 0 | 0 | 100 % |
+| ribbon · volt · 5 | 0.2498 / 0.2498 | 0 | 0 | 0 | 0 | 100 % |
+| aurora · iris · 2 (320×400) | 0.6421 / 0.6421 | 0 | 0 | 0 | 0 | 100 % |
+
+Tolerance: `Mercury.live.TOLERANCE` = dMean 0.004, dSdRel 0.02, dGrainRel 0.03, MAD 1.5.
+
+**Performance.** One fragment pass per frame: two texture reads, a 4-ring loop, one
+specular, no noise. Not yet measured in real Chrome for this skill (headless only). The budget is ≤ 4 ms per frame at 1440×900 CSS, DPR 2.
+Capture cost is paid once per view, and again on resize (debounced) or when a still option
+changes. It is one `mercury.js` pour plus its CPU grain: about 20 ms at 480×320, and a few
+hundred ms for a full-screen hero at DPR 2, run as one task per view. Measure in real
+Chrome with `ctl.bench(60)`. Headless Chrome renders WebGL in software.
+
+**Still vs live.** Live today: the sheen, ripples, aurora drift, scroll tilt, level and fill
+on all five plates. Still, captured once: the fields themselves. The pour does not flow, the
+trails do not drag, and the aurora forms do not move. The natural next step is to port the
+film plate's studio reflection to the shader so the lamps themselves can move.
+
 ## Verify before calling it done
 
 Take screenshots in a headless browser at 1440×900 and 390×844, scrolled to each plate,
@@ -198,6 +321,8 @@ and put them next to the reference images.
 - [ ] `Mercury.last === 'webgl'` in headless Chrome, and `gl: false` (`?gl=0`) pours the
       same plates through the fallback.
 - [ ] There is no horizontal scroll on a phone and there are no console errors.
+- [ ] Live pages: `tools/check.sh` section 5 passes, which covers moving, parity and the
+      reduced-motion hold, and `ctl.bench(60)` in real Chrome stays under 4 ms.
 
 ## Credits and prior art
 
