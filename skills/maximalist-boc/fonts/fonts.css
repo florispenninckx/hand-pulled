@@ -9,5 +9,5 @@
 /* Gouge: Shaded display: a fat round display face with a crescent of light gouged inside every stroke, from a hairline to a deep cut. Axis 'CARV' 0–1000, default 500. */
 @font-face { font-family: 'Gouge'; src: url('gouge.woff2') format('woff2'); font-display: swap; }
 
-/* Soak: Blur and ink-bleed display: a black grotesk soaked until its corners melt and its edges blot. Axis 'BLED' 0–1000, default 500. */
+/* Soak: Blur and ink-bleed display: a black grotesk soaked until its corners melt, its edges blot and, at full bleed, its letters flood into each other's space. Axis 'BLED' 0–1000, default 500. */
 @font-face { font-family: 'Soak'; src: url('soak.woff2') format('woff2'); font-display: swap; }

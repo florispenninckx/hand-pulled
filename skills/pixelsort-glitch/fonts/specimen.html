@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rowdrag specimen</title>
+<meta name="description" content="The pixelsort-glitch display faces (Rowdrag), made by tools/foundry.py, each with its process axis.">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
+  :root { --bg:#0b0b12; --fg:#f2f2f2; --dim:#8a8fa6; --ink:#ff3d8b; --ink2:#8a8fa6; --panel:#15151f;
+          --gut:clamp(16px,4vw,56px); --mono:ui-monospace,'SF Mono',Menlo,monospace; --sans:system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body { background:var(--bg); color:var(--fg); font:400 16px/1.5 var(--sans); overflow-x:hidden; }
+  main { padding:var(--gut); max-width:1400px; margin:0 auto; }
+  header { padding-bottom:28px; border-bottom:1px solid var(--dim); }
+  .kicker,.meta,.dial,.strip span,h2 span { font:400 12px/1.4 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .kicker { display:flex; flex-wrap:wrap; gap:8px 24px; }
+  h1 { font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:18px 0 0; }
+  .face { padding:clamp(36px,6vw,80px) 0; border-bottom:1px solid var(--dim); }
+  h2 { font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; display:flex; flex-wrap:wrap; gap:6px 18px; }
+  .note { max-width:64ch; color:var(--dim); margin:0 0 24px; }
+  .sample { font-size:clamp(56px,15vw,220px); line-height:1; margin:0 0 20px; color:var(--ink); overflow-wrap:anywhere; }
+  .live { animation:sweep 8s ease-in-out infinite alternate; }
+  @keyframes sweep { 0%,8% { --v:0; } 92%,100% { --v:1000; } }
+  @media (prefers-reduced-motion: reduce) { .live { animation:none; } }
+  .dial { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; max-width:640px; margin-bottom:32px; }
+  .dial input { width:100%; min-width:0; accent-color:var(--ink); }
+  .dial output { min-width:5ch; text-align:right; }
+  .alpha { font-size:clamp(26px,5.4vw,72px); line-height:1.15; margin:0 0 32px; overflow-wrap:anywhere; }
+  .strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); border:1px solid var(--dim); }
+  .strip div { container-type:inline-size; padding:18px 12px 12px; border-right:1px solid var(--dim); background:var(--panel); display:grid; gap:10px; overflow:hidden; }
+  .strip div:last-child { border-right:0; }
+  .strip p { font-size:26cqi; line-height:1; margin:0; white-space:nowrap; }
+  .stack { position:relative; isolation:isolate; font-family:var(--f); font-size:clamp(40px,9vw,140px); line-height:1.02; margin:0; color:var(--ink); }
+  .stack::before { content:attr(data-text); position:absolute; inset:0; z-index:-1; font-family:var(--b); color:var(--ink2); mix-blend-mode:multiply; transform:translate(.02em,.015em); }
+  pre { font:400 12.5px/1.6 var(--mono); background:var(--panel); padding:20px; overflow-x:auto; margin:0; white-space:pre; }
+  footer { padding:40px 0 8px; font:400 12px/1.6 var(--mono); color:var(--dim); }
+  footer a { color:var(--fg); }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="kicker"><span>hand-pulled foundry</span><span>pixelsort-glitch</span><span>SIL OFL 1.1</span></div>
+    <h1>Rowdrag: display faces, titles only</h1>
+  </header>
+  <section class="face">
+    <h2>Rowdrag <span>SORT 0–1000 · variable · 9 KB</span></h2>
+    <p class="note">A quantised pixel face whose rows get sorted: at SORT 0 a clean blocky grotesk on a 60-unit grid; as SORT rises, strips of pixel rows are dragged sideways into streaks and whole rows slip out of register.</p>
+    <p class="sample live" id="s0" style="font-family:'Rowdrag';--v:0;font-variation-settings:'SORT' var(--v)">Scanline</p>
+    <label class="dial"><span>SORT</span><input type="range" min="0" max="1000" value="0" data-for="s0" aria-label="Sort"><output>live</output></label>
+    <p class="alpha" style="font-family:'Rowdrag';font-variation-settings:'SORT' 0">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 0">Scan</p><span>SORT 0</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 250">Scan</p><span>SORT 250</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 500">Scan</p><span>SORT 500</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 750">Scan</p><span>SORT 750</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 1000">Scan</p><span>SORT 1000</span></div></div>
+    <p class="meta">Named instances: Clean 0, Sorted 500, Dragged 1000.</p>
+  </section>
+
+  <section class="face">
+    <h2>Set it</h2>
+    <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
+
+.x{font-family:'Rowdrag'; font-variation-settings:'SORT' 0;}</pre>
+  </section>
+  <footer>Made by tools/foundry.py from Space Grotesk (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+</main>
+<script>
+  document.querySelectorAll('.dial input').forEach(function (inp) {
+    var el = document.getElementById(inp.dataset.for), out = inp.nextElementSibling;
+    inp.addEventListener('input', function () { el.classList.remove('live'); el.style.setProperty('--v', inp.value); out.textContent = inp.value; });
+  });
+</script>
+</body>
+</html>

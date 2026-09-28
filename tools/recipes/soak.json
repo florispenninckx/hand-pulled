@@ -2,7 +2,7 @@
   "name": "Soak",
   "file": "soak",
   "skill": "maximalist-boc",
-  "about": "Blur and ink-bleed display: a black grotesk soaked until its corners melt and its edges blot.",
+  "about": "Blur and ink-bleed display: a black grotesk soaked until its corners melt, its edges blot and, at full bleed, its letters flood into each other's space.",
   "base": {
     "family": "Archivo Black",
     "repo": "google/fonts",
@@ -28,17 +28,21 @@
   "trace": 0,
   "track": {
     "0": 10,
-    "1000": 50
+    "500": 35,
+    "1000": 60
   },
   "ops": [
     {
       "op": "noise",
       "amp": {
         "0": 0.0,
-        "500": 0.12,
-        "1000": 0.2
+        "500": 0.16,
+        "1000": 0.26
       },
-      "cell": 150,
+      "cell": {
+        "0": 150,
+        "1000": 190
+      },
       "octaves": 2,
       "seed": 1
     },
@@ -46,35 +50,42 @@
       "op": "blur",
       "r": {
         "0": 4,
-        "500": 26,
-        "1000": 44
+        "500": 32,
+        "1000": 62
       }
     },
     {
       "op": "level",
       "at": {
         "0": 0.5,
-        "500": 0.46,
-        "1000": 0.43
+        "500": 0.4,
+        "1000": 0.25
       }
     },
     {
       "op": "noise",
       "amp": {
         "0": 0.0,
-        "500": 0.2,
-        "1000": 0.32
+        "500": 0.28,
+        "1000": 0.5
       },
-      "cell": 110,
+      "cell": {
+        "0": 110,
+        "1000": 80
+      },
       "octaves": 1,
-      "band": 36,
+      "band": {
+        "0": 36,
+        "1000": 56
+      },
       "seed": 2
     },
     {
       "op": "blur",
       "r": {
         "0": 2,
-        "1000": 8
+        "500": 6,
+        "1000": 10
       }
     },
     {
@@ -91,5 +102,6 @@
     "smooth": 8,
     "nsmooth": 16,
     "reach": 160
-  }
+  },
+  "pad": 220
 }
