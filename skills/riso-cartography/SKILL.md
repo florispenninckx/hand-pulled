@@ -21,7 +21,9 @@ The files next to this SKILL.md:
 - `assets/riso.js`: `window.Riso`, the press. It has per-ink drums, grain, halftone and solid screens, misregistration, drum mottle, multiply overprint and paper fibre, plus `INKS` (Riso colours) and `PAPERS`.
 - `assets/cartography.js`: `window.Carto`, seeded geography. `Carto.city` grows a street plan and labels its blocks. `Carto.meander` migrates a river for a set number of years and keeps its old courses and oxbows. It also has terrain, isolines, contours, roads and place names.
 - `assets/atlas.js`: `window.Atlas`, seven finished sheets built on both. Load `riso.js` and `cartography.js` first.
-- `reference.html`: "Figure & Ground", an atlas of a fictional town by a fictional print club. Sheet I sits at full height beside an italic serif title, with its ink switchable and a photo drop. The other six follow in two staggered rows. Sheet VI is then proofed drum by drum, and the page ends with an ink table and a short programme. **Read it before designing.**
+- `assets/live.js`: `Riso.live`, the same press moving on the GPU (WebGL2). Load it after `atlas.js`. See "Live" below.
+- `assets/live-ui.js`: `Riso.ui`, interface pieces printed live: background, button, card, toggle, slider, progress, loader, focus ring and section transition.
+- `reference.html`: "Figure & Ground", an atlas of a fictional town by a fictional print club. Sheet I sits at full height beside an italic serif title, with its ink switchable and a photo drop. The other six follow in two staggered rows. Sheet I prints live and follows the pointer with a loupe. Sheet VI is then proofed drum by drum. "The Drum Room", a small made-up press-queue app built from the live pieces, follows, and the page ends with an ink table and a short programme. **Read it before designing.**
 
 ## The seven sheets
 
@@ -101,6 +103,144 @@ Type, each face with one job:
 - The type printed on a sheet goes on its darkest drum and misregisters with everything else. Repeat those words in the canvas `aria-label`, and keep the label in step when a control changes the ink.
 - Use fictional towns, rivers, clubs and people, or the user's own. Never use a real brand's name, logo or map artwork, and never trace a real city's plan.
 
+## Live
+
+`assets/live.js` makes the press move, for real interfaces. It is **capture-first**: the CPU
+still (`Riso.print`, or an `Atlas` sheet on top of it) runs once, and hands over its paper and
+each drum's screened coverage. These go up to the GPU as float textures. A WebGL2 shader then
+recomposes the multiply overprint, `paper × Π(1 − c + c·ink)`, exactly as `riso.js` does. Every
+motion term is zero at time 0, so frame 0 is the still. The motion is the medium's own:
+
+- drums drift out of registration and back;
+- the paper feeds through the drums, top down and staggered (on first view, or tied to scroll);
+- contours are traced along the terrain in fresh ink;
+- the pointer is a loupe;
+- a click is a stamp of fresh ink with starved specks.
+
+Load the scripts in this order. All are classic scripts with no dependencies.
+
+```html
+<script src="riso.js"></script><script src="cartography.js"></script><script src="atlas.js"></script>
+<script src="live.js"></script><script src="live-ui.js"></script>
+<canvas id="map" style="width:100%;height:60vh;display:block" role="img" aria-label="Map of the town"></canvas>
+<script>
+  const ctl = Riso.live(document.getElementById('map'), {
+    sheet: 'blocks', mode: 'solid', ink: 'blue', seed: 7,        // still options (an Atlas sheet)
+    feed: 'in', drift: 1, pointer: 1, clickPulse: true,           // motion options
+  });
+  ctl.set({ slip: 0.5 });   ctl.pulse(x, y);   ctl.pause();   ctl.resume();   ctl.destroy();
+</script>
+```
+
+**Still options** choose what is printed. There are two sources:
+
+- `sheet: 'blocks' | 'river' | 'zoning' | 'poster'` plus that sheet's `Atlas` options
+  (`mode`, `seed`, `ink`, `image`, `text`, `drums`, `misregister`…);
+- or `layers` plus `paper`, `seed`, `misregister`…, exactly as `Riso.print` takes them.
+  The interface pieces use this source.
+
+`width` and `height` come from the canvas: its CSS size × min(2, DPR) × `resolution`.
+
+**Motion options** never reprint the still:
+
+| option | default | what it does |
+|---|---|---|
+| `drift`, `speed` | 1, 1 | the drums wander out of registration and back, each on its own slow period |
+| `slip` | 0 | deliberate misregistration: each drum knocked its own way, 1 = 3% of the canvas size; buttons use 0.5 for hover |
+| `offsets` | null | per-layer `[dx, dy]` in CSS px (`null` for a layer at rest): slides a drum's image; toggles, sliders and progress run on it |
+| `feed`, `feedMs`, `scrollRange` | 1, 2400, [0, 1] | the paper feed, 0–1; `'in'` feeds once on first view, `'scroll'` follows the section through the viewport |
+| `trace`, `traceLevels`, `traceRate`, `traceInk` | 0, 14, 1.6, first ink | contours of `Riso.live.ground()` lit level by level in grain-screened fresh ink |
+| `pointer`, `radius`, `zoom`, `lag`, `hand` | 0, 0.16, 1.8, 0.16, parent | the loupe: strength, radius (fraction of the short side), magnification, trailing; `hand` is the element that listens |
+| `clickPulse`, `stampInk` | false, first ink | pointerdown stamps a disc of fresh ink |
+| `ease` | 0.18 | how fast `set()` targets are reached |
+| `resolution`, `maxField`, `own` | 1, 1.6e6, auto | resolution scale; pixel cap of the capture; `own: true` forces a dedicated WebGL context |
+
+**The controller:**
+
+- `set(opts)`: motion options ease to the new value, and still options reprint. A reprint with
+  `feed: 'in'` feeds through again.
+- `load(opts)`: replaces every still option, for a new sheet.
+- `pulse(x, y, strength, size)` in CSS px; `point(x, y)` / `point(null)` steers the loupe from code.
+- `pause()`, `resume()`, `destroy()`.
+- `state()` returns `{ mode, path, frames, visible, expose, clock, size, ready, reduced }`.
+- `bench(n)` returns `{ sync, pipelined, size, path }` in ms per frame.
+
+Every view is listed in `window.handPulledLive.views`. `tools/check.sh` reads it.
+
+**What is live.** Anything printed by `Riso.print` is live: all four `Atlas` sheets through
+`sheet`, and any `layers` you draw. Drift, slip, offsets, feed, trace, loupe and stamp all run
+in the shader on the captured drums. What stays still: the geography itself. A new town, river,
+or layout is a CPU reprint; this happens on `set({ seed })` and is queued so that only one runs
+at a time. The trace runs on its own smooth ground (`Riso.live.ground(w, h, seed)`), not on
+`Carto`'s terrain. `Riso.ui.mapLayers` prints its contours from that same ground so the two line
+up. On the reference page, sheets II–VII and the drum-by-drum proof are still.
+
+**Parity.** `Riso.live.parity()` prints each case three times: the still, a capture run, and
+the GPU's frame 0. It compares their luminance: mean, standard deviation (contrast), mean
+absolute difference of neighbouring pixels (grain), and mean absolute difference per pixel.
+`Riso.live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`. The
+page registers it as `handPulledLive.parity['riso-cartography']`. It is computed once after the
+first view, and `state().ready` waits for it.
+
+Measured headless (SwiftShader) at 360 wide for the sheets and 320×240 for the print. In Chrome
+on the M1 Pro all four also pass, the worst being blocks at a 0.047-level mean difference and
+99.9% within 2 levels.
+
+| case | Δmean | Δcontrast | Δgrain | mean pixel diff | within 2 levels |
+|---|---|---|---|---|---|
+| blocks, solid, blue | 0 | 0.01% | 0.01% | 0.013 levels | 100% |
+| zoning | 0 | 0.01% | 0.01% | 0.019 levels | 100% |
+| poster | 0 | 0.01% | 0.01% | 0.015 levels | 100% |
+| `Riso.print`: grain, halftone, solid | 0 | 0.01% | 0.02% | 0.025 levels | 100% |
+
+**Budget.** One shader pass per frame: a paper fetch, four coverage fetches, and the trace and
+loupe terms. Measured with `ctl.bench(60)` in Chrome on an
+M1 Pro (ANGLE/Metal) with drift, feed, trace, loupe and four stamps on: 1.3–1.7 ms a frame
+with a 1-pixel readPixels after each frame on a 2011×795 own-context view, and 0.5 ms on a
+583×500 shared-context card. The tab was in the background, so the pipelined figure (under
+0.1 ms) is not trustworthy. Printing the still costs far more than any frame (0.2–0.5 s a
+sheet headless at 360 wide), so reprint rarely and keep motion in `set()`. Measure in real
+Chrome, not headless: SwiftShader is a software renderer.
+
+**Rules.**
+
+- `prefers-reduced-motion`: every canvas shows its still. There is no drift, feed, trace, loupe
+  or stamp. `set()` still changes state (a toggle still slides its drum) but jumps rather than
+  animates.
+- Offscreen canvases pause (IntersectionObserver), and a hidden tab stops the loop.
+- DPR is capped at 2, captures are capped at `maxField` pixels, and only one print runs at a time.
+- Without WebGL2 (or after a lost context), the still is printed straight onto the canvas. It
+  changes state but does not animate.
+- Big canvases (≥ 0.9 MP) get their own context. Small ones share one offscreen context and
+  receive frames as ImageBitmaps, so a page can carry dozens of live pieces.
+- The canvas is decoration: it gets `aria-hidden` unless you give it a `role` (a map that
+  *is* the content keeps `role="img"` and its label). Native controls stay on top and keep
+  their semantics. Pointer events are used throughout, so touch works.
+
+### Interface pieces (`Riso.ui`)
+
+Each piece puts a canvas behind a native element and returns its controller. The defaults are
+the board's blue plus fluorescent pink; `ink` and `seed` override them.
+
+| piece | call | behaviour |
+|---|---|---|
+| live background | `ui.background(section, opts)` | a blue map (grain tint + contours) behind the section: drums drift, the pointer is a loupe, a click stamps pink, contours are traced |
+| button | `ui.button(btn, { density, key })` | a block of ink plus a pink key line, a hair out of register. Hover and focus knock the drums further out; a press (or Enter/Space) stamps. `density: 0.3` gives a pale secondary button |
+| card | `ui.card(el, opts)` | a small map that feeds through the drums the first time it scrolls in; a loupe on hover |
+| toggle | `ui.toggle(checkbox)` | an outline, a tint and a knob on three drums; on slides the tint in and the knob across. Adds `role="switch"` |
+| slider | `ui.slider(range)` | a ruled track and a bar of ink pulled along it to the value |
+| progress | `ui.progress(el)` → `{ set(p), ctl }` | ink creeping along the strip, a pink stamp at 100%; `role="progressbar"` and `aria-valuenow` |
+| loader | `ui.loader(el)` → `{ ctl, stop() }` | a small plate with the press running: drums wandering, contours traced fast in pink; `role="status"` |
+| focus ring | `ui.focusRing()` | pink and blue hairlines out of register around the `:focus-visible` element, multiplied over the page. Keep a 1px CSS outline too |
+| section transition | `ui.transition(strip)` | blue contours over a pink tint, fed through as the strip scrolls past |
+
+Helpers: `ui.mapLayers({ ink, tintInk, seed, levels, lo, hi })` returns tint and contour layers
+for `Riso.live({ layers })`; `ui.contours` and `ui.tint` are its two draw functions.
+
+A made-up app built from these pieces is "The Drum Room" in `reference.html`: toggles and a
+slider drive a live background, a button starts a run, and a progress bar, a loader and job
+cards follow it. Copy its structure, not its names.
+
 ## Tells that it was generated — avoid all of them
 
 - A street grid of perfect rectangles, or a spider web of rays around one centre point.
@@ -123,6 +263,8 @@ Take screenshots in a headless browser at 1440×900 and 390×844, scrolled to ea
 - [ ] Registration visibly drifts: type and hairlines sit off the fills.
 - [ ] One large area shows grain, mottle and starved specks.
 - [ ] The same seed reprints identically, `[another pull]` gives a new town, the ink switch reprints sheet I in the new ink, and a dropped photograph prints through its blocks.
+- [ ] Live: frame 0 matches the still (`handPulledLive.parity['riso-cartography']()` all pass), the drums drift in blue, not violet, and the loupe and stamp answer the pointer.
+- [ ] With reduced motion, every canvas holds its still and the controls still work.
 - [ ] There is no horizontal scroll on a phone and there are no console errors.
 
 ## Credits and prior art

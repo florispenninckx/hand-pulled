@@ -136,6 +136,9 @@
    * layer.screen         'grain' (stochastic, riso's default look) | 'halftone' | 'solid'
    * layer.angle, cell    halftone screen angle (deg) and cell size (px @ scale 1)
    * layer.density        ink density multiplier (default 1)
+   * opts.capture(cap)    optional (live.js): also hands back the paper and each drum's
+   *                      screened coverage { w, h, paper: Float32 RGB, layers: [{ ink, cov }] };
+   *                      the print itself is unchanged
    */
   async function print(canvas, opts) {
     const o = Object.assign({ seed: 1, paper: 'natural', misregister: 1, scale: 1 }, opts);
@@ -157,6 +160,7 @@
       out[k] = pt[0] * f; out[k + 1] = pt[1] * f; out[k + 2] = pt[2] * f;
     }
 
+    const cap = o.capture ? { w, h, paper: out.slice(), layers: [] } : null;
     const masters = [];
     for (let li = 0; li < o.layers.length; li++) {
       const L = Object.assign({ screen: 'grain', angle: 15 + 30 * li, cell: 6, density: 1 }, o.layers[li]);
@@ -176,6 +180,8 @@
 
       const ang = (L.angle * Math.PI) / 180, ca = Math.cos(ang), sa = Math.sin(ang), cell = L.cell * S;
       const seedL = (o.seed * 131 + li * 7919) | 0;
+      const cov = cap ? new Float32Array(w * h) : null;
+      if (cap) cap.layers.push({ ink, cov });
 
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
@@ -202,6 +208,7 @@
           // solids are never solid: starved specks of paper show through
           if (hash2(x, y, seedL + 2) < 0.035 * d) c *= 0.35;
           if (c <= 0) continue;
+          if (cov) cov[y * w + x] = c;
           const k = (y * w + x) * 3;
           out[k] *= 1 - c + (c * ink[0]) / 255;
           out[k + 1] *= 1 - c + (c * ink[1]) / 255;
@@ -218,6 +225,7 @@
       img.data[q] = out[k]; img.data[q + 1] = out[k + 1]; img.data[q + 2] = out[k + 2]; img.data[q + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
+    if (cap) o.capture(cap);
     return { canvas, masters, seed: o.seed };
   }
 

@@ -92,6 +92,33 @@
   .prog b { font-weight: 600; }
   footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 18px var(--gut) 40px; border-top: 1px solid var(--red); }
 
+
+  /* the Drum Room: a small made-up app on the live UI pieces */
+  .strip { height: 120px; margin: 0 var(--gut) 56px; }
+  .room { position: relative; padding: clamp(18px, 4vw, 48px); min-height: 560px; display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: var(--gut); align-items: start; }
+  .desk { background: #f7f6f2; padding: 22px 22px 26px; display: grid; gap: 18px; }
+  .desk h3 { margin: 0; font: italic 400 34px/1 var(--serif); }
+  .desk .row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+  .desk label { font: 400 12px var(--mono); }
+  .rz-toggle { width: 46px; height: 24px; }
+  .rz-slider { width: 100%; height: 26px; }
+  .desk .slide { display: grid; gap: 6px; }
+  .desk .slide span { display: flex; justify-content: space-between; font: 400 12px var(--mono); }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .pbtn { font: 500 12px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: #f7f6f2; background: transparent; border: 0; padding: 14px 18px; cursor: pointer; }
+  .pbtn.ghost { color: var(--ink); }
+  .pbtn:focus-visible { outline: 1px solid #0078bf; outline-offset: 5px; }
+  .run { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; }
+  .spin { width: 34px; height: 34px; }
+  .bar { height: 14px; }
+  .run p { grid-column: 1 / -1; margin: 0; font: 400 12px var(--mono); color: var(--soft); min-height: 1.5em; }
+  .jobs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--gut) * .6); }
+  .job { outline: 1px solid var(--rule); min-height: 250px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; background: #f7f6f2; }
+  .job b { font: italic 400 30px/1 var(--serif); }
+  .job span { font: 400 12px var(--mono); background: #f7f6f2; align-self: start; padding: 2px 4px; }
+  @media (max-width: 1000px) { .room { grid-template-columns: 1fr; } }
+  @media (max-width: 720px) { .jobs { grid-template-columns: 1fr; } .job { min-height: 180px; } }
+
   @media (max-width: 1000px) {
     .three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .three .sheet:nth-child(n) { margin-top: 0; }
@@ -244,6 +271,30 @@
     </div>
   </section>
 
+  <div class="strip" aria-hidden="true"></div>
+
+  <section aria-labelledby="h-room">
+    <div class="head">
+      <h2 id="h-room">The Drum Room</h2>
+      <p>The club's press queue, built from the live pieces. The map behind it is printed in blue on two drums: a grain tint and the contours of the same ground. The drums wander out of register and back, and a fresh hit of ink traces the contours one level at a time. Point at the map for a loupe and click to stamp it. Every control here is a native one, with the print behind it.</p>
+    </div>
+    <div class="room" id="room">
+      <div class="desk">
+        <h3>Tonight's run</h3>
+        <div class="row"><label for="t-loupe">loupe on the map</label><input type="checkbox" id="t-loupe" checked></div>
+        <div class="row"><label for="t-trace">trace the contours</label><input type="checkbox" id="t-trace" checked></div>
+        <div class="slide"><span><label for="s-drift">drift of the drums</label><output id="o-drift" for="s-drift">1.0</output></span><input type="range" id="s-drift" min="0" max="3" step="0.1" value="1"></div>
+        <div class="btns"><button type="button" class="pbtn" id="b-run">Pull 80 copies</button><button type="button" class="pbtn ghost" id="b-proof">Proof one</button></div>
+        <div class="run"><span class="spin" id="spin" aria-label="press idle"></span><span class="bar" id="bar" aria-label="print run"></span><p id="run-note" aria-live="polite">The press is idle.</p></div>
+      </div>
+      <div class="jobs">
+        <article class="job" tabindex="0" aria-label="Job one: The Wenn, second edition"><b>The Wenn, 2nd ed.</b><span>purple · black · 80 copies</span></article>
+        <article class="job" tabindex="0" aria-label="Job two: north fields walk flyer"><b>North fields walk</b><span>green · black · 200 copies</span></article>
+        <article class="job" tabindex="0" aria-label="Job three: Weigh House invitation"><b>Weigh House invite</b><span>blue · pink · 120 copies</span></article>
+      </div>
+    </div>
+  </section>
+
   <section aria-labelledby="h-colo">
     <div class="head">
       <h2 id="h-colo">Inks, and the fortnight</h2>
@@ -277,9 +328,12 @@
 <script src="assets/riso.js"></script>
 <script src="assets/cartography.js"></script>
 <script src="assets/atlas.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
 <script>
 (() => {
-  const figs = [...document.querySelectorAll('.sheet')];
+  const hero = document.getElementById('hero');
+  const figs = [...document.querySelectorAll('.sheet')].filter(f => f !== hero);
   const st = new Map(figs.map(f => [f, { seed: +(f.dataset.seed || 1), image: null, text: null, ink: null, w: 0 }]));
   let queue = Promise.resolve();
 
@@ -336,6 +390,72 @@
       s.text = v.length ? { lines: v } : null; pull(fig);
     });
   });
+
+  // sheet I is live: the same still, captured once, then laid on the paper again every frame.
+  // Drums drift out of register and back, a new pull feeds through the press, the pointer is a
+  // loupe, a click stamps a fresh dot of ink.
+  const hs = { seed: 1, ink: 'bright-red', image: null }, hc = hero.querySelector('canvas'), hlabel = hc.getAttribute('aria-label');
+  let hctl = null;
+  function heroLive() {
+    hctl = Riso.live(hc, { sheet: 'blocks', mode: 'solid', seed: hs.seed, ink: hs.ink, image: null, maxField: 1.3e6, feed: 'in', drift: 1, pointer: 1, radius: 0.15, zoom: 2, clickPulse: true });
+    if (!hctl) { pull(hero); return; }
+    const shown = () => hctl.state().frames ? hero.classList.add('printed') : requestAnimationFrame(shown);
+    shown();
+  }
+  const heroSet = n => { Object.assign(hs, n); if (hctl) hctl.set(n); else pull(hero); };
+  st.set(hero, { seed: 1, image: null, text: null, ink: null, w: 0 });
+  hero.querySelector('[data-again]').addEventListener('click', () => heroSet({ seed: 1 + Math.floor(Math.random() * 9999), image: null }));
+  const hinks = [...hero.querySelectorAll('[data-ink]')];
+  hinks.forEach(b => b.addEventListener('click', () => {
+    hinks.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    hc.setAttribute('aria-label', hlabel.replace(/bright red/g, b.dataset.ink.replace('-', ' ')));
+    st.get(hero).ink = b.dataset.ink; heroSet({ ink: b.dataset.ink });
+  }));
+  const heroImage = file => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const img = new Image();
+    img.onload = () => { st.get(hero).image = img; heroSet({ image: img }); };
+    img.src = URL.createObjectURL(file);
+  };
+  const hfile = hero.querySelector('input[type=file]');
+  hfile.addEventListener('change', () => { heroImage(hfile.files[0]); hfile.value = ''; });
+  hero.addEventListener('dragover', e => { e.preventDefault(); hero.classList.add('over'); });
+  hero.addEventListener('dragleave', () => hero.classList.remove('over'));
+  hero.addEventListener('drop', e => { e.preventDefault(); hero.classList.remove('over'); heroImage(e.dataTransfer.files[0]); });
+
+  // the Drum Room: every live UI piece on one small app
+  const ui = Riso.ui;
+  ui.focusRing();
+  ui.transition(document.querySelector('.strip'));
+  const map = ui.background(document.getElementById('room'), { seed: 4 });
+  document.querySelectorAll('.job').forEach((j, i) => ui.card(j, { seed: 21 + i * 5 }));
+  const tl = document.getElementById('t-loupe'), tt = document.getElementById('t-trace'), sd = document.getElementById('s-drift'), od = document.getElementById('o-drift');
+  ui.toggle(tl); ui.toggle(tt); ui.slider(sd);
+  tl.addEventListener('change', () => map && map.set({ pointer: tl.checked ? 1 : 0 }));
+  tt.addEventListener('change', () => map && map.set({ trace: tt.checked ? 0.9 : 0 }));
+  sd.addEventListener('input', () => { od.value = (+sd.value).toFixed(1); map && map.set({ drift: +sd.value }); });
+  const brun = document.getElementById('b-run'), bproof = document.getElementById('b-proof');
+  ui.button(brun); ui.button(bproof, { density: 0.3, key: 'blue' });
+  const bar = ui.progress(document.getElementById('bar')), note = document.getElementById('run-note'), spin = document.getElementById('spin');
+  const spinner = ui.loader(spin); spinner.stop();
+  let running = 0;
+  function run(n) {
+    if (running) return;
+    const t0 = performance.now(), ms = n > 1 ? 4200 : 1200;
+    spin.setAttribute('aria-label', 'press running');
+    if (spinner.ctl) spinner.ctl.resume();
+    running = 1;
+    const step = () => {
+      const p = Math.min(1, (performance.now() - t0) / ms);
+      bar.set(p); note.textContent = p < 1 ? `pulling ${Math.ceil(p * n)} of ${n}…` : `${n} ${n > 1 ? 'copies' : 'proof'} pulled. Drums still wet.`;
+      if (p < 1) setTimeout(step, 90); else { running = 0; spinner.stop(); spin.setAttribute('aria-label', 'press idle'); }
+    };
+    step();
+  }
+  brun.addEventListener('click', () => run(80));
+  bproof.addEventListener('click', () => run(1));
+
+  Promise.all(fonts.map(f => document.fonts.load(f))).catch(() => {}).then(heroLive);
 })();
 </script>
 </body>

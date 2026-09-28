@@ -73,7 +73,7 @@
   }
   function lines(ctx, list, x, y, lh) { list.forEach((s, i) => ctx.fillText(s, x, y + i * lh)); }
   /** `drums`: print only these drums (indices), for a proof of one separation. */
-  const printOpts = (o, layers, paper) => ({ width: o.width, height: o.height, seed: o.seed, paper: paper || 'natural', misregister: o.misregister == null ? 1 : o.misregister, scale: Math.max(0.6, o.width / 900), layers: o.drums ? layers.filter((_, i) => o.drums.includes(i)) : layers });
+  const printOpts = (o, layers, paper) => ({ width: o.width, height: o.height, seed: o.seed, paper: paper || 'natural', misregister: o.misregister == null ? 1 : o.misregister, scale: Math.max(0.6, o.width / 900), capture: o.capture, layers: o.drums ? layers.filter((_, i) => o.drums.includes(i)) : layers });
   function prep(canvas, o) {
     o.width = Math.round(o.width || canvas.width); o.height = Math.round(o.height || o.width * SH / SW);
     return R.mulberry32((o.seed * 9301 + 49297) >>> 0);
