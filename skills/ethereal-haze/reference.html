@@ -72,6 +72,36 @@
   .poster .p-hex b { font-weight: 500; display: block; margin-top: .5em; }
   .poster .p-foot { position: absolute; left: 8%; right: 8%; bottom: 5%; z-index: 1; margin: 0; font: 400 clamp(7.5px, .68vw, 10px)/1.4 'Jost', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
 
+  /* live: a hero that breathes, and a small studio app built from the live UI pieces */
+  .live-hero { position: relative; height: 100vh; height: 100svh; overflow: hidden; background: #f4a484; color: #fff; }
+  .live-hero > canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .live-hero .hint { position: absolute; left: 0; right: 0; bottom: 56px; z-index: 2; margin: 0; text-align: center; font: 400 10.5px/1 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase; opacity: .85; pointer-events: none; }
+  .veil-strip { height: 22vh; min-height: 120px; background: #f6c0a0; }
+  .studio { padding: clamp(40px, 7vh, 80px) clamp(16px, 4vw, 56px); background: #f7d8c4; color: var(--ink); }
+  .studio-in { max-width: 1180px; margin: 0 auto; }
+  .studio-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 18px 32px; margin-bottom: clamp(24px, 4vh, 40px); }
+  .studio-top h2 { margin: .4em 0 0; font: 400 clamp(26px, 3vw, 42px)/1.1 'Marcellus', serif; }
+  .studio-top .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .hz-btn { position: relative; border-radius: 999px; padding: 13px 26px; opacity: 1; font: 500 11px/1 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink); overflow: hidden; }
+  .hz-btn:hover, .hz-btn:focus-visible { color: #fff; }
+  .hz-btn { transition: color .5s; }
+  .loader { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; }
+  .loader[hidden] { display: block; visibility: hidden; }
+  .studio-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(240px, 1.1fr); gap: clamp(10px, 1.6vw, 22px); }
+  @media (max-width: 960px) { .studio-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .studio-grid { grid-template-columns: 1fr; } }
+  .note { position: relative; aspect-ratio: 3 / 4; border-radius: 4px; overflow: hidden; color: var(--ink); }
+  .note h3 { position: absolute; left: 8%; bottom: 7%; margin: 0; font: 400 clamp(18px, 1.8vw, 26px)/1 'Marcellus', serif; }
+  .note p { position: absolute; left: 8%; top: 7%; margin: 0; font: 500 9.5px/1.4 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+  .panel { background: rgba(255, 248, 240, .72); border-radius: 4px; padding: 22px 22px 24px; display: flex; flex-direction: column; gap: 18px; }
+  .panel h3 { margin: 0; font: 400 20px/1.2 'Marcellus', serif; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; font-size: 13.5px; }
+  .row label { cursor: pointer; }
+  .field-l { display: flex; flex-direction: column; gap: 10px; font-size: 13.5px; }
+  .field-l span { display: flex; justify-content: space-between; }
+  .bar { height: 10px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(43,35,32,.18); }
+  .panel small { color: var(--ink2); font-size: 11.5px; letter-spacing: .04em; }
+
   footer { padding: 44px 16px 52px; text-align: center; font-size: 11.5px; letter-spacing: .04em; color: var(--ink2); }
   footer p { max-width: 46em; margin: 0 auto .8em; }
   footer a { color: inherit; text-underline-offset: 3px; }
@@ -80,6 +110,12 @@
 </head>
 <body>
 <main>
+  <section class="live-hero" id="live-hero" aria-labelledby="live-h">
+    <canvas aria-hidden="true"></canvas>
+    <div class="word"><h1 id="live-h">BRUME</h1><p>a scent that moves when you do</p></div>
+    <p class="hint">move · scroll · touch</p>
+  </section>
+
   <section class="plate" data-fn="bloom" data-look="bloom" data-seed="6" data-opts='{"palette":"coral"}' style="--ground:#f06a4a">
     <canvas aria-label="The inside of a coral flower, so close to the lens it is only colour: long petals rising from a golden heart, one rim in focus, under fine grain."></canvas>
     <div class="word"><h1>FAYE</h1></div>
@@ -199,12 +235,77 @@
       <span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f6">+ photograph</label><input type="file" id="f6" accept="image/*"></span>
     </div>
   </section>
+
+  <div class="veil-strip" id="veil-strip" aria-hidden="true"></div>
+
+  <section class="studio" id="studio" aria-labelledby="studio-h">
+    <div class="studio-in">
+      <div class="studio-top">
+        <div>
+          <p class="kicker">IX — atelier, live</p>
+          <h2 id="studio-h">Blend a scent</h2>
+        </div>
+        <div class="actions">
+          <div class="loader" id="loader" hidden aria-label="blending"></div>
+          <button type="button" class="hz-btn" id="blend">blend</button>
+          <button type="button" class="hz-btn" id="reset" data-ramp="rose">start again</button>
+        </div>
+      </div>
+      <div class="studio-grid">
+        <article class="note" id="n1" tabindex="0" aria-label="Top note: pear"><p>top · 01</p><h3>poire</h3></article>
+        <article class="note" id="n2" tabindex="0" aria-label="Heart note: iris"><p>heart · 02</p><h3>iris</h3></article>
+        <article class="note" id="n3" tabindex="0" aria-label="Base note: amber"><p>base · 03</p><h3>ambre</h3></article>
+        <div class="panel">
+          <h3>This blend</h3>
+          <div class="row"><label for="t-night">Night note</label><input type="checkbox" id="t-night"></div>
+          <div class="row"><label for="t-trail">Long trail</label><input type="checkbox" id="t-trail" checked></div>
+          <div class="field-l"><span><label for="s-int">Intensity</label><output id="o-int" for="s-int">60%</output></span><input type="range" id="s-int" min="0" max="100" value="60"></div>
+          <div class="field-l"><span>Blending</span><div class="bar" id="bar" aria-label="blending progress"></div></div>
+          <small id="status" aria-live="polite">Ready. Press blend.</small>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 <footer>
-  <p>Faye is fictional. No image here is a photograph: each is drawn by <code>haze.js</code>, defocused the way a lens defocuses, sprayed and grained the way a print grains. Press <i>another</i> for a new print, or drop a photograph on a plate to develop it in that plate's look.</p>
+  <p>Faye is fictional. No image here is a photograph: each is drawn by <code>haze.js</code>, defocused the way a lens defocuses, sprayed and grained the way a print grains. Press <i>another</i> for a new print, or drop a photograph on a plate to develop it in that plate's look. The first plate and the atelier are live (<code>live.js</code>, <code>live-ui.js</code>): the same prints, breathing.</p>
   <a href="../../index.html">all styles</a>
 </footer>
 <script src="assets/haze.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
+<script>
+// live: the hero breathes; the studio is built only from Haze.ui pieces
+(function () {
+  const $ = s => document.querySelector(s), ui = Haze.ui;
+  const hero = $('#live-hero');
+  Haze.live($('canvas', hero), { fn: 'bloom', palette: 'sorbet', seed: 11, drift: 1, mist: 0.6, focusScroll: 0.9, clickPulse: true, hand: hero });
+  ui.focusRing();
+  ui.transition($('#veil-strip'), { form: 'flow', seed: 8 });
+  ui.background($('#studio'), { form: 'flow', seed: 3, colors: ['#fbe8dc', '#f8c4a4', '#f59c80', '#f7b89a', '#fbe0cc'], drift: 0.8, mist: 0.4, bloom: 0.2, focus: 0.4 });
+  ui.card($('#n1'), { form: 'swirl', seed: 7 });
+  ui.card($('#n2'), { form: 'shift', seed: 5 });
+  ui.card($('#n3'), { form: 'ember', seed: 8 });
+  ui.button($('#blend'));
+  ui.button($('#reset'), { ramp: 'rose', form: 'flow' });
+  ui.toggle($('#t-night'), { ramp: 'rose' });
+  ui.toggle($('#t-trail'));
+  const sl = $('#s-int');
+  ui.slider(sl);
+  sl.addEventListener('input', () => { $('#o-int').value = sl.value + '%'; });
+  const bar = ui.progress($('#bar'), { value: 0 }), load = ui.loader($('#loader')), status = $('#status');
+  let timer = 0;
+  $('#blend').addEventListener('click', () => {
+    clearInterval(timer);
+    let p = 0; $('#loader').hidden = false; status.textContent = 'Blending…';
+    timer = setInterval(() => {
+      p = Math.min(1, p + 0.04); bar.set(p);
+      if (p >= 1) { clearInterval(timer); $('#loader').hidden = true; status.textContent = 'Blended: ' + (($('#t-night').checked ? 'night, ' : '') + sl.value + '% intensity') + '.'; }
+    }, 120);
+  });
+  $('#reset').addEventListener('click', () => { clearInterval(timer); bar.set(0); $('#loader').hidden = true; status.textContent = 'Ready. Press blend.'; });
+})();
+</script>
 <script>
 (function () {
   const $ = (s, r) => (r || document).querySelector(s);
