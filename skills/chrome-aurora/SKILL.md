@@ -190,13 +190,23 @@ builds controls from it. Load them after `mercury.js`: they attach `Mercury.live
 `Mercury.ui`. Both are classic scripts with no dependencies. They need WebGL2 and fall back
 to the still plate without it.
 
-**How it works (capture-first).** A view runs `mercury.js` once, at the canvas's device
-size, to get the finished plate with its grain. It runs it a second time at half size for one
-of its own passes: `layer: 'normal'` on the film plate, `layer: 'height'` on the others. Both
-are uploaded as textures. A WebGL2 fragment shader then reads them every frame and adds the
-motion. Every motion term is exactly zero at clock 0 with the default options, so frame 0 is
-the still. The still engine is not forked or ported, and no hook was added to it: its
-`layer` option already exposes the passes.
+**How it works (shader-native).** The still engine's own GLSL runs live. `mercury.js`
+exports its shader parts (`Mercury.gpuParts`): the prelude, one fragment shader per plate,
+and `prepare()`, which gives the same parameters, lattice and picture the still uses. It also
+has three hooks that do nothing in the still. `live.js` compiles the plate as GLSL 3.00 into
+two render targets at the still's internal size: the colour, and the plate's normal (film) or
+height (the others). A second pass scales it up as the still's `drawImage` does, adds the
+still's grain line by line with the same integer hash, then lays the motion on top.
+
+- **Flow.** Every lattice gradient of the noise turns at its own rate, set by a spin stored
+  in the lattice alpha, which the still leaves at 255. So the pour, the trails, the ribbon,
+  the glass and the aurora forms all flow. On film the oil also slides along its fold.
+- **Frame 0 is the still.** At flow 0 every spin and slide is zero, so frame 0 is the still.
+- **Bands.** Big fields (a full-screen film is 5.2 MP) are redrawn in bands of rows, about
+  1.3 ms a frame. They are drawn as keyframes: the next one is laid band by band while the
+  view crossfades between the last two, so no band meets a band from another moment.
+- **Grain.** The fine grain re-rolls 24 times a second, and the coarse clumps stay put.
+- **Nothing is captured** on the GPU path. The CPU fallback draws the still.
 
 The motion is liquid metal:
 
@@ -205,27 +215,31 @@ The motion is liquid metal:
 | **sheen** | pointer (lagged) | A lamp is held over the pointer and mirrored by the captured normals. The highlight slides over the folds, tinted by the metal under it. | `pointer` (0..1, 0.9), `radius` (share of the short side, 0.55), `lag` (s, 0.12), `hand` (element that takes pointer events; default the canvas's parent) |
 | **ripple** | click/tap, `pulse()` | A ring spreads out and slows down in the mercury. It bends the normals, the plate is re-sampled through them, and a crest catches the light. Up to 4 at once. | `clickPulse` (true) |
 | **aurora** | time | Three hues drift slowly across the chrome and are screened onto its highlights. They fade in over the first seconds. | `drift` (0..1, 1), `speed` (1), `hues` (three hex, `['#35f0c8', '#7b5cff', '#ff4fa0']`) |
+| **flow** | time | The surface itself pours: the noise under the mercury turns slowly, so folds travel, pools swell and the oil slides in its fold. A slow pour, about a fifth of a radian in 4 s. | `flow` (0..1, 1), `speed` (1), `bands` (0 = automatic) |
+| **grain** | time | The still's grain, with its fine scale re-rolled per tick and its coarse clumps fixed. | `grainRate` (per s, 24; 0 freezes it) |
 | **tilt** | scroll | The reflected room tilts as the canvas moves through the viewport, measured from where it sat on its first frame. | `tilt` (1) |
 | level | hover, scroll | The brightness of the whole plate, eased. `rise: true` brings it up out of black the first time the view scrolls in. `scroll: true` ties it to the view's position. | `level` (1), `rise`, `riseMs` (1400), `scroll`, `ease` (s, 0.16) |
 | fill | value | The plate is polished between `from` and `to` (0..1 across) and dull and unlit outside. Sliders, switches and progress use it. | `fill: [from, to, soft]` (null) |
 
 Still options are the plate's own: `plate` ('film' | 'trail' | 'ribbon' | 'glass' |
-'aurora'), `look`, `seed`, `grain`, `image`. Setting them re-runs the capture. Two options
-belong to the capture itself. `zoom` (280 device px): a canvas whose short side is smaller,
+'aurora'), `look`, `seed`, `grain`, `image`. Setting them rebuilds the field. Two options
+belong to the field itself. `zoom` (280 device px): a canvas whose short side is smaller,
 or that is longer than 2:1, sees a window onto the middle of a bigger plate, so a 36 px
 button shows one smooth fold instead of a whole pour shrunk down. `resolution` (1) is the
-share of the device size, with DPR capped at 2 and the capture capped at 4.2 MP.
+share of the device size, with DPR capped at 2 and the field capped at 5.3 MP, so a
+1440×900 view at DPR 2 runs at full size.
 
 ```js
 const ctl = Mercury.live(canvas, { plate: 'film', look: 'oxide', seed: 7,   // still options
                                    drift: 1, pointer: 0.9, tilt: 1 });       // motion options
-ctl.set({ level: 0.6 });       // motion options ease; still options re-capture
+ctl.set({ level: 0.6 });       // motion options ease; still options rebuild the field
 ctl.load({ plate: 'glass', look: 'eye' });   // a new plate, motion options kept
 ctl.pulse(x, y, 0.8);          // a ripple at CSS px of the canvas
 ctl.point(x, y); ctl.point(null);            // hold the lamp yourself, or put it down
 ctl.pause(); ctl.resume(); ctl.destroy();
 ctl.state();   // { mode: 'gpu'|'still', path: 'own'|'bitmap'|'copy'|'cpu', frames, visible, expose, clock, size, ready, reduced }
-ctl.bench(60); // { sync, pipelined, size, path } in ms per frame, every term on
+ctl.seek(12);  // jump to 12 s of motion, the whole field redrawn (stills of the motion, tests)
+ctl.bench(60); // { sync, pipelined, field, bands, size, fieldSize, path } in ms, every term on
 Mercury.live.parity({ plate: 'glass', look: 'eye', seed: 3 });   // frame 0 vs the still
 ```
 
@@ -243,6 +257,8 @@ with `aria-hidden`, and every function returns the controller (or `{ ctl, … }`
 | loader | `const l = ui.loader(el); l.stop()` | `role=status`. A chrome bead with a lamp circling over it. It holds still under reduced motion. |
 | focus ring | `ui.focusRing()` | One ring for the page: a band of drifting chrome cut out with a CSS mask round whatever has `:focus-visible`. Keep a 1px CSS outline as well, for the fallback and for forced colours. |
 | section transition | `ui.transition(strip)` | A strip of aurora light (aurora · ember) that brightens out of black as it scrolls up, with its reflection tilting. |
+| cursor | `ui.cursor(area)` | A small lamp that trails the mouse: a bead of chrome (glass · eye), screen-blended. Its highlight swings back against the motion, and a press ripples it. The system cursor stays. It is for the mouse only, and hidden for touch, pen and reduced motion. |
+| icon | `ui.icon(span, 'lightbulb')` | An icon poured in chrome. `Mercury.iconMask(svg)` casts the SVG white on black, and that becomes the height of a film plate, so the icon is a pool of metal in its shape with oil in its folds, screen-blended. The span sets the size. Its button or label raises the lamp. `ui.ICONS` has 15 Phosphor Light icons (MIT, inlined, generated from the package, not typed). Any SVG string with `<path d>` works too. |
 
 A minimal page (copy it, then change the plate, look and the pieces):
 
@@ -281,30 +297,45 @@ places and dark in others, and the shadow is what keeps a label readable on both
   OffscreenCanvas context and get their frames through `transferToImageBitmap`. Pass
   `own: true | false` to override.
 
-**Parity** (frame 0 against the still, 480×320 and 320×400, headless Chrome, 28 Sep 2026).
-The captured still is sampled texel for texel with every term at zero, so parity holds by
-construction. `check.sh` still measures it on every run:
+**Parity** (frame 0 of the live shader against the still, 480×320 and 320×400, Chrome,
+28 Sep 2026). Film is drawn at the still's own size and matches exactly. Glass, ribbon and
+aurora are drawn at 0.6 or 0.5 scale and scaled up, where the GPU's bilinear filter and the
+2D canvas's differ by about half a level. `check.sh` measures it on every run:
 
-| case | mean cpu/gpu | dMean | dSdRel | dGrainRel | MAD (levels) | within 2 |
-|---|---|---|---|---|---|---|
-| film · oxide · 7 | 0.1643 / 0.1643 | 0 | 0 | 0 | 0 | 100 % |
-| glass · eye · 3 | 0.2409 / 0.2409 | 0 | 0 | 0 | 0 | 100 % |
-| ribbon · volt · 5 | 0.2498 / 0.2498 | 0 | 0 | 0 | 0 | 100 % |
-| aurora · iris · 2 (320×400) | 0.6421 / 0.6421 | 0 | 0 | 0 | 0 | 100 % |
+| case | dMean | dSdRel | dGrainRel | MAD (levels) | within 2 |
+|---|---|---|---|---|---|
+| film · oxide · 7 | 0 | 0 | 0 | 0 | 100 % |
+| film · titanium · 5 | 0 | 0 | 0 | 0 | 100 % |
+| glass · pool · 2 | 0.0003 | 0.0012 | 0.0016 | 0.52 | 88.6 % |
+| glass · eye · 3 | 0.0001 | 0.0019 | 0.0050 | 0.53 | 89.4 % |
+| ribbon · volt · 5 | 0.0001 | 0.0004 | 0.0001 | 0.16 | 97.2 % |
+| trail · ember · 4 | 0 | 0 | 0 | 0.03 | 99.9 % |
+| aurora · iris · 2 (320×400) | 0.0001 | 0.0008 | 0.0001 | 0.03 | 100 % |
 
 Tolerance: `Mercury.live.TOLERANCE` = dMean 0.004, dSdRel 0.02, dGrainRel 0.03, MAD 1.5.
 
-**Performance.** One fragment pass per frame: two texture reads, a 4-ring loop, one
-specular, no noise. Not yet measured in real Chrome for this skill (headless only). The budget is ≤ 4 ms per frame at 1440×900 CSS, DPR 2.
-Capture cost is paid once per view, and again on resize (debounced) or when a still option
-changes. It is one `mercury.js` pour plus its CPU grain: about 20 ms at 480×320, and a few
-hundred ms for a full-screen hero at DPR 2, run as one task per view. Measure in real
-Chrome with `ctl.bench(60)`. Headless Chrome renders WebGL in software.
+**Performance** (`ctl.bench(60)`, Chrome, M1 Pro, 1440×900 CSS = 2880×1800 device px, own
+context, every term on, best of 3 runs; the machine was loaded with parallel lanes, load
+average 30–50, 28 Sep 2026). Budget ≤ 4 ms per frame:
 
-**Still vs live.** Live today: the sheen, ripples, aurora drift, scroll tilt, level and fill
-on all five plates. Still, captured once: the fields themselves. The pour does not flow, the
-trails do not drag, and the aurora forms do not move. The natural next step is to port the
-film plate's studio reflection to the shader so the lamps themselves can move.
+| plate | pipelined (ms) | sync (ms) | whole field (ms) | bands |
+|---|---|---|---|---|
+| film · oxide | 2.57 | 3.5 | 21.9 | 17 |
+| glass · pool | 2.32 | 3.2 | 5.0 | 4 |
+| ribbon · volt | 2.39 | 3.3 | 7.9 | 6 |
+| aurora · ember | 2.38 | 6.3 * | 3.4 | 2 |
+
+\* One noisy sync run. The pipelined number is the frame cost.
+
+A frame is one band of the field plus the composite, which costs about 1.3 ms. A new view
+pays for one whole field on its first frame. `bands` (0 = automatic) trades how often each
+row is redrawn against the frame cost. Headless Chrome renders WebGL in software, so
+measure in real Chrome.
+
+**Still vs live.** Everything evolves on the GPU path: the field of all five plates flows,
+the film's oil slides, the grain is alive, and the sheen, ripples, aurora drift, scroll tilt,
+level and fill sit on top. Nothing is captured. The studio's lamps themselves stay where the
+look puts them. Moving them (a `lamp` option on `set()`) is the natural next step.
 
 ## Verify before calling it done
 

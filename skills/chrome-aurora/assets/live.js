@@ -84,7 +84,8 @@ void main() {
   // still's grain() line by line, same integer hash), then the motion laid on top
   const FS = `#version 300 es
 precision highp float; precision highp int;
-uniform sampler2D uBase, uNrm;
+uniform sampler2D uBase, uNrm, uBase2, uNrm2;
+uniform float uMix;            // fade from keyframe (uBase, uNrm) to keyframe (uBase2, uNrm2)
 uniform vec2 uRes;
 uniform float uKind, uClock, uEnv, uTilt, uLevel;
 uniform vec4 uLight;          // x, y (px, top-down), amp, radius (px)
@@ -99,16 +100,17 @@ float hash(int x, int y, int s) {
   h = (h ^ (h >> 13u)) * 1274126177u;
   return float(h ^ (h >> 16u)) / 4294967296.;
 }
+float H(vec2 uv) { return mix(texture(uNrm, uv).r, texture(uNrm2, uv).r, uMix); }
 vec3 normalAt(vec2 uv, out float cover) {
   if (uKind > .5) {
-    vec3 t = texture(uNrm, uv).rgb;
+    vec3 t = mix(texture(uNrm, uv).rgb, texture(uNrm2, uv).rgb, uMix);
     cover = smoothstep(.004, .03, t.r + t.g + t.b);
     return cover > 0. ? normalize(t * 2. - 1.) : vec3(0., 0., 1.);
   }
   cover = 1.;
   vec2 e = 3. / uRes;
-  float hx = texture(uNrm, uv + vec2(e.x, 0.)).r - texture(uNrm, uv - vec2(e.x, 0.)).r;
-  float hy = texture(uNrm, uv + vec2(0., e.y)).r - texture(uNrm, uv - vec2(0., e.y)).r;
+  float hx = H(uv + vec2(e.x, 0.)) - H(uv - vec2(e.x, 0.));
+  float hy = H(uv + vec2(0., e.y)) - H(uv - vec2(0., e.y));
   return normalize(vec3(-hx * 6., -hy * 6., 1.));
 }
 void main() {
@@ -129,7 +131,7 @@ void main() {
   nr = normalize(nr);
   // the room tilts with the scroll and the ripples bend it: re-sample the plate along the normal
   vec2 off = ((nr.xy - n.xy) * .05 + nr.xy * uTilt * .035) * S / uRes;
-  vec3 b = floor(texture(uBase, uv + off).rgb * 255. + .5);
+  vec3 b = floor(mix(texture(uBase, uv + off).rgb, texture(uBase2, uv + off).rgb, uMix) * 255. + .5);
   // grain, as the still lays it: strongest in the midtones, a coarser clump, a little colour
   if (uGrain.x > 0.) {
     int x = int(px.x), y = int(px.y), s = int(uGrain.y), f = s + 4 * int(uGrain.w), gs = int(uGrain.z);
@@ -170,7 +172,7 @@ void main() {
 
   // ---------------------------------------------------------------- renderers
   const PLATE_U = ['uRes', 'uMin', 'uLat', 'uImg', 'uImgOn', 'uK0', 'uK1', 'uK2', 'uK3', 'uCol', 'uPos', 'uW', 'uLayer', 'uFlow', 'uSlide', 'uWin'];
-  const COMP_U = ['uBase', 'uNrm', 'uRes', 'uKind', 'uClock', 'uEnv', 'uTilt', 'uLevel', 'uLight', 'uPul', 'uNP', 'uHue', 'uFill', 'uGrain'];
+  const COMP_U = ['uBase', 'uNrm', 'uBase2', 'uNrm2', 'uMix', 'uRes', 'uKind', 'uClock', 'uEnv', 'uTilt', 'uLevel', 'uLight', 'uPul', 'uNP', 'uHue', 'uFill', 'uGrain'];
   function compile(gl, fs, names) {
     const p = gl.createProgram();
     for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
@@ -279,38 +281,44 @@ void main() {
     const tex = {
       lat: texture(gl, G.N, G.N, bytes, gl.NEAREST),
       img: pic ? texture(gl, 0, 0, pic.canvas, gl.LINEAR) : texture(gl, 1, 1, new Uint8Array([128, 128, 128, 255]), gl.LINEAR),
-      base: texture(gl, tw, th, null, gl.LINEAR), nrm: texture(gl, tw, th, null, gl.LINEAR),
     };
-    const fb = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex.base, 0);
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, tex.nrm, 0);
-    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
-    const okFb = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    if (!okFb) { v.src = null; for (const t of Object.values(tex)) gl.deleteTexture(t); gl.deleteFramebuffer(fb); v.R = null; v.ctx = v.canvas.getContext('2d'); v.src = { cpu: true }; v.dirty = true; return; }
+    const k0 = keyframe(gl, tw, th);
+    if (!k0) { v.src = null; for (const t of Object.values(tex)) gl.deleteTexture(t); v.R = null; v.ctx = v.canvas.getContext('2d'); v.src = { cpu: true }; v.dirty = true; return; }
     const bands = o.bands || Math.max(1, Math.min(24, Math.ceil(tw * th * COST[name] / FIELD_BUDGET)));
     v.src = {
-      base: tex.base, nrm: tex.nrm, tex, fb, prog, name, P, w: v.w, h: v.h, tw, th, kind: name === 'film' ? 1 : 0,
+      base: k0.base, keys: [k0], a: 0, b: 0, c: -1, tb: 0, tc: 0, fade: 0, tex, prog, name, P, w: v.w, h: v.h, tw, th, kind: name === 'film' ? 1 : 0,
       res: [bw, bh], win: win ? [(bw - v.w * (bw / cw)) / 2, (bh - v.h * (bh / ch)) / 2, k] : [0, 0, 1],
       imgOn: pic ? P.imgMix : 0, grain: (P.grain || 0) * 255, seed: seed * 7 + 3, gs: Math.max(1, Math.round(Math.min(cw, ch) / 800)),
       slide: name === 'film' ? 0.22 : 0, bands, band: 0, field: -1,
     };
     v.dirty = true;
   }
+  // one keyframe of the field: colour and the plate's normal (film) or height, drawn together
+  function keyframe(gl, tw, th) {
+    const k = { base: texture(gl, tw, th, null, gl.LINEAR), nrm: texture(gl, tw, th, null, gl.LINEAR), fb: gl.createFramebuffer() };
+    gl.bindFramebuffer(gl.FRAMEBUFFER, k.fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, k.base, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, k.nrm, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (ok) return k;
+    gl.deleteTexture(k.base); gl.deleteTexture(k.nrm); gl.deleteFramebuffer(k.fb);
+    return null;
+  }
   function freeSrc(v) {
     const s = v.src;
     if (!s || !s.tex || !v.R) return;
     const gl = v.R.gl;
     for (const t of Object.values(s.tex)) gl.deleteTexture(t);
-    gl.deleteFramebuffer(s.fb);
+    for (const k of s.keys) { gl.deleteTexture(k.base); gl.deleteTexture(k.nrm); gl.deleteFramebuffer(k.fb); }
   }
 
   // ---------------------------------------------------------------- drawing
   // pass 1: the plate at flow time t into its framebuffer, all of it or one band of rows
-  function drawField(v, t, band) {
+  function drawField(v, t, band, key) {
     const R = v.R, s = v.src, gl = R.gl, u = s.prog.u, P = s.P;
-    gl.bindFramebuffer(gl.FRAMEBUFFER, s.fb);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, s.keys[key].fb);
     gl.viewport(0, 0, s.tw, s.th);
     if (band != null && s.bands > 1) {
       const y0 = Math.floor(s.th * band / s.bands), y1 = Math.floor(s.th * (band + 1) / s.bands);
@@ -337,14 +345,36 @@ void main() {
     const gl = R.gl, u = R.prog.u, st = v.st, o = v.o;
     // the field: whole when it is new or has to go back to the still, one band a frame while it flows
     const t = st.flow;
-    if (s.field < 0 || (t === 0 && s.field !== 0)) { drawField(v, t); s.field = t; }
-    else if (t !== s.field) { drawField(v, t, s.band); s.band = (s.band + 1) % s.bands; s.field = t; }
+    if (s.field < 0 || (t === 0 && s.tb !== 0)) {
+      // new, or back to the still: one keyframe, whole
+      drawField(v, t, null, s.b); s.a = s.b; s.tb = t; s.c = -1; s.fade = 0; s.field = 0;
+    } else if (s.bands === 1) {
+      if (t !== s.tb) { drawField(v, t, null, s.b); s.a = s.b; s.tb = t; }
+    } else if (t !== s.tb || s.c >= 0) {
+      // a big field: the next keyframe is laid band by band while the view fades between the last
+      // two, so no band ever meets another from a different moment
+      if (s.c < 0) {
+        while (s.keys.length < 3) { const k = keyframe(gl, s.tw, s.th); if (!k) break; s.keys.push(k); }
+        s.c = [0, 1, 2].find(i => i < s.keys.length && i !== s.a && i !== s.b);
+        if (s.c == null) { s.c = -1; drawField(v, t, null, s.b); s.a = s.b; s.tb = t; }
+        else { s.tc = t; s.band = 0; }
+      }
+      if (s.c >= 0) {
+        drawField(v, s.tc, s.band, s.c);
+        if (++s.band === s.bands) { s.a = s.b; s.b = s.c; s.tb = s.tc; s.c = -1; s.fade = 0; }
+      }
+    }
+    if (s.a !== s.b && s.fade < s.bands) s.fade++;
+    const mixW = s.a === s.b ? 1 : s.fade / s.bands, ka = s.keys[s.a], kb = s.keys[s.b];
     if (R.canvas.width !== s.w || R.canvas.height !== s.h) { R.canvas.width = s.w; R.canvas.height = s.h; }
     gl.viewport(0, 0, s.w, s.h);
     gl.useProgram(R.prog.p);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, s.base);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, s.nrm);
-    gl.uniform1i(u.uBase, 0); gl.uniform1i(u.uNrm, 1);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, ka.base);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, ka.nrm);
+    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, kb.base);
+    gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, kb.nrm);
+    gl.uniform1i(u.uBase, 0); gl.uniform1i(u.uNrm, 1); gl.uniform1i(u.uBase2, 2); gl.uniform1i(u.uNrm2, 3);
+    gl.uniform1f(u.uMix, mixW);
     gl.uniform2f(u.uRes, s.w, s.h);
     gl.uniform1f(u.uKind, s.kind);
     gl.uniform1f(u.uClock, st.clock);
@@ -615,8 +645,8 @@ void main() {
         let field = Infinity;
         for (let i = 0; i < 6; i++) {
           const tf = performance.now();
-          drawField(v, st.flow + i * 0.01);
-          gl.bindFramebuffer(gl.FRAMEBUFFER, v.src.fb);
+          drawField(v, st.flow + i * 0.01, null, v.src.b);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, v.src.keys[v.src.b].fb);
           gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
           gl.bindFramebuffer(gl.FRAMEBUFFER, null);
           field = Math.min(field, performance.now() - tf);

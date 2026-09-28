@@ -124,9 +124,12 @@
   .cue b { font: 400 22px/1.1 var(--sans); letter-spacing: -.02em; }
   .panel { display: flex; flex-direction: column; gap: 18px; padding: 18px; border: 1px solid var(--rule); border-radius: 12px; }
   .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-  .row label { font: 300 12px var(--mono); }
+  .row label { font: 300 12px var(--mono); display: inline-flex; align-items: center; gap: 10px; }
+  .ic { width: 20px; height: 20px; }
+  .cue .ic { width: 34px; height: 34px; }
+  .cue .top { display: flex; justify-content: space-between; align-items: flex-start; }
   .btns { display: flex; flex-wrap: wrap; gap: 10px; }
-  .mbtn { font: 400 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: #000; border: 1px solid rgba(235, 231, 223, .25); border-radius: 999px; padding: 12px 22px; cursor: pointer; text-shadow: 0 0 8px rgba(0, 0, 0, .9); }
+  .mbtn { display: inline-flex; align-items: center; gap: 8px; font: 400 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: #000; border: 1px solid rgba(235, 231, 223, .25); border-radius: 999px; padding: 12px 22px; cursor: pointer; text-shadow: 0 0 8px rgba(0, 0, 0, .9); }
   .mbtn:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
   .ma-toggle { width: 52px; height: 26px; }
   .ma-slider { width: 100%; height: 20px; }
@@ -176,19 +179,19 @@
   <section aria-labelledby="h-desk">
     <div class="head">
       <h2 id="h-desk">Houselights, the desk</h2>
-      <p>A small made-up lighting desk for the hall, built only from the live pieces: cue cards that rise out of the black, chrome buttons, switches, a master fader, a fade bar, a syncing bead, and one chrome focus ring for the whole page (press Tab).</p>
+      <p>A small made-up lighting desk for the hall, built only from the live pieces: cue cards that rise out of the black, chrome buttons, switches, a master fader, a fade bar, a syncing bead, icons poured in chrome, a small lamp that trails the mouse over the desk, and one chrome focus ring for the whole page (press Tab).</p>
     </div>
     <div class="desk">
       <div class="cues">
-        <article class="cue" tabindex="0" data-plate="ribbon" data-look="volt" data-seed="3"><span class="caps">Cue 12</span><b>Blue hour</b><span class="mono">fade 8 s · wash + strip</span></article>
-        <article class="cue" tabindex="0" data-plate="trail" data-look="ember" data-seed="4"><span class="caps">Cue 13</span><b>Ember drag</b><span class="mono">fade 3 s · floor</span></article>
-        <article class="cue" tabindex="0" data-plate="film" data-look="titanium" data-seed="5"><span class="caps">Cue 14</span><b>Titan wall</b><span class="mono">snap · back wall</span></article>
+        <article class="cue" tabindex="0" data-plate="ribbon" data-look="volt" data-seed="3"><span class="top"><span class="caps">Cue 12</span><span class="ic" data-icon="moon"></span></span><b>Blue hour</b><span class="mono">fade 8 s · wash + strip</span></article>
+        <article class="cue" tabindex="0" data-plate="trail" data-look="ember" data-seed="4"><span class="top"><span class="caps">Cue 13</span><span class="ic" data-icon="flashlight"></span></span><b>Ember drag</b><span class="mono">fade 3 s · floor</span></article>
+        <article class="cue" tabindex="0" data-plate="film" data-look="titanium" data-seed="5"><span class="top"><span class="caps">Cue 14</span><span class="ic" data-icon="lamp-pendant"></span></span><b>Titan wall</b><span class="mono">snap · back wall</span></article>
       </div>
       <div class="panel">
-        <div class="btns"><button class="mbtn" type="button" id="go">Go cue</button><button class="mbtn" type="button" id="hold">Hold</button><button class="mbtn" type="button">Blackout</button></div>
-        <div class="row"><label for="haze">Haze machine</label><input type="checkbox" id="haze" checked></div>
-        <div class="row"><label for="lock">Strobe lock</label><input type="checkbox" id="lock"></div>
-        <div class="row" style="flex-direction:column;align-items:stretch"><label for="master">Master level</label><input type="range" id="master" min="0" max="100" value="72"></div>
+        <div class="btns"><button class="mbtn" type="button" id="go"><span class="ic" data-icon="play"></span>Go cue</button><button class="mbtn" type="button" id="hold"><span class="ic" data-icon="pause"></span>Hold</button><button class="mbtn" type="button"><span class="ic" data-icon="power"></span>Blackout</button></div>
+        <div class="row"><label for="haze"><span class="ic" data-icon="cloud-fog"></span>Haze machine</label><input type="checkbox" id="haze" checked></div>
+        <div class="row"><label for="lock"><span class="ic" data-icon="lock"></span>Strobe lock</label><input type="checkbox" id="lock"></div>
+        <div class="row" style="flex-direction:column;align-items:stretch"><label for="master"><span class="ic" data-icon="sliders-horizontal"></span>Master level</label><input type="range" id="master" min="0" max="100" value="72"></div>
         <div class="row" style="flex-direction:column;align-items:stretch"><span class="mono" id="fade-l">Fade: idle</span><div class="bar" id="fade" aria-labelledby="fade-l"></div></div>
         <div class="row"><span class="mono">Syncing the rig</span><span class="bead" id="bead" aria-label="Syncing"></span></div>
       </div>
@@ -419,6 +422,8 @@
   ui.loader(document.getElementById('bead'));
   ui.focusRing();
   ui.transition(document.getElementById('strip'));
+  document.querySelectorAll('.ic[data-icon]').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 3 + i }));
+  ui.cursor(document.querySelector('[aria-labelledby="h-desk"]'));
   const label = document.getElementById('fade-l');
   let run = 0;
   document.getElementById('go').addEventListener('click', () => {

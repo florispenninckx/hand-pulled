@@ -238,7 +238,7 @@
    */
   function icon(el, name, opts) {
     const svg = ICONS[name] || name;
-    const o = Object.assign({ plate: 'film', look: 'oxide', seed: 3, grain: 0.02, rest: 0.85, hover: 1.15, weight: 10, pad: 0.1 }, opts);
+    const o = Object.assign({ plate: 'film', look: 'oxide', seed: 3, grain: 0.02, rest: 1, hover: 1.25, weight: 24, pad: 0.08 }, opts);
     style();
     el.classList.add('ma-icon'); el.setAttribute('aria-hidden', 'true');
     const c = document.createElement('canvas'); el.appendChild(c);
