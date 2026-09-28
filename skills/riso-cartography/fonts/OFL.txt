@@ -1,25 +1,21 @@
-Fonts in this folder: Seep, Sunprint, Sunprint Halo.
+Fonts in this folder: Blockplan, Blockplan Drop.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
 
-Seep (seep.woff2)
-  from Krona One, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/kronaone/KronaOne-Regular.ttf
-  Copyright (c) 2011 by Sorkin Type Co (www.sorkintype.com), with Reserved Font Names "Krona" and "Krona One".
+Blockplan (blockplan-drop.woff2, blockplan.woff2)
+  from Anton, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/anton/Anton-Regular.ttf
+  Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont.git)
 
-Sunprint (sunprint-halo.woff2, sunprint.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
-
-Sunprint Halo (sunprint-halo.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+Blockplan Drop (blockplan-drop.woff2)
+  from Anton, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/anton/Anton-Regular.ttf
+  Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont.git)
 
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Seep, Sunprint, Sunprint Halo) and use no Reserved Font Name of their bases
-(Krona One, Unbounded). We reserve no names for our own fonts.
+names (Blockplan, Blockplan Drop) and use no Reserved Font Name of their bases
+(Anton). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 

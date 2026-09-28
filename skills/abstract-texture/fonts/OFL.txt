@@ -1,31 +1,23 @@
-Fonts in this folder: Seep, Sunprint, Sunprint Halo.
+Fonts in this folder: Tideline.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
 
-Seep (seep.woff2)
-  from Krona One, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/kronaone/KronaOne-Regular.ttf
-  Copyright (c) 2011 by Sorkin Type Co (www.sorkintype.com), with Reserved Font Names "Krona" and "Krona One".
-
-Sunprint (sunprint-halo.woff2, sunprint.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
-
-Sunprint Halo (sunprint-halo.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+Tideline (tideline.woff2)
+  from Bricolage Grotesque, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/bricolagegrotesque/BricolageGrotesque[opsz,wdth,wght].ttf
+  Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
 
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Seep, Sunprint, Sunprint Halo) and use no Reserved Font Name of their bases
-(Krona One, Unbounded). We reserve no names for our own fonts.
+names (Tideline) and use no Reserved Font Name of their bases
+(Bricolage Grotesque). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-http://scripts.sil.org/OFL
+https://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------

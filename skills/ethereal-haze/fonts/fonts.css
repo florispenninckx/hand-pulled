@@ -1,0 +1,4 @@
+/* The ethereal-haze faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Lull: A thin high-contrast serif that goes out of focus: at FOCS 0 its hairlines are razor-sharp; as FOCS rises the light blooms, the hairlines thicken, the stems and serifs swell and soften, like a word photographed through a soft-focus lens. Axis 'FOCS' 0–1000, default 0. */
+@font-face { font-family: 'Lull'; src: url('lull.woff2') format('woff2'); font-display: swap; }

@@ -1,0 +1,4 @@
+/* The pixelsort-glitch faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Rowdrag: A quantised pixel face whose rows get sorted: at SORT 0 a clean blocky grotesk on a 60-unit grid; as SORT rises, strips of pixel rows are dragged sideways into streaks and whole rows slip out of register. Axis 'SORT' 0–1000, default 0. */
+@font-face { font-family: 'Rowdrag'; src: url('rowdrag.woff2') format('woff2'); font-display: swap; }

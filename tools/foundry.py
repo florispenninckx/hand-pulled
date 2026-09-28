@@ -22,6 +22,7 @@ gets one static file per position instead.
   .venv/bin/python tools/foundry.py build soak globule          # or: build all
   .venv/bin/python tools/foundry.py build soak --chars "Hamburg" --proof
   .venv/bin/python tools/foundry.py proof soak                    # PNG of the last build
+  .venv/bin/python tools/foundry.py specimen pixelsort-glitch     # a generated specimen.html
 
 Adding a face: copy a recipe in tools/recipes/ and change it.
   name, file, skill, about  the family name, the .woff2 stem, the skill folder, the fonts.css note
@@ -35,6 +36,8 @@ Adding a face: copy a recipe in tools/recipes/ and change it.
                             functions below.
   glyphs                    per-glyph overrides of op params: {"s": {"0": {"drop": 1}}}
   trace, fit, max_error     the master that is traced, the curve fit, and the fit check
+  glyph_limit               a glyph worse than this (units) is frozen at the traced master
+  swap                      [[hex, hex]] code points whose glyphs the base draws swapped
   variable                  false for a static face (one master)
 Build it with --chars and --proof until the proof reads, then build it in full and read the
 mean and max error it prints.
@@ -385,6 +388,80 @@ def op_carve(f, o, pos, g, seed):
     moved = ndimage.shift(inner, (-math.sin(a) * w, math.cos(a) * w), order=1, mode='constant')
     cut = np.minimum(inner, 1 - moved)
     return np.minimum(f, 1 - cut)
+
+
+def op_inline(f, o, pos, g, seed):
+    """An inline: a channel `w` wide cut along the middle of every stroke, kept `inset` inside the
+    edge, and moved `shift` units towards `angle` (degrees, 90 = up), the side the light is on."""
+    m = f > 0.5
+    if not m.any():
+        return f
+    skel = morphology.skeletonize(m)
+    dist = ndimage.distance_transform_edt(m)
+    if skel.any():
+        skel &= dist > at(o.get('trim', 0.7), pos) * np.median(dist[skel])
+    if not skel.any():
+        return f
+    cut = soft(at(o['w'], pos) / 2 / g.px - ndimage.distance_transform_edt(~skel))
+    s = at(o.get('shift', 0), pos) / g.px
+    if s:
+        a = math.radians(at(o.get('angle', 120), pos))
+        cut = ndimage.shift(cut, (-math.sin(a) * s, math.cos(a) * s), order=1, mode='constant')
+    cut = np.minimum(cut, soft(sdf(f) - at(o['inset'], pos) / g.px))
+    return np.minimum(f, 1 - cut)
+
+
+def op_stencil(f, o, pos, g, seed):
+    """Stencil bridges: a vertical gap `w` wide through the whole letter at the centre of every
+    counter, so no counter is an island. Counters smaller than `min` square units are ignored."""
+    m = f > 0.5
+    holes, n = ndimage.label(ndimage.binary_fill_holes(m) & ~m)
+    w = at(o['w'], pos) / g.px
+    cols = np.arange(f.shape[1])[None, :]
+    cut = np.zeros_like(f)
+    for i in range(1, n + 1):
+        rr, cc = np.nonzero(holes == i)
+        if len(rr) * g.px ** 2 < o.get('min', 1500):
+            continue
+        band = soft(w / 2 - np.abs(cols - cc.mean()))
+        cut = np.maximum(cut, np.broadcast_to(band, f.shape))
+    return np.minimum(f, 1 - cut)
+
+
+def op_extrude(f, o, pos, g, seed):
+    """A solid drop shadow: the letter swept `d` units towards `angle` (degrees, -45 = down-right)."""
+    d = at(o['d'], pos) / g.px
+    if d <= 0:
+        return f
+    a = math.radians(at(o.get('angle', -45), pos))
+    out = f.copy()
+    for t in np.linspace(0, d, max(2, int(d / 0.75)) + 1)[1:]:
+        out = np.maximum(out, ndimage.shift(f, (-math.sin(a) * t, math.cos(a) * t), order=1, mode='constant'))
+    return out
+
+
+def op_drip(f, o, pos, g, seed):
+    """Melt: every column of ink sags down by up to `len` units, the length varying across the
+    letter as smooth noise over `cell` units, fading with `fade` (0 = a hard drag, 1 = a taper).
+    With `outer` (the default) only the bottom of each column drips."""
+    L = at(o['len'], pos) / g.px
+    if L <= 0:
+        return f
+    n = value_noise((1, f.shape[1]), at(o.get('cell', 80), pos) / g.px, seed + o.get('seed', 0), 2)[0]
+    Lc = L * np.clip(0.5 + 0.9 * n, 0.05, 1.0)
+    fade = at(o.get('fade', 0.6), pos)
+    src = f
+    if o.get('outer', True):                      # only the lowest edge of each column runs, so
+        m = f > 0.5                               # nothing drips into a counter and floods it
+        below = np.cumsum(m[::-1], 0)[::-1] - m
+        src = f * (below == 0)
+    out = f.copy()
+    for k in range(1, int(L) + 1):
+        sh = np.zeros_like(f)
+        sh[k:] = src[:-k]
+        wgt = np.clip((Lc - k) / np.maximum(Lc, 1e-6), 0, 1)
+        out = np.maximum(out, sh * ((1 - fade) + fade * wgt) * (k <= Lc))
+    return out
 
 
 OPS = {k[3:]: v for k, v in globals().items() if k.startswith('op_')}
@@ -775,6 +852,11 @@ def make_glyph(args):
             out['masters'][p] = {'contours': [], 'adv': adv0 * sx + 2 * at(track, p), 'dev': 0.0}
         return out
 
+    if 'pixel' in recipe:
+        return make_pixel(recipe, gname, positions, polys, adv0, out)
+    if 'echo' in recipe:
+        return make_echo(recipe, gname, positions, polys, adv0, out)
+
     px = recipe.get('px', 2.0)
     pad = recipe.get('pad', 160)
     allpts = np.concatenate(polys)
@@ -791,6 +873,12 @@ def make_glyph(args):
     fields = {p: process(polys, p, recipe, g, seed, gname) for p in positions}
     step = fit.get('step', 2.0 * px / 2)
     C = trace(fields[trace_pos], g, step, fit.get('min_area', 60))
+    if not C:                   # the process erased this glyph at the traced master (a hairline sign
+        for alt in sorted(positions, key=lambda q: abs(q - trace_pos))[1:]:   # under a big blur):
+            C = trace(fields[alt], g, step, fit.get('min_area', 60))          # trace the nearest one
+            if C:                                                             # that still has ink
+                trace_pos = alt
+                break
     Wt = warp_matrix(recipe, trace_pos)
     Wt_inv = np.linalg.inv(Wt)
     # project in a chain outward from the traced position, each master from its neighbour
@@ -824,6 +912,99 @@ def make_glyph(args):
         perim = sum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]), axis=0), axis=1).sum() for P in per[p]) or 1
         cs = [[((float(q[0]) + tr, float(q[1])), on) for q, on in c] for c in contours[p]]
         out['masters'][p] = {'contours': cs, 'adv': adv0 * sx + 2 * tr, 'dev': float(xor / perim)}
+    return out
+
+
+# ---------------------------------------------------------------------------------------------
+# constructed faces: the masters differ only by moving whole pieces, so they are built directly
+# (every master has the same points by construction) instead of traced and projected.
+
+def _rect(x0, y0, x1, y1):
+    """A rectangle, clockwise (ink on the right of travel)."""
+    return [((x0, y0), True), ((x0, y1), True), ((x1, y1), True), ((x1, y0), True)]
+
+
+def _runs(row):
+    """[(start, end)] of the True runs in a boolean row."""
+    d = np.diff(np.concatenate([[0], row.astype(np.int8), [0]]))
+    return list(zip(np.nonzero(d == 1)[0], np.nonzero(d == -1)[0]))
+
+
+def make_pixel(recipe, gname, positions, polys, adv0, out):
+    """recipe.pixel: the letter quantised to `cell`-unit pixels (a pixel is ink when more than `at`
+    of it is covered), one rectangle per run of pixels in a row. Along the axis, a fraction `p`
+    of the rows is sorted: the row is cut into `split` strips and each strip's last run is dragged
+    right by up to `drag` units, and a fraction `p_shift` of the rows slides by up to `shift`.
+    Rectangles overlap by `bleed` units so no hairline seam shows between rows."""
+    pc = recipe['pixel']
+    cell, split, bleed = pc['cell'], pc.get('split', 2), pc.get('bleed', 1.0)
+    W = warp_matrix(recipe, positions[0])
+    wp = [P @ W.T for P in polys]
+    allp = np.concatenate(wp)
+    x0 = math.floor(allp[:, 0].min() / cell) * cell - cell
+    y0 = math.ceil(allp[:, 1].max() / cell) * cell + cell
+    g = Grid(x0, y0, int(math.ceil((allp[:, 0].max() - x0) / cell)) + 2,
+             int(math.ceil((y0 - allp[:, 1].min()) / cell)) + 2, cell)
+    ink = raster(wp, g, ss=8) > pc.get('at', 0.5)
+    rng = np.random.default_rng(recipe.get('seed', 1) * 7919 + zlib.crc32(gname.encode()) % 100000)
+    rects = []                                     # (xa, xb, ya, yb, shift, drag) at full strength
+    for r in range(g.h):
+        runs = _runs(ink[r])
+        if not runs:
+            continue
+        top = y0 - r * cell
+        sort = rng.random() < pc.get('p', 0.35)
+        shift = rng.uniform(-1, 1) * pc.get('shift', 0) if rng.random() < pc.get('p_shift', 0.25) else 0.0
+        strips = split if sort else 1
+        for s in range(strips):
+            ya, yb = top - (s + 1) * cell / strips, top - s * cell / strips
+            drag = rng.uniform(0.2, 1.0) * pc.get('drag', 0) if sort else 0.0
+            for i, (c0, c1) in enumerate(runs):
+                rects.append((x0 + c0 * cell, x0 + c1 * cell, ya, yb, shift, drag if i == len(runs) - 1 else 0.0))
+    lo, hi = positions[0], positions[-1]
+    for p in positions:
+        u = (p - lo) / (hi - lo) if hi > lo else 1.0
+        tr = at(recipe.get('track', 0), p)
+        cs = [_rect(xa + sh * u + tr - bleed, ya - bleed, xb + (sh + dr) * u + tr + bleed, yb + bleed)
+              for xa, xb, ya, yb, sh, dr in rects]
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * W[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def make_echo(recipe, gname, positions, polys, adv0, out):
+    """recipe.echo: the processed letter, plus `n` outline copies of it (rings `ring` units thick,
+    lying just inside its edge, so at the axis minimum they hide inside the letter). Along the
+    axis, copy k moves to k**power × (dx, dy). The letter and its rings are traced once."""
+    ec = recipe['echo']
+    px, pad = recipe.get('px', 2.0), recipe.get('pad', 160)
+    W = warp_matrix(recipe, positions[0])
+    allp = np.concatenate(polys) @ W.T
+    lo, hi = allp.min(0) - pad, allp.max(0) + pad
+    g = Grid(lo[0], hi[1], int(math.ceil((hi[0] - lo[0]) / px)), int(math.ceil((hi[1] - lo[1]) / px)), px)
+    seed = recipe.get('seed', 1) * 7919 + zlib.crc32(gname.encode()) % 100000
+    f = process(polys, positions[0], recipe, g, seed, gname)
+    fit = recipe.get('fit', {})
+
+    def fitted(field):
+        return [fit_spline(P[None], fit.get('tol', 1.5), fit.get('seg', 40), fit.get('bend', 4),
+                           fit.get('corner', 50), 0)[0]
+                for P in trace(field, g, fit.get('step', px), fit.get('min_area', 60))]
+
+    solid, d = fitted(f), sdf(f)
+    rings = [fitted(np.minimum(f, 1 - soft(d - at(ec['ring'], k) / px))) for k in range(1, ec['n'] + 1)]
+    lines = quads_to_polys(solid)
+    perim = sum(np.linalg.norm(np.diff(P, axis=0), axis=1).sum() for P in lines) or 1
+    dev = float(np.logical_xor(raster(lines, g) > 0.5, f > 0.5).sum() * px * px / perim)
+    a, b = positions[0], positions[-1]
+    for p in positions:
+        u = (p - a) / (b - a) if b > a else 1.0
+        tr = at(recipe.get('track', 0), p)
+        cs = [[((float(q[0]) + tr, float(q[1])), on) for q, on in c] for c in solid]
+        for k, rc in enumerate(rings, 1):
+            s = k ** ec.get('power', 1.0) * u
+            dx, dy = at(ec['dx'], k) * s, at(ec['dy'], k) * s
+            cs += [[((float(q[0]) + dx + tr, float(q[1]) + dy), on) for q, on in c] for c in rc]
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * W[0, 0] + 2 * tr, 'dev': dev}
     return out
 
 
@@ -863,6 +1044,10 @@ def glyph_order(recipe, font, chars):
             continue
         uni[ord(ch)] = g
         add(g)
+    for a, b in recipe.get('swap', []):              # a base that draws a pair the wrong way round
+        a, b = int(a, 16), int(b, 16)
+        if a in uni and b in uni:
+            uni[a], uni[b] = uni[b], uni[a]
     return order, uni
 
 
@@ -985,6 +1170,14 @@ def build(name, chars=None, jobs=None, proof=False):
     work = [(recipe, gname, positions, trace_pos) for gname in order[1:]]
     with ProcessPoolExecutor(max_workers=jobs or os.cpu_count()) as ex:
         glyphs = {r['name']: r for r in ex.map(make_glyph, work, chunksize=2)}
+    # A glyph whose projection broke (a hairline that tore) is frozen at its traced shape, so one
+    # stray glyph cannot push the whole family to statics; it keeps each master's advance.
+    for g in order[1:]:
+        ms = glyphs[g]['masters']
+        if ms[trace_pos].get('contours') and any(m['dev'] > recipe.get('glyph_limit', 40) for m in ms.values()):
+            print(f"  {g}: projection failed (worst {max(m['dev'] for m in ms.values()):.0f} units), frozen at {trace_pos}")
+            for p in positions:
+                ms[p] = {**ms[trace_pos], 'adv': ms[p]['adv'], 'dev': 0.0}
     vm = vertical_metrics(recipe, font, scale, glyphs, positions)
     devs = {p: [glyphs[g]['masters'][p]['dev'] for g in order[1:]] for p in positions}
     worst = {p: max(((glyphs[g]['masters'][p]['dev'], g) for g in order[1:]), default=(0, '')) for p in positions}
@@ -1155,6 +1348,150 @@ def make_proof(name, text=None, out=None):
     return dest
 
 
+# ---------------------------------------------------------------------------------------------
+# specimen pages (skills without a hand-made one): every face with a live axis and a test strip
+
+SPECIMEN = {
+    'pixelsort-glitch': {'bg': '#0b0b12', 'fg': '#f2f2f2', 'dim': '#8a8fa6', 'ink': '#ff3d8b', 'panel': '#15151f',
+                         'word': 'Scanline', 'line': 'rows dragged out of the slit'},
+    'riso-cartography': {'bg': '#f4efe4', 'fg': '#1d1d1d', 'dim': '#6b665c', 'ink': '#e8413b', 'ink2': '#1f6fb2',
+                         'panel': '#ebe4d4', 'word': 'Riverside', 'line': 'walk the old course of the river',
+                         'stack': ['Blockplan', 'Blockplan Drop']},
+    'ethereal-haze': {'bg': '#f6e7da', 'fg': '#3a1c14', 'dim': '#9a6a5a', 'ink': '#e2553f', 'panel': '#f1d9c8',
+                      'word': 'Poppy', 'line': 'the inside of a flower, too close'},
+    'chrome-aurora': {'bg': '#07080a', 'fg': '#e9edf2', 'dim': '#7d8594', 'ink': '#9fe8ff', 'panel': '#111317',
+                      'word': 'MERCURY', 'line': 'LIQUID LIGHT ON BLACK'},
+    'abstract-texture': {'bg': '#d9d6cf', 'fg': '#141414', 'dim': '#5f5c56', 'ink': '#2b50ff', 'panel': '#cdc9c0',
+                         'word': 'reverb', 'line': 'a surface seen through glass'},
+    'indigo-grain': {'bg': '#1e3590', 'fg': '#f3f3ef', 'dim': '#cfd8f2', 'ink': '#f3f3ef', 'panel': '#111a4a',
+                     'word': 'Tide', 'line': 'cobalt into white'},
+}
+
+
+def _esc(s):
+    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+
+def make_specimen(skill):
+    od = ROOT / 'skills' / skill / 'fonts'
+    th = SPECIMEN[skill]
+    rs = [r for r in (load_recipe(n) for n in all_recipes()) if r['skill'] == skill and face_files(od, r)]
+    faces, strips, codes = [], [], []
+    for i, r in enumerate(rs):
+        ax, files = r['axis'], face_files(od, r)
+        var = len(files) == 1 and files[0].stem == r['file'] and r.get('variable', True)
+        fam = r['name']
+        word = th['word']
+        if var:
+            tag, dflt = ax['tag'], int(ax.get('default', 0))
+            inst = ', '.join(f"{k} {v}" for k, v in ax.get('instances', {}).items())
+            live = ' live' if i == 0 else ''
+            faces.append(f'''  <section class="face">
+    <h2>{_esc(fam)} <span>{tag} 0–1000 · variable · {files[0].stat().st_size // 1024} KB</span></h2>
+    <p class="note">{_esc(r['about'])}</p>
+    <p class="sample{live}" id="s{i}" style="font-family:'{fam}';--v:{dflt};font-variation-settings:'{tag}' var(--v)">{_esc(word)}</p>
+    <label class="dial"><span>{tag}</span><input type="range" min="0" max="1000" value="{dflt}" data-for="s{i}" aria-label="{_esc(ax['name'])}"><output>{'live' if live else dflt}</output></label>
+    <p class="alpha" style="font-family:'{fam}';font-variation-settings:'{tag}' {dflt}">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip">{''.join(f"""<div><p style="font-family:'{fam}';font-variation-settings:'{tag}' {v}">{_esc(word[:4])}</p><span>{tag} {v}</span></div>""" for v in (0, 250, 500, 750, 1000))}</div>
+    <p class="meta">Named instances: {inst or 'none'}.</p>
+  </section>''')
+            codes.append(f".x{{font-family:'{fam}'; font-variation-settings:'{tag}' {dflt};}}")
+        else:
+            ws = [(100 + round(int(f.stem.rsplit('-', 1)[1]) / 1000 * 8) * 100, f) if f.stem != r['file'] else (400, f)
+                  for f in files]
+            faces.append(f'''  <section class="face">
+    <h2>{_esc(fam)} <span>static · {' / '.join(f"{w}: {f.stat().st_size // 1024} KB" for w, f in ws)}</span></h2>
+    <p class="note">{_esc(r['about'])}</p>
+    <p class="sample" style="font-family:'{fam}';font-weight:{ws[-1][0]}">{_esc(word)}</p>
+    <p class="alpha" style="font-family:'{fam}';font-weight:{ws[-1][0]}">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip">{''.join(f"""<div><p style="font-family:'{fam}';font-weight:{w}">{_esc(word[:4])}</p><span>weight {w}</span></div>""" for w, _ in ws)}</div>
+  </section>''')
+            codes.append(f".x{{font-family:'{fam}'; font-weight:{ws[-1][0]};}}")
+    stack = ''
+    if th.get('stack') and all(any(r['name'] == n for r in rs) for n in th['stack']):
+        front, back = th['stack']
+        rb = next(r for r in rs if r['name'] == back)
+        stack = f'''  <section class="face">
+    <h2>Two inks <span>{_esc(front)} over {_esc(back)}, misregistered</span></h2>
+    <p class="note">Set the same words twice at the same size: {_esc(back)} in the second ink underneath, {_esc(front)} on top, and nudge the lower layer a few hundredths of an em, as a second drum would.</p>
+    <p class="stack" data-text="{_esc(th['line'])}" style="--b:'{back}';--f:'{front}'">{_esc(th['line'])}</p>
+  </section>'''
+        codes.append(f".two{{position:relative;font-family:'{front}';color:{th['ink']}}}\n"
+                     f".two::before{{content:attr(data-text);position:absolute;inset:0;z-index:-1;font-family:'{back}';"
+                     f"font-variation-settings:'{rb['axis']['tag']}' 400;color:{th['ink2']};mix-blend-mode:multiply;transform:translate(.02em,.015em)}}")
+    first = rs[0]
+    title = f"{first['name']} specimen" if len(rs) == 1 else f"{skill} type specimen"
+    html = f'''<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_esc(title)}</title>
+<meta name="description" content="The {skill} display faces ({', '.join(r['name'] for r in rs)}), made by tools/foundry.py, each with its process axis.">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  @property --v {{ syntax: '<number>'; inherits: true; initial-value: 0; }}
+  :root {{ --bg:{th['bg']}; --fg:{th['fg']}; --dim:{th['dim']}; --ink:{th['ink']}; --ink2:{th.get('ink2', th['dim'])}; --panel:{th['panel']};
+          --gut:clamp(16px,4vw,56px); --mono:ui-monospace,'SF Mono',Menlo,monospace; --sans:system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif; }}
+  * {{ box-sizing:border-box; }}
+  html,body {{ margin:0; }}
+  body {{ background:var(--bg); color:var(--fg); font:400 16px/1.5 var(--sans); overflow-x:hidden; }}
+  main {{ padding:var(--gut); max-width:1400px; margin:0 auto; }}
+  header {{ padding-bottom:28px; border-bottom:1px solid var(--dim); }}
+  .kicker,.meta,.dial,.strip span,h2 span {{ font:400 12px/1.4 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }}
+  .kicker {{ display:flex; flex-wrap:wrap; gap:8px 24px; }}
+  h1 {{ font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:18px 0 0; }}
+  .face {{ padding:clamp(36px,6vw,80px) 0; border-bottom:1px solid var(--dim); }}
+  h2 {{ font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; display:flex; flex-wrap:wrap; gap:6px 18px; }}
+  .note {{ max-width:64ch; color:var(--dim); margin:0 0 24px; }}
+  .sample {{ font-size:clamp(56px,15vw,220px); line-height:1; margin:0 0 20px; color:var(--ink); overflow-wrap:anywhere; }}
+  .live {{ animation:sweep 8s ease-in-out infinite alternate; }}
+  @keyframes sweep {{ 0%,8% {{ --v:0; }} 92%,100% {{ --v:1000; }} }}
+  @media (prefers-reduced-motion: reduce) {{ .live {{ animation:none; }} }}
+  .dial {{ display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; max-width:640px; margin-bottom:32px; }}
+  .dial input {{ width:100%; min-width:0; accent-color:var(--ink); }}
+  .dial output {{ min-width:5ch; text-align:right; }}
+  .alpha {{ font-size:clamp(26px,5.4vw,72px); line-height:1.15; margin:0 0 32px; overflow-wrap:anywhere; }}
+  .strip {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); border:1px solid var(--dim); }}
+  .strip div {{ container-type:inline-size; padding:18px 12px 12px; border-right:1px solid var(--dim); background:var(--panel); display:grid; gap:10px; overflow:hidden; }}
+  .strip div:last-child {{ border-right:0; }}
+  .strip p {{ font-size:26cqi; line-height:1; margin:0; white-space:nowrap; }}
+  .stack {{ position:relative; isolation:isolate; font-family:var(--f); font-size:clamp(40px,9vw,140px); line-height:1.02; margin:0; color:var(--ink); }}
+  .stack::before {{ content:attr(data-text); position:absolute; inset:0; z-index:-1; font-family:var(--b); color:var(--ink2); mix-blend-mode:multiply; transform:translate(.02em,.015em); }}
+  pre {{ font:400 12.5px/1.6 var(--mono); background:var(--panel); padding:20px; overflow-x:auto; margin:0; white-space:pre; }}
+  footer {{ padding:40px 0 8px; font:400 12px/1.6 var(--mono); color:var(--dim); }}
+  footer a {{ color:var(--fg); }}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="kicker"><span>hand-pulled foundry</span><span>{skill}</span><span>SIL OFL 1.1</span></div>
+    <h1>{_esc(', '.join(r['name'] for r in rs))}: display faces, titles only</h1>
+  </header>
+{chr(10).join(faces)}
+{stack}
+  <section class="face">
+    <h2>Set it</h2>
+    <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
+
+{_esc(chr(10).join(codes))}</pre>
+  </section>
+  <footer>Made by tools/foundry.py from {_esc(', '.join(sorted({r['base']['family'] for r in rs})))} (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+</main>
+<script>
+  document.querySelectorAll('.dial input').forEach(function (inp) {{
+    var el = document.getElementById(inp.dataset.for), out = inp.nextElementSibling;
+    inp.addEventListener('input', function () {{ el.classList.remove('live'); el.style.setProperty('--v', inp.value); out.textContent = inp.value; }});
+  }});
+</script>
+</body>
+</html>
+'''
+    (od / 'specimen.html').write_text(html)
+    print(f'  wrote {(od / "specimen.html").relative_to(ROOT)}')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -1168,6 +1505,8 @@ def main():
     p.add_argument('name')
     p.add_argument('--text')
     p.add_argument('--out')
+    sp = sub.add_parser('specimen', help='write skills/<skill>/fonts/specimen.html from the recipes')
+    sp.add_argument('skill')
     a = ap.parse_args()
     if a.cmd == 'list':
         for n in all_recipes():
@@ -1179,6 +1518,8 @@ def main():
             build(n, a.chars, a.jobs, a.proof)
     elif a.cmd == 'proof':
         make_proof(a.name, a.text.replace('\\n', '\n') if a.text else None, a.out)
+    elif a.cmd == 'specimen':
+        make_specimen(a.skill)
 
 
 if __name__ == '__main__':

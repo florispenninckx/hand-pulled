@@ -2,7 +2,7 @@
  "name": "Sunprint",
  "file": "sunprint",
  "skill": "indigo-grain",
- "about": "A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print to a long exposure where the light creeps under the edges and the strokes swell and pool like liquid.",
+ "about": "A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print through a long exposure where the light creeps under the edges, to a blown-out print where the strokes swell into pools and the counters drown.",
  "base": {
   "family": "Unbounded",
   "repo": "google/fonts",
@@ -20,12 +20,14 @@
   "masters": [
    0,
    300,
+   650,
    1000
   ],
   "instances": {
    "Contact": 0,
    "Regular": 300,
-   "Long": 1000
+   "Long": 650,
+   "Blown": 1000
   }
  },
  "trace": 0,
@@ -36,11 +38,13 @@
    "amp": {
     "0": 0.0,
     "300": 0.14,
-    "1000": 0.3
+    "650": 0.3,
+    "1000": 0.46
    },
    "cell": {
     "0": 90,
-    "1000": 120
+    "650": 120,
+    "1000": 170
    },
    "octaves": 2,
    "band": 40,
@@ -51,7 +55,8 @@
    "r": {
     "0": 3,
     "300": 20,
-    "1000": 42
+    "650": 42,
+    "1000": 78
    }
   },
   {
@@ -59,7 +64,8 @@
    "at": {
     "0": 0.5,
     "300": 0.43,
-    "1000": 0.37
+    "650": 0.37,
+    "1000": 0.27
    }
   },
   {
@@ -67,14 +73,19 @@
    "amp": {
     "0": 0.0,
     "300": 0.18,
-    "1000": 0.34
+    "650": 0.34,
+    "1000": 0.5
    },
    "cell": {
     "0": 36,
-    "1000": 46
+    "650": 46,
+    "1000": 60
    },
    "octaves": 2,
-   "band": 24,
+   "band": {
+    "0": 24,
+    "1000": 40
+   },
    "seed": 4
   },
   {
@@ -82,7 +93,8 @@
    "r": {
     "0": 1.5,
     "300": 4,
-    "1000": 7
+    "650": 7,
+    "1000": 10
    }
   },
   {
@@ -99,5 +111,6 @@
   "smooth": 6,
   "nsmooth": 14,
   "reach": 160
- }
+ },
+ "pad": 200
 }

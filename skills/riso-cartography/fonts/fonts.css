@@ -1,0 +1,7 @@
+/* The riso-cartography faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Blockplan: A stencil face cut from a condensed poster grotesk: a bridge through every counter so no island falls out of the screen. CUTS runs from hairline bridges to wide gaps you can read the paper through. Axis 'CUTS' 0–1000, default 400. */
+@font-face { font-family: 'Blockplan'; src: url('blockplan.woff2') format('woff2'); font-display: swap; }
+
+/* Blockplan Drop: The second ink for Blockplan: the same letters, uncut, a little fat and rough at the edge as a riso drum leaves them, extruded into a solid drop shadow by DROP. Set it under Blockplan at the same size and tracking (the advances match) in a second spot colour, and nudge it out of register. Axis 'DROP' 0–1000, default 400. */
+@font-face { font-family: 'Blockplan Drop'; src: url('blockplan-drop.woff2') format('woff2'); font-display: swap; }

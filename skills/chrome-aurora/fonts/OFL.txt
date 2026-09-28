@@ -1,25 +1,17 @@
-Fonts in this folder: Seep, Sunprint, Sunprint Halo.
+Fonts in this folder: Specula.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
 
-Seep (seep.woff2)
-  from Krona One, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/kronaone/KronaOne-Regular.ttf
-  Copyright (c) 2011 by Sorkin Type Co (www.sorkintype.com), with Reserved Font Names "Krona" and "Krona One".
-
-Sunprint (sunprint-halo.woff2, sunprint.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
-
-Sunprint Halo (sunprint-halo.woff2)
-  from Unbounded, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/unbounded/Unbounded[wght].ttf
-  Copyright 2022 The Unbounded Project Authors (https://github.com/googlefonts/unbounded)
+Specula (specula.woff2)
+  from Orbitron, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/orbitron/Orbitron[wght].ttf
+  Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name: "Orbitron"
 
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Seep, Sunprint, Sunprint Halo) and use no Reserved Font Name of their bases
-(Krona One, Unbounded). We reserve no names for our own fonts.
+names (Specula) and use no Reserved Font Name of their bases
+(Orbitron). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 
