@@ -20,7 +20,8 @@ no glow.
 The files next to this SKILL.md:
 
 - `assets/haze.js`: `window.Haze`, six seeded image engines in canvas 2D (`bloom`, `field`, `ribbon`, `silk`, `meadow`, `poppies`), `develop` to put any photograph through one of the looks, and a `grain` overlay. It has no dependencies and uses no WebGL and no `ctx.filter`.
-- `reference.html`: "Faye", a fictional perfume house. It has a hero bloom, a card set of six ribbons, a full-bleed grain field, four field posters labelled like colour chips, two silks, the meadow and the poppies. **Read it before designing.**
+- `assets/live.js` and `assets/live-ui.js`: the same prints on the GPU, moving, and interface pieces built on them. See "Live" below.
+- `reference.html`: "Faye", a fictional perfume house. It opens on a live hero ("brume") and ends on a live studio app ("Blend a scent"); in between are a hero bloom, a card set of six ribbons, a full-bleed grain field, four field posters labelled like colour chips, two silks, the meadow and the poppies. **Read it before designing.**
 
 ## The engines
 
@@ -131,6 +132,119 @@ and put them next to the reference pins.
 - [ ] The same seed gives the same image, and "another" gives a new one.
 - [ ] A dropped photograph develops in the image's look.
 - [ ] There is no horizontal scroll on a phone and there are no console errors.
+
+## Live
+
+Use this when a page should move: an app, a landing page, a hero that answers the hand.
+`assets/live.js` runs the print on the GPU and animates it. `assets/live-ui.js` builds
+interface pieces on it. Both are classic scripts with no dependencies. Load them after
+`haze.js`:
+
+```html
+<section id="hero" style="position:relative;height:100svh">
+  <canvas aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
+  <h1 style="position:relative">brume</h1>
+</section>
+<script src="assets/haze.js"></script><script src="assets/live.js"></script><script src="assets/live-ui.js"></script>
+<script>
+  const hero = document.getElementById('hero');
+  const ctl = Haze.live(hero.querySelector('canvas'), {
+    fn: 'bloom', palette: 'sorbet', seed: 11,                          // still options
+    drift: 1, mist: 0.6, focusScroll: 0.9, clickPulse: true, hand: hero, // motion options
+  });
+  ctl.set({ focus: 0.8 });   ctl.pulse(x, y);   ctl.pause();   ctl.resume();   ctl.destroy();
+  Haze.ui.button(document.querySelector('button'));   Haze.ui.focusRing();
+</script>
+```
+
+**How it works (capture-first).** The still engine paints the scene small and blurs it the
+way its subject blurs (lens disc, moving shutter, spray). That irregular canvas work runs
+**once** on the CPU: `finish()` in haze.js has a `capture` hook that hands over the soft
+image and the print settings instead of printing. live.js makes the same high-quality
+upscale to device pixels and uploads it. It also uploads the still's own 512² grain and
+scatter tile. The print (`finish()`: scatter to stipple, saturation, vignette, veil,
+midtone-weighted chroma grain, the same clamps) is ported line by line to one fragment
+shader. The live terms sit on top, and each one is exactly zero at clock 0.
+
+**Still options** are the ones of the still engine: `fn` (`'bloom' | 'field' | 'ribbon' |
+'silk' | 'meadow' | 'poppies'`, default `'field'`), then `seed`, `palette`, `form`,
+`colors`, `ramp`, `paper`, `speed`, `angle`, `grain`, `scatter`, `chroma`, `sat`, `veil`,
+`veilColor` and `vignette` as in the table above. For a photograph, pass `image` (a decoded
+`<img>`) and `look`. Width, height and cssWidth come from the canvas's CSS size × DPR
+(capped at 2). Changing a still option through `set()` recaptures the image. **Motion
+options** never recapture:
+
+| option | default | what it does |
+|---|---|---|
+| `drift`, `driftScale`, `pace` | 1, 0.35, 1 | fog: the soft image slides along a slow noise field (amplitude 1.2 % of the short side). The stipple stays put, so the print holds and the light moves under it |
+| `mist`, `breath`, `breathPeriod` | 0.5, 0.35, 11 | pale patches drift through and the whole print lifts toward `glow`, breathing in and out over `breathPeriod` s |
+| `focus` | 0 | focus pull: 1 is softer (a wider lens disc), −1 is sharper (the rim comes back, unsharp). `focusRadius` 0.012 of the short side |
+| `focusScroll` | 0 | the view is sharp when its centre crosses the middle of the viewport and goes soft by this much as it scrolls away |
+| `enter`, `enterMs` | false, 2200 | comes into focus (soft → sharp) the first time it scrolls into view |
+| `pointer`, `bloom`, `radius`, `lag`, `sharpen` | true, 0.3, 0.3, 0.25, 0.35 | light swelling toward the pointer as through gauze (a screen lift toward `glow`), lagged. The spot under the pointer also pulls sharper. `hand` is the element that listens (default: the parent) |
+| `glow` | `'#fff1e2'` | the colour of the light (mist, bloom, pulses) |
+| `clickPulse` | false | pointerdown fires `pulse()`: a soft bloom of light that opens and fades over about 3 s |
+| `grainRate` | 12 | grain re-rolled this many times a second; the scatter (the stipple of the edges) never moves |
+| `reveal`, `revealPaper` | null, `'#f3ede1'` | colour only left of `reveal` (0–1 of the width), cream paper beyond, and the boundary is stippled by the same scatter. Used by the slider and the progress bar |
+| `ease`, `own` | 0.12, auto | how fast set() targets are reached; `own: true` forces a dedicated WebGL2 context |
+
+The controller (all chainable): `set(opts)`, `load(opts)` (a new sheet),
+`pulse(x, y, strength)` in CSS px, `point(x, y)` / `point(null)` to steer the light from
+code, `pause()`, `resume()`, `destroy()`, `state()` → `{ mode, path, frames, visible, focus,
+clock, size, ready, reduced }`, `bench(n)` → `{ sync, pipelined, size, path }` ms per frame.
+
+**UI pieces** (`Haze.ui`). Each keeps the native control (button, checkbox, range, a
+focusable element). The canvas is `aria-hidden` behind it. At rest a piece is a little out
+of focus. Hover or keyboard focus pulls it sharp and swells the light toward the pointer.
+A press, or Enter/Space, is a soft bloom.
+
+| piece | call | notes |
+|---|---|---|
+| live background | `ui.background(section, opts)` | fog, mist, pointer light, click bloom; opts go to live() |
+| button | `ui.button(btn, { ramp, form, rest, sharp })` | a small grain field; rest focus 0.8, sharp −0.35; flip the label colour with `:hover, :focus-visible` in CSS |
+| card | `ui.card(el, { form, seed })` | a ribbon that comes into focus when first seen, then drifts |
+| toggle | `ui.toggle(checkbox, { ramp })` | adds `role="switch"`; off is soft and mostly paper, on pulls sharp, fills and blooms; a pale disc is the thumb |
+| slider | `ui.slider(range, { ramp })` | colour up to the value, paper beyond, light at the thumb |
+| progress | `const p = ui.progress(el); p.set(0.4)` | `role="progressbar"` + aria values; colour spreads over cream; blooms at 100 % |
+| loader | `const l = ui.loader(el); l.stop()` | `role="status"`; a small sun breathing fast while a lamp circles behind the gauze |
+| focus ring | `ui.focusRing(scope?)` | CSS only: a 1px ink outline and a warm halo that breathes on `:focus-visible` (it also shows without WebGL2) |
+| section transition | `ui.transition(strip, opts)` | a strip of haze that racks focus with scroll: sharp mid-viewport, soft as it leaves |
+
+Ramps for the pieces: `Haze.ui.RAMPS` (`coral`, `rose`, `apricot`), or pass your own list
+of colours. Keep a page to one moving hero and quiet pieces. Motion here is slow: a 10 s
+breath, drift you notice only when you look away and back.
+
+**What is live.** Every engine (`bloom`, `field`, `ribbon`, `silk`, `meadow`, `poppies`)
+and `develop` with a photograph, through capture. The scene is not re-simulated: petals do
+not sway and the meadow does not scroll. The fog, mist, focus, light and grain move over the
+captured scene. The GPU port of the scene itself is future work. `Haze.grain()` is a CSS
+overlay and needs no live mode.
+
+**Fallbacks.** `prefers-reduced-motion`: the still frame, clock 0, no drift, mist, pointer
+light or pulses, and frozen grain. `set()` jumps to its target and the view draws only when
+something changed. It listens for changes. No WebGL2: the CPU still from haze.js, like
+reduced motion. A lost context rebuilds on restore. Offscreen views pause
+(IntersectionObserver) and build lazily when they first come near the viewport. The loop
+stops on `visibilitychange`. Paused or hidden views still draw their first frame. DPR is
+capped at 2. Canvases ≥ 0.9 MP get their own WebGL2 context. Smaller ones share one
+OffscreenCanvas context and receive frames as ImageBitmaps.
+
+**Parity.** `Haze.live.parity(opts)` draws the still with haze.js and frame 0 on the GPU at
+480×320 (or `width`/`height`) and compares luminance mean, SD (contrast), mean |neighbour
+difference| (grain), mean |pixel difference| in 8-bit levels and the share within 2 levels.
+`window.handPulledLive.parity['ethereal-haze']()` runs six cases: bloom coral, field fold,
+field flame, ribbon shift, silk rouge and poppies. All six are **bit-exact**: dMean 0,
+dSdRel 0, dGrainRel 0, 0.000 levels, 100 % within 2 levels (headless Chrome, 28 Sep 2026).
+They are exact because the upscale is the still's own canvas upscale, the print samples with
+`texelFetch` at clock 0, and the grain tile is the still's own table. `live.TOLERANCE` is
+`{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`, and `live.pass(r)` applies it.
+
+**Budget.** Target ≤ 4 ms a frame at 1440×900 CSS (2880×1800 device px) with every live term
+on. **Not measured yet**: this lane could not open the page in a real, visible Chrome, and
+headless Chrome renders WebGL in software. To measure, open reference.html in Chrome and
+run `handPulledLive.views[0].bench(60)` in the console (the hero, own context). The print
+shader costs one texelFetch for scatter, one or two texture reads (nine with a focus pull
+under way), four grain fetches and a three-octave value noise for fog and mist.
 
 ## Credits and prior art
 

@@ -182,6 +182,8 @@
    *   vignette  0..1, corners darkened by this much
    */
   function finish(canvas, st, src, o) {
+    // live.js: hand over the soft image and the print settings instead of printing on the CPU
+    if (o.capture) { o.capture({ W: canvas.width, H: canvas.height, src, x: st.m, y: st.m, w: st.w, h: st.h, o, tile: tile(((o.seed | 0) * 7 + 1) & 0xffff) }); return canvas; }
     const W = canvas.width, H = canvas.height, ctx = canvas.getContext('2d');
     ctx.save(); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(src, st.m, st.m, st.w, st.h, 0, 0, W, H); ctx.restore();
