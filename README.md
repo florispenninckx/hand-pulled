@@ -13,7 +13,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 | [`maximalist-pop`](skills/maximalist-pop/SKILL.md) | an indie record cover: hand-drawn bubble and curl lettering, one-line writing, stamps, printed paper | [Sweet William](skills/maximalist-pop/reference.html) | `hand.js` |
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | one picture after a machine got hold of it: saturated sort and slit-scan smears on dark, wave warps, sorted drips, a dropped screen, a grid collage, scanner drag, sliced type | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
-| [`indigo-grain`](skills/indigo-grain/SKILL.md) | cyanotype sun prints: Prussian blue, botanicals, soft contact edges, grain | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
+| [`indigo-grain`](skills/indigo-grain/SKILL.md) | a blue board made of grain: cyanotype botanicals and sun-printed photographs, light forms out of navy-black, blurred butterflies, marbling, spray and halftone | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
 | [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign in warm, saturated colour: the inside of a flower held too close, grain-gradient fields, ribbons of colour on cream, silk, a meadow past a slow shutter | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
 
 Every artist, label, place and brand on the reference pages is invented.
@@ -94,6 +94,10 @@ for the sun print.
 The slit-scan, the wave pushes, codec macroblocks, a flatbed scanner's split colour lines
 and a cracked LCD in `glitch.js` are general practice.
 The haze engine's disc defocus, Catmull-Rom ribbons and Blinn-Phong silk are textbook methods.
+The indigo engines solve marbling backward after Lu, Jaffer, Jin, Zhao and Mao, "Mathematical
+Marbling" (2012). They use Steven Worley's cellular noise for the marble lace and pool light,
+Ken Perlin's improved noise, the voxel-landscape column scan for the lit relief, and the
+printer's halftone screen.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
 WebGPU or C++. The skills here are 2D canvas without WebGL, so none of them fed into

@@ -6,106 +6,150 @@
 <title>Indigo Grain</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,420;1,9..144,420&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Fraunces:ital,opsz,wght@0,9..144,420;1,9..144,420&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
+  :root { --paper: #f3f3ef; --ink: #1c2a6b; --gap: 6px; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: #07070d; }
-  body { font: 400 13px/1.4 'Space Mono', monospace; color: #fff; overflow-x: hidden; }
+  html, body { margin: 0; background: var(--paper); }
+  body { font: 400 13px/1.4 'Space Mono', monospace; color: var(--ink); overflow-x: hidden; }
 
-  .mark {
-    position: fixed; top: 14px; left: 16px; z-index: 6;
-    font: 700 11px/1 'Space Mono', monospace; letter-spacing: .18em; text-transform: uppercase;
-    color: #fff; mix-blend-mode: difference; pointer-events: none;
+  header {
+    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px;
+    padding: 14px 16px 12px;
   }
+  header h1 { margin: 0; font: italic 400 24px/1 'Fraunces', serif; letter-spacing: 0; }
+  header p { margin: 0; max-width: 64ch; font: 400 11px/1.45 'Space Mono', monospace; letter-spacing: .02em; color: #3c4778; }
 
-  main { display: block; }
-  .plate { position: relative; width: 100%; height: 100vh; height: 100svh; overflow: hidden; }
-  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .plate[data-kind="print-pos"]::after {
-    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    border: 2.6vmin solid #faf9f4;
+  /* the wall: sheets are dealt into columns, each to the shortest one, like a pin board */
+  .wall { display: flex; gap: var(--gap); padding: 0 16px; align-items: flex-start; }
+  .col { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: var(--gap); }
+  .tile { position: relative; margin: 0; overflow: hidden; background: var(--bg, #1c2a6b); }
+  .tile canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .tile figcaption {
+    position: absolute; left: 10px; right: 10px; bottom: 8px; z-index: 2;
+    display: flex; justify-content: space-between; align-items: flex-end; gap: 8px;
+    color: #f4f6fb;
   }
-
-  .loading {
-    position: absolute; inset: 0; z-index: 1; display: grid; place-items: center;
-    background: #07070d; color: #8288a8; font: italic 400 13px/1 'Fraunces', serif; letter-spacing: .02em;
-  }
-  @media (prefers-reduced-motion: no-preference) { .loading { transition: opacity .35s ease; } }
-  .loading.hide { opacity: 0; pointer-events: none; }
-
-  .cap {
-    position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2;
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px;
-    color: #fff; mix-blend-mode: difference;
-  }
-  .cap .name { font: italic 400 16px/1 'Fraunces', serif; letter-spacing: 0; }
-  .cap .ctrl { display: flex; gap: 16px; font: 400 11px/1 'Space Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
-  .cap button, .cap label.upload {
-    background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit;
+  .tile .name { font: italic 400 13px/1.1 'Fraunces', serif; color: var(--cap-l, inherit); text-shadow: 0 0 6px var(--halo-l, transparent); }
+  .tile .ctrl { color: var(--cap-r, inherit); text-shadow: 0 0 6px var(--halo-r, transparent); }
+  .ctrl { display: flex; gap: 12px; white-space: nowrap; font: 400 10px/1 'Space Mono', monospace; letter-spacing: .08em; text-transform: uppercase; }
+  .ctrl button, .ctrl label {
+    background: none; border: 0; padding: 4px 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit;
     cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px;
   }
   input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  :focus-visible { outline: 1.5px solid #fff; outline-offset: 2px; }
+  :focus-visible, input[type=file]:focus-visible + label { outline: 1.5px solid currentColor; outline-offset: 2px; }
 
-  @media (max-width: 480px) {
-    .cap .name { font-size: 14px; }
+  /* posters: a sheet with small type on it */
+  .posters { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; padding: 40px 16px 48px; }
+  .poster { position: relative; margin: 0; width: min(100%, 520px); }
+  .poster .sheet { position: relative; aspect-ratio: 1 / 1.414; overflow: hidden; container-type: inline-size; background: var(--bg); }
+  .poster canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .poster figcaption { display: flex; justify-content: space-between; align-items: baseline; padding-top: 8px; }
+  .poster figcaption .name { font: italic 400 14px/1 'Fraunces', serif; }
+  .type { position: absolute; inset: 0; z-index: 1; color: #eef3f8; font: 500 2.1cqw/1.25 'Archivo', sans-serif; letter-spacing: .02em; text-transform: uppercase; pointer-events: none; }
+  .type > * { position: absolute; margin: 0; }
+
+  .isle .t1 { left: 7%; top: 5%; font: 400 5.4cqw/1.2 'Archivo', sans-serif; letter-spacing: .34em; }
+  .isle .t1 span { display: block; }
+  .isle .t1 span + span { padding-left: 2.2em; }
+  .isle .t1 span:last-child { padding-left: 4.6em; font-size: .72em; letter-spacing: .5em; }
+  .isle .side { left: 3.2%; top: 5%; writing-mode: vertical-rl; font-size: 1.9cqw; letter-spacing: .4em; opacity: .85; }
+  .isle .info { left: 7%; bottom: 5%; width: 44%; font-size: 1.75cqw; line-height: 1.55; text-transform: none; }
+  .isle .info b { display: block; font-weight: 500; font-size: 2.4cqw; margin-bottom: .5em; text-transform: uppercase; letter-spacing: .12em; }
+  .isle .mark { right: 6%; bottom: 5%; width: 7cqw; height: 7cqw; border: .35cqw solid currentColor; border-radius: 50%; display: grid; place-items: center; font-size: 2.3cqw; letter-spacing: 0; }
+
+  .tow .top { left: 6%; right: 6%; top: 3.6%; display: flex; justify-content: space-between; gap: 4%; font-size: 1.95cqw; }
+  .tow .title { left: 0; right: 0; top: 14.2%; text-align: center; font: 400 3.9cqw/1 'Archivo', sans-serif; letter-spacing: .02em; }
+  .tow .list { left: 31%; top: 67.5%; display: grid; grid-template-columns: auto auto; column-gap: 5cqw; font-size: 1.95cqw; line-height: 1.22; }
+  .tow .list p { margin: 0; }
+  .tow .list p:last-child span { display: block; }
+  .tow .list p:last-child span.gap { height: 1.22em; }
+  .tow .list p:first-child span { display: block; }
+  .tow .vert { right: 5.5%; top: 68%; writing-mode: vertical-rl; transform: rotate(180deg); font: italic 400 2.6cqw/1 'Fraunces', serif; text-transform: none; letter-spacing: .02em; }
+  .tow .rule { left: 6%; right: 6%; bottom: 7.5%; height: 2.4cqw; border-bottom: .2cqw solid currentColor; }
+  .tow .rule i { position: absolute; bottom: 0; width: .2cqw; height: 100%; background: currentColor; }
+  .tow .pills { right: 6%; bottom: 3.4%; display: flex; gap: .4cqw; }
+  .tow .pills i { width: 2.2cqw; height: 2.2cqw; border: .2cqw solid currentColor; border-radius: 50%; }
+
+  footer { padding: 0 16px 28px; font: 400 11px/1.5 'Space Mono', monospace; color: #3c4778; }
+
+  @media (max-width: 600px) {
+    header h1 { font-size: 20px; }
+    .tile figcaption { left: 8px; right: 8px; bottom: 6px; }
+    .tile .name { font-size: 12px; }
   }
 </style>
 </head>
 <body>
 
-<div class="mark">Indigo Grain</div>
+<header>
+  <h1>Indigo Grain</h1>
+  <p>Cyanotype sun prints, grain gradients, marbling and spray, all in one blue family. Every sheet is drawn in the page from nothing; “another” pulls a new one.</p>
+</header>
 
 <main>
-  <section class="plate" data-kind="field" data-palette="cobalt">
-    <div class="loading">developing</div>
-    <canvas aria-label="A grain-gradient field: deep ultramarine dissolving into white, coarse stochastic grain."></canvas>
-    <div class="cap">
-      <span class="name">I — cobalt field</span>
-      <span class="ctrl"><button type="button" data-again>another</button></span>
-    </div>
-  </section>
+  <div class="wall" id="wall">
+    <figure class="tile" data-r="ridge" data-a="1.46" style="--bg:#1b3a9a"><canvas role="img" aria-label="A lit silk-like surface rising out of olive-black: cobalt flanks, peach where the light lands, fine stacked contour lines."></canvas><figcaption><span class="name">ridge</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="wing" data-a="1.5" style="--bg:#1e3590"><canvas role="img" aria-label="A pale butterfly on ultramarine, blurred by its own movement and cut by the edge; a small sharp one below."></canvas><figcaption><span class="name">wing, moving</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="eclipse" data-a="1.3" style="--bg:#0a1446"><canvas role="img" aria-label="A cream light pressing in from the left edge, a thin yellow-green fringe, a black band, pale blue beyond."></canvas><figcaption><span class="name">eclipse</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="clouds" data-a="1.25" style="--bg:#5084c6"><canvas role="img" aria-label="A sun-printed photograph of heaped clouds with a pine at the left edge, white on saturated blue."></canvas><figcaption><span class="name">sky, sun print</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="moths" data-a="1.5" style="--bg:#8cc4fd"><canvas role="img" aria-label="Two blue moths printed on pale sky blue, the lower one turned and softer."></canvas><figcaption><span class="name">moths</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
 
-  <section class="plate" data-kind="field" data-palette="nightglow">
-    <div class="loading">developing</div>
-    <canvas aria-label="A violet-pink-blue glow on near-black, entirely grain."></canvas>
-    <div class="cap">
-      <span class="name">II — night glow</span>
-      <span class="ctrl"><button type="button" data-again>another</button></span>
-    </div>
-  </section>
+    <figure class="tile" data-r="cobalt" data-a="1.3" style="--bg:#56c8ff"><canvas role="img" aria-label="A grain-gradient field: deep cobalt dissolving into white through coarse grain."></canvas><figcaption><span class="name">cobalt field</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="orb" data-a="1.02" style="--bg:#02021a"><canvas role="img" aria-label="An orb of cyan particles on near-black, dense in the middle, spraying violet specks at its edge."></canvas><figcaption><span class="name">orb</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="lily" data-a="1.5" style="--bg:#2c3c8c"><canvas role="img" aria-label="A spider lily photogram, pale lilac on navy, fine grain."></canvas><figcaption><span class="name">lily, photogram</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="screen" data-a="1.3" style="--bg:#2d4682"><canvas role="img" aria-label="A coarse halftone screen bent over soft folds: pale rounded cells on a navy lattice."></canvas><figcaption><span class="name">screen</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="river" data-a="1.45" style="--bg:#dcedf3"><canvas role="img" aria-label="Marbled paper: a navy river through pale blue lace, dark stones ringed in white."></canvas><figcaption><span class="name">marbled, river</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
 
-  <section class="plate" data-kind="print-neg" data-palette="navy">
-    <div class="loading">developing</div>
-    <canvas aria-label="A spider lily photogram, white on navy, soft focus, fine grain."></canvas>
-    <div class="cap">
-      <span class="name">III — lily, photogram</span>
-      <span class="ctrl"><button type="button" data-again>another</button></span>
-    </div>
-  </section>
+    <figure class="tile" data-r="dusk" data-a="1.5" style="--bg:#0c1224"><canvas role="img" aria-label="A blue glow in one corner of a brown-black sheet, all grain."></canvas><figcaption><span class="name">dusk</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="ghosts" data-a="1.4" style="--bg:#0b3552"><canvas role="img" aria-label="Two ghostly moths in dark teal, smeared by movement."></canvas><figcaption><span class="name">moths, night</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="towers" data-a="1.25" style="--bg:#5084c6"><canvas role="img" aria-label="A sun-printed photograph of towers seen from below, window grids and long exposure streaks."></canvas><figcaption><span class="name">towers, sun print</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="spray" data-a="1.4" style="--bg:#d3d8ea"><canvas role="img" aria-label="Ultramarine ink sprayed on white paper, dense in drifts, specks of every size."></canvas><figcaption><span class="name">spray</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="swell" data-a="1.5" style="--bg:#1b3a9a"><canvas role="img" aria-label="A broad lit wave under a dark sky, peach low in the light."></canvas><figcaption><span class="name">swell</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
 
-  <section class="plate" data-kind="print-pos" data-palette="paperblue">
-    <div class="loading">developing</div>
-    <canvas aria-label="A profile silhouette printed in ultramarine on white, coarse grain falling off at the edge."></canvas>
-    <div class="cap">
-      <span class="name">IV — profile, printed</span>
-      <span class="ctrl"><button type="button" data-again>another</button></span>
-    </div>
-  </section>
+    <figure class="tile" data-r="trumpets" data-a="1.5" style="--bg:#1c3c8c"><canvas role="img" aria-label="Trumpet lilies at three depths, one sharp, in a soft cyanotype-blue photograph. Add your own photograph to print it the same way."></canvas><figcaption><span class="name">lilies</span><span class="ctrl"><button type="button" data-again>another</button><input type="file" id="photoLily" accept="image/*"><label for="photoLily">+ photo</label></span></figcaption></figure>
+    <figure class="tile" data-r="horizon" data-a="1.5" style="--bg:#0d58ba"><canvas role="img" aria-label="A small pale butterfly above a sea horizon, its dim double in the blue below."></canvas><figcaption><span class="name">horizon</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="glow" data-a="1.4" style="--bg:#181043"><canvas role="img" aria-label="A violet and pink glow on near-black, entirely grain."></canvas><figcaption><span class="name">night glow</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="wash" data-a="1.4" style="--bg:#6fa4d0"><canvas role="img" aria-label="Marbled paper in streaked bands of blue wash with white veins."></canvas><figcaption><span class="name">marbled, wash</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="profile" data-a="1.25" style="--bg:#faf9f4"><canvas role="img" aria-label="A profile silhouette printed in ultramarine on white, the paper in front speckled with ink."></canvas><figcaption><span class="name">profile, printed</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption></figure>
+    <figure class="tile" data-r="brushed" data-a="1.3" style="--bg:#f3f5f8"><canvas role="img" aria-label="A sun print on a hand-brushed coat: burnt-out highlights, saturated blue, ragged brushed edges. Add your own photograph to print it this way."></canvas><figcaption><span class="name">brushed</span><span class="ctrl"><button type="button" data-again>another</button><input type="file" id="photoSun" accept="image/*"><label for="photoSun">+ photo</label></span></figcaption></figure>
+  </div>
 
-  <section class="plate" data-kind="tone" data-palette="lily">
-    <div class="loading">developing</div>
-    <canvas aria-label="A soft cyanotype-blue photograph, grain everywhere; drop in your own to print it the same way."></canvas>
-    <div class="cap">
-      <span class="name">V — your print</span>
-      <span class="ctrl">
-        <button type="button" data-again>another</button>
-        <label class="upload" for="photoFile">+ photograph</label>
-        <input type="file" id="photoFile" accept="image/*">
-      </span>
-    </div>
+  <section class="posters" aria-label="Two posters">
+    <figure class="poster" data-r="isles" style="--bg:#0663b3">
+      <div class="sheet">
+        <canvas role="img" aria-label="A cobalt poster ruled in faint tiles, with a column of stippled navy islands."></canvas>
+        <div class="type isle">
+          <p class="t1"><span>Isles</span><span>of low</span><span>tide</span></p>
+          <p class="side">printed islands</p>
+          <p class="info"><b>Isles of low tide</b>Forty sun prints of an archipelago that is not on any chart.<br>Lower Harbour Print Hall, room 2<br>12 Sep – 30 Nov · Tue–Sun 10–18<br>Opening 11 Sep, 19:00 · free entry</p>
+          <p class="mark">LH</p>
+        </div>
+      </div>
+      <figcaption><span class="name">poster, islands</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption>
+    </figure>
+    <figure class="poster" data-r="undertow" style="--bg:#323f62">
+      <div class="sheet">
+        <canvas role="img" aria-label="A faded navy poster: a band of pool light across the middle, a dark inset of rippled water above it."></canvas>
+        <div class="type tow">
+          <p class="top"><span>Half Light + Plate Room present</span><span>A group show curated by Oda Vellinga</span></p>
+          <p class="title">Undertow</p>
+          <div class="list">
+            <p><span>Mira Holt</span><span>Jonas Fereday</span><span>Elke Marsh</span><span>Teo Vandamme</span><span>Ruth Okafor-Lind</span><span>August Pell</span><span>Nina Sorlie</span><span>Kai Brennan</span></p>
+            <p><span>Opening night</span><span>Nov 14</span><span>Thursday 6–11pm</span><span class="gap"></span><span>12 Quay Road</span><span>Dock Hall #3</span><span class="gap"></span><span>Free entry</span></p>
+          </div>
+          <p class="vert">Plate Room</p>
+          <div class="rule"><i style="left:0"></i><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i><i style="right:0"></i></div>
+          <p class="pills"><i></i><i></i><i></i><i></i><i></i></p>
+        </div>
+      </div>
+      <figcaption><span class="name">poster, pool light</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption>
+    </figure>
   </section>
 </main>
+
+<footer>All names on these posters are made up. Engines: <code>cyanotype.js</code> (grain, relief, halo, stipple, screen, marbling, caustics) and <code>botanica.js</code> (lilies, a profile, butterflies and moths, skies, towers).</footer>
 
 <script src="assets/cyanotype.js"></script>
 <script src="assets/botanica.js"></script>
@@ -114,28 +158,28 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-
+  const C = Cyanotype, B = Botanica;
   const grey = (g, a) => `rgba(${g * 255 | 0},${g * 255 | 0},${g * 255 | 0},${a == null ? 1 : a})`;
-  // III: two spider-lily stems laid on the paper, umbels at two heights, stems
-  // crossing off the bottom; a faint lighter fold down the middle of the ground.
+  const sm = t => t < 0 ? 0 : t > 1 ? 1 : t * t * (3 - 2 * t);
+
+  // ---- layouts kept from the first five plates ---------------------------
+  // a spider lily laid on the paper, two umbels at two heights, a faint lighter fold
   function spiderLayout(ctx, w, h, rand) {
     const fold = ctx.createLinearGradient(0, 0, w, 0);
     fold.addColorStop(0, grey(1, 0)); fold.addColorStop(0.5, grey(1, 0.07)); fold.addColorStop(1, grey(1, 0));
     ctx.fillStyle = fold; ctx.fillRect(0, 0, w, h);
     const size = Math.min(0.13 * h, 0.23 * w), bx = w * (0.47 + (rand() - 0.5) * 0.06);
-    Botanica.nerine(ctx, rand, { x: bx + size * 0.12, y: h * 1.03, tx: bx + size * (0.5 + rand() * 0.7), ty: h * (0.25 + rand() * 0.04), size });
-    Botanica.nerine(ctx, rand, { x: bx - size * 0.12, y: h * 1.03, tx: bx - size * (0.5 + rand() * 0.8), ty: h * (0.53 + rand() * 0.05), size: size * 0.95 });
+    B.nerine(ctx, rand, { x: bx + size * 0.12, y: h * 1.03, tx: bx + size * (0.5 + rand() * 0.7), ty: h * (0.25 + rand() * 0.04), size });
+    B.nerine(ctx, rand, { x: bx - size * 0.12, y: h * 1.03, tx: bx - size * (0.5 + rand() * 0.8), ty: h * (0.53 + rand() * 0.05), size: size * 0.95 });
   }
-  // IV: a head in profile, large and cropped, the face near the right edge looking
-  // right; the paper in front of it is speckled, densest high on the right.
+  // a head in profile, large and cropped, looking right; speckled paper in front of it
   function profileLayout(ctx, w, h, rand) {
-    const land = w > h, S = land ? 0.72 * h : Math.min(0.46 * h, 0.9 * w);
-    const noseX = w * (land ? 0.63 : 0.78);
-    Botanica.profile(ctx, rand, { x: noseX - 0.46 * S, y: h * (land ? 0.13 : 0.1), scale: S, hair: 0.9 + rand() * 0.3 });
+    const land = w > h, S = land ? 0.72 * h : Math.min(0.5 * h, 0.95 * w);
+    const noseX = w * (land ? 0.63 : 0.8);
+    B.profile(ctx, rand, { x: noseX - 0.46 * S, y: h * (land ? 0.13 : 0.12), scale: S, hair: 0.9 + rand() * 0.3 });
   }
   const speckle = (u, v) => 0.1 + 0.55 * Math.max(0, 1 - u / 0.3) + 0.36 * Math.exp(-((u - 1) ** 2 + (v + 0.05) ** 2) / 0.14);
-  // V: trumpet lilies at three depths. The ground layer is diffuse light with
-  // strap leaves and stems in shadow; one bloom is sharp, the rest are not.
+  // trumpet lilies at three depths: diffuse ground, leaves and stems in shadow, one bloom sharp
   function trumpetLayers(w, h, rand, accents) {
     const L = Math.min(0.28 * h, 0.42 * w), j = (a, b) => a + rand() * (b - a);
     const hero = { x: w * j(0.16, 0.28), y: h * j(0.58, 0.66), angle: j(-0.6, -0.3), tilt: j(0.1, 0.3) };
@@ -144,10 +188,10 @@
     const far = [0, 1, 2].map(() => ({ x: w * j(0.05, 0.95), y: h * j(0.1, 0.9), angle: j(-2.5, -0.6), tilt: j(-0.3, 0.6) }));
     const leaves = [0, 1, 2].map(i => ({ x: w * (0.15 + 0.35 * i + j(-0.1, 0.1)), y: h * 1.05, angle: -Math.PI / 2 + j(-0.35, 0.35), length: h * j(0.45, 0.8), width: L * j(0.16, 0.26), bend: j(-0.5, 0.5) }));
     const edge = { x: w * j(0.9, 1.02), y: h * j(0.3, 0.45), angle: j(2.2, 2.8), tilt: j(0.2, 0.4) };
-    const stemTo = (ctx, b, bend) => {   // down and back from the base of a bloom, off the bottom of the frame
+    const stemTo = (ctx, b, bend) => {
       const h0 = b.angle + Math.PI, dt = Math.PI / 2 - h0 + bend;
-      const pts = Botanica.walk(b.x, b.y, (h - b.y) * 1.2 + L * 0.5, h0, u => dt * 2 * (1 - u), 40);
-      Botanica.ribbon(ctx, pts, u => L * (0.026 + 0.014 * u));
+      const pts = B.walk(b.x, b.y, (h - b.y) * 1.2 + L * 0.5, h0, u => dt * 2 * (1 - u), 40);
+      B.ribbon(ctx, pts, u => L * (0.026 + 0.014 * u));
     };
     return [
       { focus: 1.3, haze: 2.6, soft: 0.85, objects: (ctx, ww, hh, r2) => {
@@ -156,12 +200,12 @@
         ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = grey(0.62, 0.5);
         for (const f of far) { ctx.beginPath(); ctx.ellipse(f.x, f.y, L * j(0.4, 0.8), L * j(0.2, 0.5), f.angle, 0, Math.PI * 2); ctx.fill(); }
-        for (const f of far.slice(0, 2)) Botanica.trumpet(ctx, r2, Object.assign({ size: L * 0.8, shade: [0.55, 0.78] }, f));
+        for (const f of far.slice(0, 2)) B.trumpet(ctx, r2, Object.assign({ size: L * 0.8, shade: [0.55, 0.78] }, f));
       } },
       { mode: 'multiply', focus: 1.1, haze: 2.2, soft: 0.75, objects: (ctx, ww, hh, r2) => {
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
         ctx.fillStyle = grey(0.5);
-        for (const lf of leaves) Botanica.leaf(ctx, r2, lf);
+        for (const lf of leaves) B.leaf(ctx, r2, lf);
       } },
       { mode: 'multiply', focus: 0.35, haze: 1.0, soft: 0.4, objects: (ctx, ww, hh, r2) => {
         ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
@@ -169,81 +213,250 @@
         for (const b of [hero, second]) stemTo(ctx, b, (r2() - 0.5) * 0.3);
       } },
       { focus: 0.8, haze: 1.5, soft: 0.6, objects: (ctx, ww, hh, r2) => {
-        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 1.15 }, corner));
-        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 1.05, shade: [0.6, 0.9] }, edge));
+        B.trumpet(ctx, r2, Object.assign({ size: L * 1.15 }, corner));
+        B.trumpet(ctx, r2, Object.assign({ size: L * 1.05, shade: [0.6, 0.9] }, edge));
       } },
       { focus: 0.3, haze: 0.9, soft: 0.4, objects: (ctx, ww, hh, r2) => {
-        Botanica.trumpet(ctx, r2, Object.assign({ size: L * 0.95 }, second));
+        B.trumpet(ctx, r2, Object.assign({ size: L * 0.95 }, second));
       } },
       { focus: 0.1, haze: 0.35, soft: 0.18, objects: (ctx, ww, hh, r2) => {
-        const t = Botanica.trumpet(ctx, r2, Object.assign({ size: L }, hero));
+        const t = B.trumpet(ctx, r2, Object.assign({ size: L }, hero));
         accents.push({ x: t.x, y: t.y, r: L * 0.42, a: 0.34 });
       } },
     ];
   }
-  const plates = $$('.plate').map(section => ({
-    section,
-    canvas: $('canvas', section),
-    loading: $('.loading', section),
-    kind: section.dataset.kind,
-    palette: section.dataset.palette,
-    seed: 1 + Math.floor(Math.random() * 9999),
-    photo: null,
-  }));
 
-  function sizeOf(section) {
-    const r = section.getBoundingClientRect();
-    return { w: Math.max(2, Math.round(r.width * dpr)), h: Math.max(2, Math.round(r.height * dpr)) };
-  }
-
-  function renderPlate(p) {
-    p.loading.classList.remove('hide');
-    const { w, h } = sizeOf(p.section);
-    requestAnimationFrame(() => {
-      if (p.kind === 'field') {
-        Cyanotype.field(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, grain: 1.2, coarse: p.palette === 'cobalt' ? 0.85 : 0 });
-      } else if (p.kind === 'print-neg') {
-        // crisp Lycoris umbel: pale lilac florets, flat mid-cobalt ground, fine grain
-        Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'negative', focus: 0.05, haze: 0.10, soft: 0.16, grain: 0.5, objects: spiderLayout });
-      } else if (p.kind === 'print-pos') {
-        // crisp silhouette edge; the ink-to-paper wash is a coarse dithered gradient, not a blur
-        Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'positive', focus: 0.14, haze: 0.3, soft: 0.2, grain: 1.0, coarse: 0.7, bg: speckle, bgDither: 0.85, objects: profileLayout });
-      } else if (p.kind === 'tone') {
-        if (p.photo) {
-          Cyanotype.tone(p.canvas, p.photo, { width: w, height: h, seed: p.seed, palette: p.palette, focus: 0.55, haze: 1.2, soft: 0.6, grain: 1.1 });
-        } else {
-          const layoutRand = Cyanotype.mulberry32((p.seed * 7 + 11) >>> 0);
-          const accents = [];
-          const layers = trumpetLayers(w, h, layoutRand, accents);
-          Cyanotype.print(p.canvas, { width: w, height: h, seed: p.seed, palette: p.palette, polarity: 'negative', grain: 1.15, layers, accents });
+  // ---- the posters ---------------------------------------------------------
+  // cobalt ruled in faint tiles, a column of islands stippled in navy-black, widest mid-sheet
+  function isles(c, w, h, seed) {
+    const rand = C.mulberry32(seed), n = C.noise(rand), s = Math.min(w, h), cell = w / 13, T = new Float32Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const cx = Math.floor(x / cell), cy = Math.floor(y / (cell * 0.55));
+      T[y * w + x] = 0.4 + 0.1 * (C.hash2(cx, cy, seed) - 0.5) + 0.06 * (C.hash2(cx >> 1, cy, seed + 5) - 0.5) + 0.12 * (y / h) + 0.06 * n(x / (0.4 * s), y / (0.4 * s));
+    }
+    C.develop(c, T, { width: w, height: h, seed, palette: 'island', grain: 0.5 });
+    // each island is a small range: two or three peaks under one envelope, a jagged
+    // ridge, a flat water line; spray hangs just above the ridge
+    const D = new Float32Array(w * h), N = 12;
+    for (let k = 0; k < N; k++) {
+      const q = (k + 0.5) / N, f = Math.pow(Math.sin(Math.PI * q), 0.8), yb = h * (0.2 + 0.62 * q);
+      const half = w * (0.06 + 0.3 * f) * (0.85 + 0.3 * rand()), cx = w * (0.61 + (rand() - 0.5) * 0.08), top = s * (0.035 + 0.055 * f) * (0.8 + 0.4 * rand());
+      const peaks = Array.from({ length: 2 + (rand() * 2 | 0) }, (_, i) => ({ at: (rand() - 0.5) * 1.1, hgt: i ? 0.45 + 0.4 * rand() : 1, wid: 0.18 + 0.3 * rand() }));
+      const ph = rand() * 50;
+      for (let x = Math.max(0, Math.floor(cx - half)); x < Math.min(w, Math.ceil(cx + half)); x++) {
+        const u = (x - cx) / half, env = Math.pow(Math.max(0, 1 - u * u), 0.55);
+        let p = 0;
+        for (const pk of peaks) p = Math.max(p, pk.hgt * Math.exp(-(((u - pk.at) / pk.wid) ** 2)));
+        p = Math.max(0, (p * 0.85 + 0.15) * env + 0.1 * C.fbm(n, u * 11 + ph, k * 3.1, 3) * env);
+        const yt = yb - top * p;
+        for (let y = Math.max(0, Math.floor(yt - s * 0.03)); y < Math.min(h, Math.ceil(yb)); y++) {
+          const i = y * w + x;
+          D[i] = Math.max(D[i], y < yt ? 0.4 * Math.exp(-(yt - y) / (s * 0.007)) : 0.82 + 0.18 * sm((y - yt) / Math.max(1, 0.5 * (yb - yt))));
         }
       }
-      p.loading.classList.add('hide');
-    });
+    }
+    C.stipple(c, D, { width: w, height: h, seed, ink: { stops: [[0, '#1560a8'], [0.45, '#0c3464'], [1, '#050b18']] }, lo: 0, hi: 1, sizes: [0.95, 0.6, 0.3] });
+  }
+  // faded navy, a band of pool light across the middle, a dark inset of rippled water
+  function undertow(c, w, h, seed) {
+    const rand = C.mulberry32(seed), n = C.noise(rand), s = Math.min(w, h);
+    const L = C.caustics(w, h, seed, { cell: 0.09, squash: 0.55, width: 0.1, warp: 1.4 });
+    const T = new Float32Array(w * h), b0 = 0.265, b1 = 0.64, ix0 = 0.33, ix1 = 0.73, iy0 = 0.17, iy1 = 0.385;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const u = x / w, v = y / h, i = y * w + x;
+      let t = 0.84 + 0.05 * n(x / (0.5 * s), y / (0.5 * s));
+      const band = sm((v - b0) / 0.012) * sm((b1 - v) / 0.012);
+      t += (1 - (0.1 + 0.85 * Math.pow(L[i], 0.9)) - t) * band * (0.9 + 0.1 * n(x / (0.2 * s) + 4, y / (0.2 * s)));
+      if (u > ix0 && u < ix1 && v > iy0 && v < iy1) {
+        const warp = C.fbm(n, x / (0.3 * w) + 7, y / (0.3 * w), 3) * 0.14 * h + Math.sin(u * 7 + v * 3) * 0.02 * h;
+        const r = 0.5 + 0.5 * Math.sin(((y + warp) / (0.016 * h)) * Math.PI * 2);
+        t = 0.9 - 0.6 * Math.pow(r, 7) * (0.4 + 0.6 * sm(1 - Math.abs(u - 0.53) / 0.2));
+      }
+      T[i] = t;
+    }
+    C.develop(c, T, { width: w, height: h, seed, palette: 'pool', grain: 0.9 });
   }
 
-  plates.forEach(p => {
-    $('[data-again]', p.section).addEventListener('click', () => {
-      p.seed = 1 + Math.floor(Math.random() * 9999);
-      renderPlate(p);
+  // ---- one recipe per sheet: (canvas, w, h, seed, photo) --------------------
+  const winged = (c, w, h, seed, o) => C.print(c, Object.assign({ width: w, height: h, seed }, o));
+  const R = {
+    ridge: (c, w, h, seed) => C.relief(c, { width: w, height: h, seed }),
+    swell: (c, w, h, seed) => C.relief(c, { width: w, height: h, seed, horizon: 0.3, light: [0.5, -0.6, 0.5], focus: 0.3, warm: 0.3 }),
+    eclipse: (c, w, h, seed) => C.halo(c, { width: w, height: h, seed, y: 0.3 + 0.12 * C.mulberry32(seed)() }),
+    cobalt(c, w, h, seed) {
+      // one deep pool in a lower corner, dissolving to white paper through coarse grain
+      const r = C.mulberry32(seed + 3), s = Math.min(w, h), side = r() < 0.5 ? 0.7 : 0.3;
+      C.field(c, { width: w, height: h, seed, palette: 'cobalt', grain: 1.2, coarse: 0.85, pools: [
+        { type: 'blob', cx: w * (side + (r() - 0.5) * 0.1), cy: h * (0.78 + r() * 0.08), sigma: s * 0.55, amp: 1.3 },
+        { type: 'blob', cx: w * (side > 0.5 ? 1 : 0), cy: h * 1.05, sigma: s * 0.3, amp: 0.5 },
+      ] });
+    },
+    glow: (c, w, h, seed) => C.field(c, { width: w, height: h, seed, palette: 'nightglow', grain: 1.2 }),
+    dusk(c, w, h, seed) {
+      const rand = C.mulberry32(seed), n = C.noise(rand), s = Math.min(w, h), T = new Float32Array(w * h);
+      const cx = w * (0.6 + 0.5 * rand()), cy = h * (-0.1 + 0.25 * rand()), R0 = Math.hypot(w, h) * (0.55 + 0.15 * rand());
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const d = Math.hypot(x - cx, (y - cy) * 0.9) / R0 + 0.08 * C.fbm(n, x / (0.4 * s), y / (0.4 * s), 3);
+        T[y * w + x] = Math.max(0, 0.98 - 0.95 * Math.pow(d, 1.25));
+      }
+      C.develop(c, T, { width: w, height: h, seed, palette: 'dusk', grain: 1.35 });
+    },
+    orb(c, w, h, seed) {
+      const n = C.noise(C.mulberry32(seed)), s = Math.min(w, h), cx = w * 0.5, cy = h * 0.48, Rr = s * 0.42;
+      const D = new Float32Array(w * h), G = new Float32Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const wx = x + n(x / (0.25 * s), y / (0.25 * s)) * Rr * 0.1, wy = y + n(x / (0.25 * s) + 5, y / (0.25 * s)) * Rr * 0.1;
+        const r = Math.hypot((wx - cx) / 1.08, wy - cy) / Rr, core = 1 / (1 + Math.exp((r - 0.9) * 22));
+        const band = 0.18 * Math.exp(-(((x - cx) / (Rr * 0.3)) ** 2)), spray = 0.34 * Math.exp(-Math.pow(Math.max(0, r - 0.85) / 0.32, 1.1));
+        D[y * w + x] = Math.min(1, core * (0.8 + band) + spray * (1 - core)); G[y * w + x] = core * (0.42 + band * 1.6);
+      }
+      C.develop(c, G, { width: w, height: h, seed, palette: { stops: [[0, '#02021a'], [0.35, '#122558'], [0.7, '#2e6aa5'], [1, '#5fb2d6']] }, grain: 0.9 });
+      C.stipple(c, D, { width: w, height: h, seed, ink: 'orb', lo: 0, hi: 1, sizes: [0.65, 0.3, 0.12] });
+    },
+    spray(c, w, h, seed) {
+      const n = C.noise(C.mulberry32(seed)), s = Math.min(w, h), D = new Float32Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const b = C.fbm(n, x / (0.3 * s), y / (0.3 * s), 4), f = C.fbm(n, x / (0.06 * s) + 7, y / (0.06 * s), 2);
+        const top = Math.exp(-(((x / w - 0.35) / 0.3) ** 2) - ((y / h) / 0.12) ** 2) * 0.5;
+        D[y * w + x] = Math.max(0, Math.min(1, 0.5 + b * 0.85 + f * 0.12 + top));
+      }
+      C.stipple(c, D, { width: w, height: h, seed, ink: 'spray', ground: 'spray', wash: 0.3, lo: 0.45, hi: 1, sizes: [0.6, 0.34, 0.16], gamma: 1.3 });
+    },
+    screen(c, w, h, seed) {
+      const n = C.noise(C.mulberry32(seed)), s = Math.min(w, h), L = new Float32Array(w * h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const f = C.fbm(n, x / (0.45 * s), y / (0.45 * s), 3);
+        const folds = 0.5 + 0.5 * Math.sin(f * 7 + C.fbm(n, x / (0.2 * s) + 9, y / (0.2 * s), 2) * 2);
+        L[y * w + x] = 0.12 + 0.72 * Math.pow(folds, 1.6);
+      }
+      C.screen(c, C.blur(L, w, h, s * 0.02), { width: w, height: h, seed, cell: 0.034 });
+    },
+    river: (c, w, h, seed) => C.marble(c, { width: w, height: h, seed, res: 640 }),
+    wash: (c, w, h, seed) => C.marble(c, { width: w, height: h, seed, kind: 'wash', res: 640 }),
+    lily: (c, w, h, seed) => C.print(c, { width: w, height: h, seed, palette: 'navy', focus: 0.05, haze: 0.1, soft: 0.16, grain: 0.5, objects: spiderLayout }),
+    profile: (c, w, h, seed) => C.print(c, { width: w, height: h, seed, palette: 'paperblue', polarity: 'positive', focus: 0.14, haze: 0.3, soft: 0.2, grain: 1.0, coarse: 0.7, bg: speckle, bgDither: 0.85, objects: profileLayout }),
+    trumpets(c, w, h, seed, photo) {
+      if (photo) return C.tone(c, photo, { width: w, height: h, seed, palette: 'lily', focus: 0.55, haze: 1.2, soft: 0.6, grain: 1.1 });
+      const accents = [], layers = trumpetLayers(w, h, C.mulberry32((seed * 7 + 11) >>> 0), accents);
+      C.print(c, { width: w, height: h, seed, palette: 'lily', grain: 1.15, layers, accents });
+    },
+    wing(c, w, h, seed) {
+      const s = Math.min(w, h), r = C.mulberry32(seed + 1), turn = -1.1 - 0.4 * r();
+      winged(c, w, h, seed, { palette: 'ultramarine', grain: 0.9, layers: [
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.92, y: H * (0.42 + 0.14 * r()), size: s * 0.62, angle: turn, open: [0.55, 1], shade: { root: 0.92, wing: 0.86, edge: 0.95, vein: 0.1, spot: 0.12 } }), focus: 1.6, haze: 1, soft: 0.35, smear: [0.022, 0.006] },
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.18, y: H * 0.9, size: s * 0.13, angle: 0.05, shade: { wing: 0.9, vein: 0.18 } }), focus: 0.3, haze: 0.4, soft: 0.2 },
+      ] });
+    },
+    moths(c, w, h, seed) {
+      const s = Math.min(w, h), sh = { root: 0.95, wing: 0.5, edge: 0.78, vein: -0.2, spot: -0.15, body: 1 };
+      winged(c, w, h, seed, { palette: 'sky', polarity: 'positive', grain: 0.8, layers: [
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.55, y: H * 0.27, size: s * 0.46, angle: 0.25, moth: true, open: [1, 0.85], shade: sh }), focus: 0.9, haze: 0.8, soft: 0.3 },
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.45, y: H * 0.72, size: s * 0.5, angle: -0.4, moth: true, open: [0.8, 1], shade: sh }), focus: 1.5, haze: 1.2, soft: 0.45, smear: [0.008, 0.004] },
+      ] });
+    },
+    ghosts(c, w, h, seed) {
+      const s = Math.min(w, h), sh = { root: 0.75, wing: 0.55, edge: 0.7, vein: 0.1, spot: 0, body: 0.9 };
+      winged(c, w, h, seed, { palette: 'deepwater', grain: 1, layers: [
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.5, y: H * 0.2, size: s * 0.72, angle: 0.5, moth: true, open: [1, 0.7], shade: sh }), focus: 1.3, haze: 1.2, soft: 0.4, smear: [0.018, 0.006] },
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.46, y: H * 0.72, size: s * 0.8, angle: -0.2, moth: true, open: [0.9, 1], shade: Object.assign({}, sh, { wing: 0.4, root: 0.6 }) }), focus: 1.8, haze: 1.5, soft: 0.5, smear: [0.006, 0.018] },
+      ] });
+    },
+    horizon(c, w, h, seed) {
+      const s = Math.min(w, h), hz = 0.54;
+      const bg = (u, v) => { const sky = 0.08 + 0.55 * Math.pow(Math.min(1, v / hz), 2.2), sea = 0.9 - 0.08 * (v - hz); return sky + (sea - sky) * sm((v - hz) / 0.012 + 0.5); };
+      winged(c, w, h, seed, { palette: 'horizon', grain: 1.1, bg, layers: [
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.5, y: H * 0.44, size: s * 0.2, angle: 0.4, open: [0.55, 1], shade: { root: 0.85, wing: 0.9, edge: 0.95, vein: 0.45, spot: 0.3 } }), focus: 0.25, haze: 0.3, soft: 0.15 },
+        { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.48, y: H * 0.68, size: s * 0.17, angle: 2.2, open: [0.4, 0.8], shade: { root: 0.5, wing: 0.35, edge: 0.55, vein: 0.1, spot: 0 } }), focus: 0.8, haze: 0.8, soft: 0.3 },
+      ] });
+    },
+    clouds: (c, w, h, seed) => C.print(c, { width: w, height: h, seed, palette: 'sunprint', objects: (x, W, H, q) => B.sky(x, q, { w: W, h: H, tree: 'left' }), focus: 0.25, haze: 0.4, soft: 0.12, grain: 1.1, levels: [0.08, 0.92] }),
+    towers: (c, w, h, seed) => C.print(c, { width: w, height: h, seed, palette: 'sunprint', objects: (x, W, H, q) => B.towers(x, q, { w: W, h: H }), focus: 0.2, haze: 0.9, soft: 0.22, grain: 1.2, levels: [0.1, 0.9] }),
+    brushed(c, w, h, seed, photo) {
+      if (photo) return C.tone(c, photo, { width: w, height: h, seed, palette: 'sunprint', focus: 0.3, haze: 0.6, soft: 0.2, grain: 1.2, gamma: 1, levels: [0.12, 0.9], brush: 0.07 });
+      C.print(c, { width: w, height: h, seed, palette: 'sunprint', objects: (x, W, H, q) => B.sky(x, q, { w: W, h: H, tree: 'right', clouds: 1.2 }), focus: 0.25, haze: 0.4, soft: 0.12, grain: 1.2, levels: [0.12, 0.88], brush: 0.07 });
+    },
+    isles, undertow,
+  };
+
+  // ---- the wall: deal the sheets into columns, render them as they come into view ----
+  const wall = $('#wall');
+  const sheets = $$('[data-r]').map(el => ({
+    el, recipe: R[el.dataset.r], aspect: +el.dataset.a || 0, canvas: $('canvas', el),
+    seed: 1 + Math.floor(Math.random() * 9999), photo: null, size: null,
+  }));
+  const tiles = sheets.filter(t => t.el.classList.contains('tile'));
+  tiles.forEach(t => { t.el.style.aspectRatio = `1 / ${t.aspect}`; });
+  let ncols = 0;
+  function deal() {
+    const W = wall.clientWidth, N = W >= 1180 ? 5 : W >= 880 ? 4 : W >= 600 ? 3 : 2;
+    if (N === ncols) return;
+    ncols = N;
+    const cols = Array.from({ length: N }, () => { const d = document.createElement('div'); d.className = 'col'; return d; });
+    const hs = new Array(N).fill(0);
+    for (const t of tiles) { const k = hs.indexOf(Math.min(...hs)); cols[k].appendChild(t.el); hs[k] += t.aspect + 0.05; }
+    wall.replaceChildren(...cols);
+  }
+
+  const queue = [];
+  let busy = false;
+  function pump() {
+    if (busy || !queue.length) return;
+    busy = true;
+    const t = queue.shift();
+    requestAnimationFrame(() => setTimeout(() => {
+      try { draw(t); } finally { busy = false; pump(); }
+    }, 0));
+  }
+  function want(t) { if (!queue.includes(t)) { queue.push(t); pump(); } }
+  function draw(t) {
+    const r = t.canvas.getBoundingClientRect(), w = Math.max(2, Math.round(r.width * dpr)), h = Math.max(2, Math.round(r.height * dpr));
+    t.recipe(t.canvas, w, h, t.seed, t.photo);
+    t.size = [w, h];
+    // caption ink from the pixels right under it, name and controls apart: navy on pale, near-white on dark
+    if (t.el.classList.contains('tile')) {
+      const g = t.canvas.getContext('2d'), k = w / r.width;
+      [['--cap-l', '.name'], ['--cap-r', '.ctrl']].forEach(([v, sel]) => {
+        const e = $(sel, t.el).getBoundingClientRect();
+        const x0 = Math.max(0, Math.floor((e.left - r.left) * k)), y0 = Math.max(0, Math.floor((e.top - r.top) * k));
+        const px = g.getImageData(x0, y0, Math.max(1, Math.min(w - x0, Math.ceil(e.width * k))), Math.max(1, Math.min(h - y0, Math.ceil(e.height * k)))).data;
+        let L = 0;
+        for (let i = 0; i < px.length; i += 4) L += 0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2];
+        const pale = L / ((px.length / 4) * 255) > 0.56;
+        t.el.style.setProperty(v, pale ? '#10194a' : '#f4f6fb');
+        t.el.style.setProperty(v.replace('cap', 'halo'), pale ? 'rgba(240,244,250,.55)' : 'rgba(8,14,40,.5)');
+      });
+    }
+  }
+  function stale(t) {
+    if (!t.size) return true;
+    const r = t.canvas.getBoundingClientRect();
+    return Math.abs(r.width * dpr - t.size[0]) / t.size[0] > 0.12;
+  }
+  const byEl = new Map(sheets.map(t => [t.el, t]));
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    const t = byEl.get(e.target);
+    if (e.isIntersecting && stale(t)) want(t);
+  }), { rootMargin: '500px 0px' });
+
+  deal();
+  sheets.forEach(t => {
+    io.observe(t.el);
+    $('[data-again]', t.el).addEventListener('click', () => { t.seed = 1 + Math.floor(Math.random() * 9999); want(t); });
+    const file = $('input[type=file]', t.el);
+    if (file) file.addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return;
+      const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
+      t.photo = img; want(t);
     });
   });
-
-  const photoPlate = plates.find(p => p.kind === 'tone');
-  const fileInput = $('#photoFile');
-  fileInput.addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return;
-    const img = new Image(); img.src = URL.createObjectURL(f); await img.decode();
-    photoPlate.photo = img;
-    renderPlate(photoPlate);
-  });
-
-  plates.forEach(renderPlate);
 
   let resizeT;
   window.addEventListener('resize', () => {
     clearTimeout(resizeT);
-    resizeT = setTimeout(() => plates.forEach(renderPlate), 200);
+    resizeT = setTimeout(() => {
+      deal();
+      sheets.forEach(t => { io.unobserve(t.el); io.observe(t.el); });   // re-check what is in view and now the wrong size
+    }, 200);
   });
 })();
 </script>

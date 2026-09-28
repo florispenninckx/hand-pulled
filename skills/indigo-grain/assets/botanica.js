@@ -14,6 +14,12 @@
  *   Botanica.stem(ctx, x0, y0, x1, y1, { bow, w0, w1 })            a tapered, gently bowed stem
  *   Botanica.profile(ctx, rand, { x, y, scale, hair })            a head in profile with hair, neck and shoulder
  *   Botanica.ribbon(ctx, pts, halfWidth(u))                        the primitive every shape is filled with
+ *   Botanica.butterfly(ctx, rand, { x, y, size, angle, open, moth, shade })  a butterfly or moth, wings open or turned
+ *   Botanica.sky(ctx, rand, { w, h, tree, clouds })                a heaped-cloud sky, a pine at one edge
+ *   Botanica.towers(ctx, rand, { w, h, count })                    towers seen from below, window grids
+ *
+ * sky() and towers() paint luminance over the whole mask (a photograph, not a
+ * cut-out), so print them as a negative: what is bright stays pale.
  *
  * Original implementation.
  */
@@ -303,5 +309,237 @@
     }
   }
 
-  root.Botanica = { nerine, trumpet, leaf, stem, profile, ribbon, walk, bloom };
+  // ---- butterflies and moths ------------------------------------------------
+  // Right-hand wings in body units: x out from the body, y toward the tail. The
+  // outlines are a closed spline through these points; the left side is the mirror.
+  const WINGS = {
+    butterfly: {
+      fore: [[0.03, -0.1], [0.2, -0.42], [0.5, -0.66], [0.84, -0.72], [1, -0.58], [0.92, -0.32], [0.76, -0.08], [0.5, 0.04], [0.14, 0.04]],
+      hind: [[0.04, -0.02], [0.4, -0.02], [0.68, 0.14], [0.74, 0.38], [0.6, 0.6], [0.36, 0.74], [0.15, 0.62], [0.05, 0.3]],
+      body: 0.045, antenna: 0.62,
+    },
+    moth: {
+      fore: [[0.04, -0.12], [0.3, -0.42], [0.66, -0.58], [1, -0.56], [0.98, -0.36], [0.82, -0.06], [0.5, 0.08], [0.14, 0.06]],
+      hind: [[0.04, 0], [0.36, 0.02], [0.62, 0.14], [0.66, 0.34], [0.5, 0.5], [0.26, 0.54], [0.08, 0.36]],
+      body: 0.075, antenna: 0.42,
+    },
+  };
+  /** A closed Catmull-Rom spline through `ctrl`, `per` samples per span. */
+  function loop(ctrl, per) {
+    const n = ctrl.length, out = [];
+    for (let i = 0; i < n; i++) {
+      const p0 = ctrl[(i - 1 + n) % n], p1 = ctrl[i], p2 = ctrl[(i + 1) % n], p3 = ctrl[(i + 2) % n];
+      for (let k = 0; k < per; k++) {
+        const t = k / per, t2 = t * t, t3 = t2 * t;
+        const f = (a, b, c, d) => 0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t2 + (3 * b - a - 3 * c + d) * t3);
+        out.push([f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1])]);
+      }
+    }
+    return out;
+  }
+  /**
+   * One wing: outline jittered per specimen, scalloped along the outer margin,
+   * filled with a radial gradient from the root (dense at the root and the margin
+   * band, thinner between, which is how a wing takes the light), then veins and
+   * marginal spots drawn inside its clip.
+   */
+  function wing(ctx, rand, ctrl, side, S, o, sh) {
+    const j = ctrl.map(([x, y]) => [x + (rand() - 0.5) * 0.06, y + (rand() - 0.5) * 0.06]);
+    const pts = loop(j, 10), sc = o.scallop, ph = rand() * TAU;
+    let R = 0;
+    for (const p of pts) R = Math.max(R, Math.hypot(p[0], p[1]));
+    const path = new Path2D();
+    pts.forEach((p, i) => {
+      const r = Math.hypot(p[0], p[1]), a = Math.atan2(p[1], p[0]), out = Math.max(0, r / R - 0.55) / 0.45;
+      const k = 1 + sc * out * Math.sin(a * 26 + ph) * 0.5;
+      const X = p[0] * k * side * S, Y = p[1] * k * S;
+      i ? path.lineTo(X, Y) : path.moveTo(X, Y);
+    });
+    path.closePath();
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, R * S);
+    g.addColorStop(0, grey(1, sh.root)); g.addColorStop(0.45, grey(1, sh.wing));
+    g.addColorStop(0.82, grey(1, sh.wing)); g.addColorStop(1, grey(1, sh.edge));
+    ctx.fillStyle = g; ctx.fill(path);
+    ctx.save(); ctx.clip(path);
+    // veins from the root to the margin, bowed a little toward the tail
+    const nv = 7;
+    ctx.strokeStyle = sh.vein > 0 ? grey(0, sh.vein) : grey(1, -sh.vein);
+    ctx.lineWidth = Math.max(1.2, S * 0.008);
+    for (let v = 0; v < nv; v++) {
+      const p = pts[Math.floor((0.12 + 0.62 * v / (nv - 1)) * pts.length)];
+      ctx.beginPath(); ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(p[0] * 0.5 * side * S, (p[1] * 0.5 + 0.06) * S, p[0] * side * S, p[1] * S);
+      ctx.stroke();
+    }
+    // spots along the margin
+    if (sh.spot) {
+      ctx.fillStyle = sh.spot > 0 ? grey(0, sh.spot) : grey(1, -sh.spot);
+      for (let i = 0; i < pts.length; i += 7) {
+        const p = pts[i], r = Math.hypot(p[0], p[1]);
+        if (r < R * 0.7 || rand() < 0.35) continue;
+        ctx.beginPath(); ctx.arc(p[0] * 0.9 * side * S, p[1] * 0.9 * S, S * (0.015 + 0.025 * rand()), 0, TAU); ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  /**
+   * butterfly(ctx, rand, { x, y, size, angle, open, moth, scallop, shade })
+   * A butterfly or moth seen from above, `size` = one wing's span in px, `angle` the
+   * way the head points (0 = up). `open` = [left, right] spread of each side: a
+   * value under 1 foreshortens that side, the way a wing tilted toward the lens
+   * narrows. `shade` sets the grey of each part on the mask:
+   *   { root, wing, edge }  wing density from the body out (defaults 0.9, 0.78, 0.95)
+   *   vein, spot            darken by that much; a negative value lightens instead
+   *   body                  density of body and antennae (default 0.95)
+   * A pale print of a pale wing wants the defaults; an ink moth on sky wants a
+   * thinner wing and a dense body, e.g. { root: 0.95, wing: 0.55, edge: 0.8, vein: -0.25, body: 1 }.
+   */
+  function butterfly(ctx, rand, o) {
+    const kind = WINGS[o.moth ? 'moth' : 'butterfly'], S = o.size, open = o.open || [1, 1];
+    const sh = Object.assign({ root: 0.9, wing: 0.78, edge: 0.95, vein: 0.12, spot: 0.18, body: 0.95 }, o.shade);
+    const oo = { scallop: o.scallop == null ? (o.moth ? 0.02 : 0.05) : o.scallop };
+    ctx.save(); ctx.translate(o.x, o.y); ctx.rotate(o.angle || 0);
+    for (const side of [-1, 1]) {
+      const k = open[side < 0 ? 0 : 1];
+      ctx.save(); ctx.scale(k, 1);
+      wing(ctx, rand, kind.hind, side, S, oo, sh);
+      wing(ctx, rand, kind.fore, side, S, oo, sh);
+      ctx.restore();
+    }
+    // body, thorax, head
+    ctx.fillStyle = grey(1, sh.body);
+    const bw = kind.body * S;
+    ctx.beginPath(); ctx.ellipse(0, 0.2 * S, bw * 0.8, 0.3 * S, 0, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, -0.04 * S, bw * 1.15, 0.13 * S, 0, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(0, -0.19 * S, bw * 0.9, 0, TAU); ctx.fill();
+    // antennae: clubbed on a butterfly, thicker and shorter on a moth
+    ctx.strokeStyle = grey(1, sh.body); ctx.lineCap = 'round';
+    for (const side of [-1, 1]) {
+      const L = kind.antenna * S, ex = side * L * (0.42 + 0.1 * rand()), ey = -0.2 * S - L * 0.9;
+      ctx.lineWidth = Math.max(1, S * (o.moth ? 0.016 : 0.007));
+      ctx.beginPath(); ctx.moveTo(side * bw * 0.4, -0.22 * S);
+      ctx.quadraticCurveTo(side * L * 0.08, -0.2 * S - L * 0.6, ex, ey); ctx.stroke();
+      if (!o.moth) { ctx.beginPath(); ctx.arc(ex, ey, S * 0.018, 0, TAU); ctx.fill(); }
+    }
+    ctx.restore();
+  }
+
+  // ---- scenes for sun-printed photographs -----------------------------------
+  // These paint a whole photograph as luminance (white = bright) over the mask, so
+  // a negative print keeps the lights pale and turns the darks to ink.
+  function lumField(ctx, W, H, k, fn) {
+    const w = Math.max(1, Math.round(W * k)), h = Math.max(1, Math.round(H * k));
+    const c = document.createElement('canvas'); c.width = w; c.height = h;
+    const x2 = c.getContext('2d'), img = x2.createImageData(w, h), d = img.data;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const v = Math.max(0, Math.min(255, fn(x / k, y / k) * 255)), i = (y * w + x) * 4;
+      d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255;
+    }
+    x2.putImageData(img, 0, 0);
+    ctx.save(); ctx.imageSmoothingEnabled = true; ctx.drawImage(c, 0, 0, W, H); ctx.restore();
+  }
+  function perlin(rand) {
+    const p = new Uint8Array(512), perm = Array.from({ length: 256 }, (_, i) => i);
+    for (let i = 255; i > 0; i--) { const j = (rand() * (i + 1)) | 0; [perm[i], perm[j]] = [perm[j], perm[i]]; }
+    for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
+    const fade = t => t * t * t * (t * (t * 6 - 15) + 10), g = (h, x, y) => ((h & 1) ? -x : x) + ((h & 2) ? -y : y);
+    const n = (x, y) => {
+      const xi = Math.floor(x), yi = Math.floor(y), X = xi & 255, Y = yi & 255; x -= xi; y -= yi;
+      const u = fade(x), v = fade(y), a = p[X] + Y, b = p[X + 1] + Y;
+      const n0 = g(p[a], x, y) + u * (g(p[b], x - 1, y) - g(p[a], x, y));
+      const n1 = g(p[a + 1], x, y - 1) + u * (g(p[b + 1], x - 1, y - 1) - g(p[a + 1], x, y - 1));
+      return n0 + v * (n1 - n0);
+    };
+    return (x, y, oct) => { let s = 0, a = 0.5, f = 1; for (let i = 0; i < oct; i++) { s += a * n(x * f, y * f); f *= 2.03; a *= 0.5; } return s; };
+  }
+  /** A spray of needle-fine dark strokes around (x, y): one clump of pine or cypress foliage. */
+  function foliage(ctx, rand, x, y, r, dark) {
+    ctx.strokeStyle = grey(dark, 0.85); ctx.lineCap = 'round';
+    const count = Math.round(r * 7);
+    for (let i = 0; i < count; i++) {
+      // needles lie along little twigs fanning out from the clump's centre
+      const a = rand() * TAU, d = r * Math.pow(rand(), 0.7), px = x + Math.cos(a) * d, py = y + Math.sin(a) * d * 0.6;
+      const b = a + (rand() - 0.5) * 1.4, l = r * (0.08 + 0.2 * rand());
+      ctx.lineWidth = 0.7 + rand() * 1.1;
+      ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + Math.cos(b) * l, py + Math.sin(b) * l); ctx.stroke();
+    }
+    ctx.fillStyle = grey(dark, 0.9);
+    ctx.beginPath(); ctx.ellipse(x, y, r * 0.2, r * 0.12, 0, 0, TAU); ctx.fill();
+  }
+  /**
+   * sky(ctx, rand, { w, h, tree, clouds }) — a bright sky photographed upward:
+   * heaped clouds with shaded undersides across a sky that darkens toward the top,
+   * and (tree: 'left' | 'right' | false) a pine at the edge, its branches black
+   * against the light (pin: clouds and a tree, sun-printed).
+   */
+  function sky(ctx, rand, o) {
+    const W = o.w, H = o.h, s = Math.min(W, H), n = perlin(rand), cl = o.clouds == null ? 1 : o.clouds;
+    const tilt = rand() * 0.6 - 0.3, cx = rand() * 9, cy = rand() * 9;
+    lumField(ctx, W, H, 0.5, (x, y) => {
+      const u = x / s, v = y / s;
+      const base = 0.36 + 0.3 * (y / H) - 0.12 * (x / W);
+      const f = q => n(u * 1.5 + cx, (q + u * tilt) * 2.4 + cy, 6) + 0.25 * n(u * 6 + 3, q * 6, 3);
+      const shape = f(v) + 0.02 + 0.25 * (cl - 1);
+      const c = Math.max(0, Math.min(1, shape * 4.5));
+      const under = Math.max(0, Math.min(1, (f(v - 0.03) - shape) * 7));          // heaps are shaded underneath
+      return base + (0.98 - base) * c * (1 - 0.3 * under);
+    });
+    if (!o.tree) return;
+    const left = o.tree !== 'right', X0 = left ? -0.02 * W : 1.02 * W, dir = left ? 1 : -1;
+    const trunk = walk(X0 + dir * 0.06 * W, H * 1.05, H * 0.9, -Math.PI / 2 + dir * 0.12, () => -dir * 0.25, 30);
+    ctx.fillStyle = grey(0.05, 0.95);
+    ribbon(ctx, trunk, u => s * (0.018 - 0.012 * u));
+    for (let i = 0; i < 9; i++) {
+      const at = trunk[Math.floor((0.25 + 0.72 * rand()) * (trunk.length - 1))];
+      const L = s * (0.12 + 0.28 * rand()), a = dir > 0 ? -0.35 - rand() * 0.8 : Math.PI + 0.35 + rand() * 0.8;
+      const br = walk(at.x, at.y, L, a, () => (rand() - 0.5) * 1.2, 12);
+      ctx.fillStyle = grey(0.05, 0.95); ribbon(ctx, br, u => s * 0.006 * (1 - u * 0.7));
+      for (let k = 3; k < br.length; k += 3) foliage(ctx, rand, br[k].x, br[k].y, s * (0.03 + 0.05 * rand()), 0.06);
+    }
+    for (let k = 4; k < trunk.length; k += 2) foliage(ctx, rand, trunk[k].x + dir * s * 0.03, trunk[k].y, s * (0.04 + 0.05 * rand()), 0.05);
+  }
+  /**
+   * towers(ctx, rand, { w, h, count }) — a cluster of towers seen from their foot,
+   * verticals converging toward the top, each facade either in sun or in shade and
+   * ruled with floors and mullions. Print it with a vertical smear and it reads as a
+   * long exposure of a city (pin: the streaked skyline).
+   */
+  function towers(ctx, rand, o) {
+    const W = o.w, H = o.h, N = o.count || 5, vx = W * (0.4 + 0.2 * rand()), vy = -H * 1.6;
+    const sky = ctx.createLinearGradient(0, 0, 0, H);
+    sky.addColorStop(0, grey(0.42)); sky.addColorStop(1, grey(0.78));
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+    const lanes = Array.from({ length: N }, (_, i) => (i + 0.2 + 0.6 * rand()) / N).sort(() => rand() - 0.5);
+    lanes.forEach((u, i) => {
+      const bw = W * (0.14 + 0.16 * rand()), x0 = u * W * 1.1 - W * 0.05 - bw / 2, top = H * (0.02 + 0.45 * rand());
+      const toV = (x, y) => x + (vx - x) * ((H - y) / (H - vy));   // lean toward the vanishing point above
+      const lit = rand() < 0.55, face = lit ? 0.9 + 0.08 * rand() : 0.18 + 0.2 * rand();
+      const A = [toV(x0, top), top], B = [toV(x0 + bw, top), top], C = [x0 + bw, H * 1.02], D = [x0, H * 1.02];
+      const fg = ctx.createLinearGradient(0, top, 0, H);               // the sun catches the upper floors
+      fg.addColorStop(0, grey(face)); fg.addColorStop(1, grey(lit ? face * 0.8 : face * 0.6));
+      ctx.fillStyle = fg; ctx.beginPath(); ctx.moveTo(...A); ctx.lineTo(...B); ctx.lineTo(...C); ctx.lineTo(...D); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.clip();
+      const fl = Math.max(3, H * (0.009 + 0.006 * rand()));
+      ctx.fillStyle = grey(lit ? 0.35 : 0.02, lit ? 0.65 : 0.6);
+      for (let y = top + fl * 0.5; y < H; y += fl) ctx.fillRect(0, y, W, fl * 0.42);
+      const cols = 4 + (rand() * 8 | 0);
+      ctx.strokeStyle = grey(lit ? 0.4 : 0.4, 0.6); ctx.lineWidth = Math.max(1, bw * 0.018);
+      for (let c = 1; c < cols; c++) {
+        const f = c / cols; ctx.beginPath(); ctx.moveTo(A[0] + (B[0] - A[0]) * f, top); ctx.lineTo(D[0] + (C[0] - D[0]) * f, H); ctx.stroke();
+      }
+      ctx.restore();
+      if (rand() < 0.4) {                                   // a mast or a crown on top
+        ctx.fillStyle = grey(face * 0.9 + 0.1);
+        ctx.fillRect((A[0] + B[0]) / 2 - bw * 0.05, top - H * 0.08, bw * 0.1, H * 0.08);
+      }
+    });
+    // uneven exposure: long faint streaks down the sheet, some light, some dark
+    for (let i = 0; i < W * 0.5; i++) {
+      const x = rand() * W, y = rand() * H * 0.7, l = H * (0.2 + 0.8 * rand());
+      ctx.fillStyle = grey(rand() < 0.5 ? 1 : 0, 0.04 + 0.1 * rand());
+      ctx.fillRect(x, y, 1 + rand() * 2.5, l);
+    }
+  }
+
+  root.Botanica = { nerine, trumpet, leaf, stem, profile, ribbon, walk, bloom, butterfly, sky, towers };
 })(typeof window !== 'undefined' ? window : globalThis);
