@@ -73,6 +73,34 @@
     .listing li .t, .listing li .a, .listing li .n { grid-column: 2; }
   }
 
+  /* the live hero draws its own arrival (develop: 'in'), so the CSS reveal is off for it */
+  .plate[data-live] canvas { clip-path: none !important; }
+
+  /* Slitdeck: a small fictional desk built from live-ui.js */
+  .deck-strip { height: clamp(48px, 7vw, 88px); }
+  .deck { padding: clamp(40px, 6vw, 80px) 16px; max-width: 1240px; margin: 0 auto; }
+  .deck h2 { margin: 0; font: 800 clamp(32px, 5vw, 72px)/.85 'Archivo', sans-serif; letter-spacing: -.04em; }
+  .deck .sub { margin: 10px 0 24px; color: var(--dim); }
+  .deck-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 20px 28px; align-items: start; }
+  .screen { aspect-ratio: 16 / 9; background: #15151a; position: relative; }
+  .screen .tag { position: absolute; left: 0; bottom: 0; background: var(--page); padding: 2px 8px; font-size: 12px; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 12px; }
+  .lbtn { border: 0; padding: 12px 16px; background: #0b0b0e; cursor: pointer; font: 500 13px 'IBM Plex Mono', monospace; }
+  .lbtn span { background: var(--page); padding: 1px 6px; }
+  .lbtn:hover span, .lbtn:focus-visible span { background: var(--ink); color: var(--page); }
+  .panel { display: grid; gap: 16px; border-top: 1px solid var(--ink); padding-top: 12px; }
+  .field { display: grid; grid-template-columns: 15ch minmax(0, 1fr) 4ch; gap: 10px; align-items: center; }
+  .field output { color: var(--teal); text-align: right; }
+  .pg-toggle { width: 64px; height: 22px; }
+  .pg-slider { width: 100%; height: 18px; }
+  .bar { height: 14px; background: #0b0b0e; outline: 1px solid var(--rule); }
+  .load { width: 100%; height: 6px; }
+  .load[hidden] { display: none; }
+  .clips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+  .clip { aspect-ratio: 4 / 5; position: relative; }
+  .clip b { position: absolute; left: 0; bottom: 0; background: var(--page); padding: 2px 8px; font-weight: 500; font-size: 12px; }
+  @media (max-width: 700px) { .deck-grid, .clips { grid-template-columns: 1fr; } .clip { aspect-ratio: 3 / 2; } }
+
   footer { padding: 0 16px 48px; max-width: 1240px; margin: 0 auto; font-size: 12px; color: var(--dim); }
   footer a { color: inherit; text-underline-offset: 3px; }
   footer code { color: var(--ink); }
@@ -80,7 +108,7 @@
 </head>
 <body>
 <main>
-  <section class="plate hero" data-kind="smear" data-seed="6">
+  <section class="plate hero" data-kind="smear" data-seed="6" data-live>
     <canvas aria-label="A coast at dusk read through a slit band by band: stepped horizontal streaks of navy, teal, pink and orange over a dark sea."></canvas>
     <h1>stale<br>vector</h1>
     <div class="meta">
@@ -173,6 +201,35 @@
       <li><span class="t">19:00</span><span class="a">Ines Koort — mint drip</span><span class="n">closing</span></li>
     </ol>
   </section>
+
+  <div class="deck-strip" aria-hidden="true"></div>
+  <section class="deck" aria-labelledby="deck-h">
+    <h2 id="deck-h">slitdeck</h2>
+    <p class="sub">the desk the weekend's visuals run from (a fictional tool). Hover, press, scroll.</p>
+    <div class="deck-grid">
+      <div>
+        <div class="screen" id="screen"><span class="tag" id="clipname">I — smear.mov</span></div>
+        <div class="row">
+          <button type="button" class="lbtn" id="burst"><span>burst</span></button>
+          <button type="button" class="lbtn" id="next"><span>next clip</span></button>
+          <button type="button" class="lbtn" id="export"><span>export</span></button>
+        </div>
+      </div>
+      <div class="panel" role="group" aria-label="Desk controls">
+        <label class="field"><span>sort</span><input type="checkbox" id="sort" checked><span></span></label>
+        <label class="field"><span>mosh on scroll</span><input type="checkbox" id="mosh" checked><span></span></label>
+        <label class="field"><span>threshold</span><input type="range" id="lo" min="0" max="90" value="25"><output for="lo" id="lo-o">.25</output></label>
+        <label class="field"><span>streak</span><input type="range" id="len" min="0" max="100" value="100"><output for="len" id="len-o">1.0</output></label>
+        <div class="field"><span>export</span><div class="bar" id="bar" aria-label="Export"></div><output id="bar-o">0%</output></div>
+        <div class="load" id="load" hidden aria-label="Reading frames"></div>
+      </div>
+    </div>
+    <div class="clips">
+      <div class="clip" id="c1"><b>II — wave.mov</b></div>
+      <div class="clip" id="c2"><b>VI — drip.mp4</b></div>
+      <div class="clip" id="c3"><b>IV — collage.psd</b></div>
+    </div>
+  </section>
 </main>
 <footer>
   Stale Vector, its venue and its artists are fictional. No plate is a photograph or a found glitch: the coast is drawn by <code>glitch.js</code>, then broken the way a slit, a codec, a dropped screen, a scanner or a layout breaks a picture. Press <i>another</i> for a new one, or drop your own photograph on a plate.
@@ -180,12 +237,14 @@
 </footer>
 <script src="assets/pixelsort.js"></script>
 <script src="assets/glitch.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
 <script>
 (function () {
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const dpr = Math.min(2, window.devicePixelRatio || 1), SCENE = 6;   // one picture for the whole page
-  const plates = $$('.plate').map(el => {
+  const plates = $$('.plate:not([data-live])').map(el => {
     const box = el.closest('figure') || el;
     return { el, box, canvas: $('canvas', el), kind: el.dataset.kind, seed: +el.dataset.seed, scene: SCENE, mode: el.dataset.mode, image: null };
   });
@@ -225,6 +284,54 @@
   addEventListener('resize', () => {   // phones fire resize on scroll as the toolbar moves; only a width change re-renders
     if (innerWidth === lastW) return;
     lastW = innerWidth; clearTimeout(t); t = setTimeout(renderAll, 200);
+  });
+})();
+</script>
+<script>
+(function () {
+  // the live hero and Slitdeck: live.js + live-ui.js on top of the same still engine
+  const $ = s => document.querySelector(s), ui = Glitch.ui, SCENE = 6;
+  const hero = $('.hero');
+  const heroCtl = Glitch.live(hero.querySelector('canvas'), { mode: 'smear', seed: 6, scene: SCENE, develop: 'in', clickPulse: true, hand: hero });
+  hero.querySelector('[data-again]').addEventListener('click', () => heroCtl && heroCtl.load({ mode: 'smear', seed: 1 + Math.floor(Math.random() * 9999), scene: 1 + Math.floor(Math.random() * 9999) }));
+  hero.querySelector('input[type=file]').addEventListener('change', async e => {
+    const f = e.target.files[0]; if (!f || !/^image\//.test(f.type) || !heroCtl) return;
+    const img = new Image(); img.src = URL.createObjectURL(f);
+    try { await img.decode(); } catch (x) { return; }
+    heroCtl.set({ image: img });
+  });
+
+  ui.transition($('.deck-strip'));
+  ui.focusRing();
+  const screen = ui.card($('#screen'), { mode: 'smear', seed: 3, scene: SCENE, sweep: 1, clickPulse: true });
+  const CLIPS = [['smear', null, 'I — smear.mov'], ['wave', 'ripple', 'II — wave.mov'], ['drip', 'dusk', 'VI — drip.mp4'], ['scan', null, 'VII — scan.tif'], ['collage', 'night', 'IV — collage.psd']];
+  let clip = 0;
+  ui.button($('#burst')); ui.button($('#next'), { seed: 4 }); ui.button($('#export'), { seed: 8 });
+  $('#burst').addEventListener('click', () => { const r = $('#screen').getBoundingClientRect(); screen && screen.pulse(r.width * (0.2 + Math.random() * 0.6), r.height * (0.2 + Math.random() * 0.6), 1); });
+  $('#next').addEventListener('click', () => {
+    clip = (clip + 1) % CLIPS.length; const [mode, variant, name] = CLIPS[clip];
+    if (screen) screen.load({ mode, variant, seed: 3 + clip, scene: SCENE });
+    $('#clipname').textContent = name;
+  });
+  const sortT = ui.toggle($('#sort')), moshT = ui.toggle($('#mosh'), { seed: 6 });
+  const lo = ui.slider($('#lo')), len = ui.slider($('#len'), { seed: 9 });
+  const streak = () => $('#sort').checked ? +$('#len').value / 100 : 0;
+  $('#sort').addEventListener('change', () => screen && screen.set({ sweep: streak() }));
+  $('#mosh').addEventListener('change', e => { screen && screen.set({ mosh: e.target.checked ? 1 : 0 }); heroCtl && heroCtl.set({ mosh: e.target.checked ? 1 : 0 }); });
+  $('#lo').addEventListener('input', e => { const v = e.target.value / 100; $('#lo-o').textContent = v.toFixed(2).slice(1); screen && screen.set({ lo: v }); });
+  $('#len').addEventListener('input', e => { $('#len-o').textContent = (e.target.value / 100).toFixed(1); screen && screen.set({ sweep: streak() }); });
+  const bar = ui.progress($('#bar')), load = ui.loader($('#load'));
+  ['c1', 'c2', 'c3'].forEach((id, i) => ui.card($('#' + id), [{ mode: 'wave', variant: 'ripple', seed: 2 }, { mode: 'drip', variant: 'dusk', seed: 5 }, { mode: 'collage', variant: 'night', seed: 1 }][i]));
+  let job = 0;
+  $('#export').addEventListener('click', () => {
+    const t0 = performance.now(), me = ++job, reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('#load').hidden = false;
+    (function step() {
+      if (me !== job) return;
+      const p = Math.min(1, (performance.now() - t0) / 2400);
+      bar.set(p); $('#bar-o').textContent = Math.round(p * 100) + '%';
+      if (p < 1) setTimeout(step, reduce ? 400 : 60); else $('#load').hidden = true;
+    })();
   });
 })();
 </script>
