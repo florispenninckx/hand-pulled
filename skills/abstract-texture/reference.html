@@ -133,8 +133,10 @@
   .bar { height: 14px; box-shadow: inset 0 0 0 1px var(--rule); }
   .field { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; font: 400 12px var(--mono); }
   .field output { color: var(--soft); }
+  .field > span { display: inline-flex; align-items: center; gap: 10px; }
+  .panel h3 { display: flex; align-items: center; gap: 10px; }
   .btns { display: flex; flex-wrap: wrap; gap: 12px; }
-  .lbtn { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #3a2016; border: 0; padding: 15px 20px; cursor: pointer; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+  .lbtn { display: inline-flex; align-items: center; gap: 10px; font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #3a2016; border: 0; padding: 15px 20px; cursor: pointer; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
   .lbtn.quiet { background: #1b2250; }
   .lbtn.warm:hover, .lbtn.warm:focus-visible { color: #1b1216; text-shadow: none; }
   .lbtn:focus-visible { outline: 1px solid var(--kiln); outline-offset: 3px; }
@@ -323,17 +325,17 @@
     </div>
     <div class="app">
       <div class="panel">
-        <h3>The lehr, now</h3>
+        <h3><i data-icon="thermometer"></i>The lehr, now</h3>
         <div class="readout"><div class="lamp" id="lamp" aria-label="reading the thermocouple"></div><div><div class="temp" id="temp">512°</div><div class="mono" id="phase">holding at the annealing point</div></div></div>
         <div class="bar" id="bar" aria-label="cycle progress"></div>
         <label class="field" for="rate">Cooling rate, degrees an hour <output id="rateOut" for="rate">60</output></label>
         <input type="range" id="rate" min="20" max="120" value="60">
-        <label class="field"><span>Hold at the strain point</span><input type="checkbox" id="hold" checked></label>
-        <label class="field"><span>Ring the bell when cold</span><input type="checkbox" id="bell"></label>
-        <div class="btns"><button type="button" class="lbtn warm" id="start"><span id="startLabel">Start the cycle</span></button><button type="button" class="lbtn quiet" id="logit">Log a piece</button></div>
+        <label class="field"><span><i data-icon="hourglass"></i>Hold at the strain point</span><input type="checkbox" id="hold" checked></label>
+        <label class="field"><span><i data-icon="bell"></i>Ring the bell when cold</span><input type="checkbox" id="bell"></label>
+        <div class="btns"><button type="button" class="lbtn warm" id="start"><i data-icon="flame" data-palette="cobalt"></i><span id="startLabel">Start the cycle</span></button><button type="button" class="lbtn quiet" id="logit"><i data-icon="plus"></i>Log a piece</button></div>
       </div>
       <div class="panel">
-        <h3>In the lehr tonight</h3>
+        <h3><i data-icon="snowflake"></i>In the lehr tonight</h3>
         <div class="pieces" id="pieces">
           <div class="piece" tabindex="0" data-mode="satin" data-palette="opal"><span>No. 118</span><b>Bowl, pale</b><span>blown · 2.1 kg</span></div>
           <div class="piece dark" tabindex="0" data-mode="reeded" data-palette="cobalt"><span>No. 119</span><b>Fluted panel</b><span>cast · 4.4 kg</span></div>
@@ -396,6 +398,9 @@
   document.querySelectorAll('.piece').forEach((el, i) => ui.card(el, { mode: el.dataset.mode, palette: el.dataset.palette, seed: 4 + i }));
   ui.button($('start'), { palette: 'ember' });
   ui.button($('logit'), { palette: 'cobalt', mode: 'reeded' });
+  // icons seen through the glass, and a loupe of reeded glass trailing the mouse over the app
+  document.querySelectorAll('.app [data-icon]').forEach(el => ui.icon(el, el.dataset.icon, el.dataset.palette ? { palette: el.dataset.palette } : {}));
+  ui.cursor(document.querySelector('.app'));
   let run = null, n = 121;
   $('start').addEventListener('click', () => {
     if (run) return;
