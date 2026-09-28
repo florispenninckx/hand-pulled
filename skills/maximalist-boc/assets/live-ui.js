@@ -9,10 +9,12 @@
  *   const ui = Pour.ui;
  *   ui.background(section, { mode: 'marble' });   ui.button(btn);   ui.card(card, { mode: 'bands' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
- *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
+ *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.cursor(section);
+ *   ui.icon(span, 'paint-bucket');   span.style.maskImage = ui.iconMask(svg);
  *
  * Every function returns the live controller (or a small object holding it) so a page can set()
- * it further. Original code, MIT.
+ * it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
+ * https://phosphoricons.com — inlined below, never fetched. The rest is original code, MIT.
  */
 (function (root) {
   'use strict';
@@ -21,6 +23,22 @@
   const live = P.live;
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+
+  // Phosphor Icons, light weight (MIT). 256 viewBox, filled outlines.
+  const I = d => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="${d}"/></svg>`;
+  const ICONS = {
+    drop: I('M172.53,49.06a252.86,252.86,0,0,0-41.09-38,6,6,0,0,0-6.88,0,252.86,252.86,0,0,0-41.09,38C56.34,80.26,42,113.09,42,144a86,86,0,0,0,172,0C214,113.09,199.66,80.26,172.53,49.06ZM128,218a74.09,74.09,0,0,1-74-74c0-59.62,59-108.93,74-120.51C143,35.07,202,84.38,202,144A74.09,74.09,0,0,1,128,218Zm53.92-65A55.58,55.58,0,0,1,137,197.92a7,7,0,0,1-1,.08,6,6,0,0,1-1-11.92c17.38-2.92,32.13-17.68,35.08-35.08a6,6,0,1,1,11.84,2Z'),
+    'drop-half': I('M172.53,49.06a251.42,251.42,0,0,0-41.09-38,6,6,0,0,0-6.88,0,251.42,251.42,0,0,0-41.09,38C56.34,80.26,42,113.09,42,144a86,86,0,0,0,172,0C214,113.09,199.66,80.26,172.53,49.06ZM202,144a75,75,0,0,1-.69,10H134V134h67.44A92.09,92.09,0,0,1,202,144ZM186.8,90H134V70h39.89A176,176,0,0,1,186.8,90ZM134,198h44.52A73.76,73.76,0,0,1,134,217.74Zm0-12V166h64.66a74.05,74.05,0,0,1-9.78,20Zm0-64V102h58.7a117.43,117.43,0,0,1,6.69,20Zm30.29-64H134V28.3A257.09,257.09,0,0,1,164.29,58ZM54,144c0-53.42,47.35-98.56,68-115.7V217.74A74.09,74.09,0,0,1,54,144Z'),
+    'paint-bucket': I('M237,164.67a6,6,0,0,0-10,0c-.7,1-17,25.72-17,43.33a22,22,0,0,0,44,0C254,190.39,237.69,165.71,237,164.67ZM232,218a10,10,0,0,1-10-10c0-8.17,5.37-19.92,10-28.34,4.63,8.41,10,20.15,10,28.34A10,10,0,0,1,232,218Zm1.9-80.82a6,6,0,0,0,2.34-9.94L120.76,11.76a6,6,0,0,0-8.49,0l-42,42-26-26a6,6,0,0,0-8.49,8.48l26,26L16.44,107.59a22,22,0,0,0,0,31.11l84.86,84.86a22,22,0,0,0,31.11,0l78.83-78.83Zm-30.14-1.94-79.83,79.83a10,10,0,0,1-14.14,0L24.93,130.21a10,10,0,0,1,0-14.14L70.25,70.75l31.62,31.61a26,26,0,0,0,3.75,32,26,26,0,0,0,36.76,0h0a26,26,0,0,0-32-40.51L78.74,62.26l37.78-37.77L220.89,128.86l-14.79,4.93A6.07,6.07,0,0,0,203.76,135.24ZM114.1,106.11l0,0a14,14,0,1,1,0,19.82,13.91,13.91,0,0,1,0-19.82Z'),
+    'paint-brush': I('M224,26c-20.8,0-44.11,11.41-69.3,33.9C136.62,76.06,121,94.9,110.3,109A58,58,0,0,0,34,164c0,32.07-20.43,46.39-21.35,47A6,6,0,0,0,16,222H92a58,58,0,0,0,55-76.3c14.08-10.67,32.92-26.32,49.08-44.4C218.59,76.11,230,52.8,230,32A6,6,0,0,0,224,26ZM92,210H30.65C37.92,200.85,46,185.78,46,164a46,46,0,1,1,46,46Zm29.49-95.91c3.6-4.67,7.88-10,12.71-15.69a78.17,78.17,0,0,1,23.4,23.4c-5.67,4.83-11,9.11-15.69,12.71A58.38,58.38,0,0,0,121.49,114.09Zm45.2-.3a90.24,90.24,0,0,0-24.48-24.48C163.05,66.46,191,42,217.56,38.44,214,65,189.54,93,166.69,113.79Z'),
+    'hourglass-medium': I('M198,75.64V40a14,14,0,0,0-14-14H72A14,14,0,0,0,58,40V76a14.06,14.06,0,0,0,5.6,11.2L118,128,63.6,168.8A14.06,14.06,0,0,0,58,180v36a14,14,0,0,0,14,14H184a14,14,0,0,0,14-14V180.36a14.08,14.08,0,0,0-5.56-11.17L138,128l54.49-41.19A14.08,14.08,0,0,0,198,75.64ZM70,40a2,2,0,0,1,2-2H184a2,2,0,0,1,2,2V75.64a2,2,0,0,1-.79,1.6L178.9,82H76.67L70.8,77.6A2,2,0,0,1,70,76Zm58,80.49L92.67,94H163Zm58,59.87V216a2,2,0,0,1-2,2H72a2,2,0,0,1-2-2V180a2,2,0,0,1,.8-1.6L122,140v28a6,6,0,0,0,12,0V140.06l51.21,38.7A2,2,0,0,1,186,180.36Z'),
+    waves: I('M220.62,178.58a6,6,0,0,1-.79,8.45c-16.87,14-32,19-45.75,19-18.19,0-34.13-8.66-48.94-16.7-26-14.12-48.44-26.31-81.31,1A6,6,0,0,1,36.17,181c39.13-32.45,68.65-16.41,94.69-2.26s48.44,26.31,81.31-1A6,6,0,0,1,220.62,178.58Zm-8.45-56.81c-32.87,27.27-55.32,15.07-81.31,1S75.3,92.54,36.17,125a6,6,0,0,0,7.66,9.25c32.87-27.27,55.32-15.08,81.31-1,14.81,8,30.75,16.71,48.94,16.71,13.79,0,28.88-5,45.75-19a6,6,0,0,0-7.66-9.24ZM43.83,78.21c32.87-27.27,55.32-15.07,81.31-1C140,85.3,155.89,94,174.08,94c13.79,0,28.88-5,45.75-19a6,6,0,1,0-7.66-9.24c-32.87,27.27-55.32,15.07-81.31,1S75.3,36.52,36.17,69a6,6,0,1,0,7.66,9.24Z'),
+    sparkle: I('M196.89,130.94,144.4,111.6,125.06,59.11a13.92,13.92,0,0,0-26.12,0L79.6,111.6,27.11,130.94a13.92,13.92,0,0,0,0,26.12L79.6,176.4l19.34,52.49a13.92,13.92,0,0,0,26.12,0L144.4,176.4l52.49-19.34a13.92,13.92,0,0,0,0-26.12Zm-4.15,14.86-55.08,20.3a6,6,0,0,0-3.56,3.56l-20.3,55.08a1.92,1.92,0,0,1-3.6,0L89.9,169.66a6,6,0,0,0-3.56-3.56L31.26,145.8a1.92,1.92,0,0,1,0-3.6l55.08-20.3a6,6,0,0,0,3.56-3.56l20.3-55.08a1.92,1.92,0,0,1,3.6,0l20.3,55.08a6,6,0,0,0,3.56,3.56l55.08,20.3a1.92,1.92,0,0,1,0,3.6ZM146,40a6,6,0,0,1,6-6h18V16a6,6,0,0,1,12,0V34h18a6,6,0,0,1,0,12H182V64a6,6,0,0,1-12,0V46H152A6,6,0,0,1,146,40ZM246,88a6,6,0,0,1-6,6H230v10a6,6,0,0,1-12,0V94H208a6,6,0,0,1,0-12h10V72a6,6,0,0,1,12,0V82h10A6,6,0,0,1,246,88Z'),
+    play: I('M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z'),
+    pause: I('M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z'),
+    sliders: I('M62,106.6V40a6,6,0,0,0-12,0v66.6a30,30,0,0,0,0,58.8V216a6,6,0,0,0,12,0V165.4a30,30,0,0,0,0-58.8ZM56,154a18,18,0,1,1,18-18A18,18,0,0,1,56,154Zm78-95.4V40a6,6,0,0,0-12,0V58.6a30,30,0,0,0,0,58.8V216a6,6,0,0,0,12,0V117.4a30,30,0,0,0,0-58.8ZM128,106a18,18,0,1,1,18-18A18,18,0,0,1,128,106Zm102,62a30.05,30.05,0,0,0-24-29.4V40a6,6,0,0,0-12,0v98.6a30,30,0,0,0,0,58.8V216a6,6,0,0,0,12,0V197.4A30.05,30.05,0,0,0,230,168Zm-30,18a18,18,0,1,1,18-18A18,18,0,0,1,200,186Z'),
+    shuffle: I('M236.24,179.76a6,6,0,0,1,0,8.48l-24,24a6,6,0,0,1-8.48-8.48L217.52,190H200.94a70.16,70.16,0,0,1-57-29.31l-41.71-58.4A58.11,58.11,0,0,0,55.06,78H32a6,6,0,0,1,0-12H55.06a70.16,70.16,0,0,1,57,29.31l41.71,58.4A58.11,58.11,0,0,0,200.94,178h16.58l-13.76-13.76a6,6,0,0,1,8.48-8.48Zm-92.06-74.41a5.91,5.91,0,0,0,3.48,1.12,6,6,0,0,0,4.89-2.51l1.19-1.67A58.11,58.11,0,0,1,200.94,78h16.58L203.76,91.76a6,6,0,1,0,8.48,8.48l24-24a6,6,0,0,0,0-8.48l-24-24a6,6,0,0,0-8.48,8.48L217.52,66H200.94a70.16,70.16,0,0,0-57,29.31L142.78,97A6,6,0,0,0,144.18,105.35Zm-32.36,45.3a6,6,0,0,0-8.37,1.39l-1.19,1.67A58.11,58.11,0,0,1,55.06,178H32a6,6,0,0,0,0,12H55.06a70.16,70.16,0,0,0,57-29.31l1.19-1.67A6,6,0,0,0,111.82,150.65Z'),
+  };
 
   let styled = false;
   function style() {
@@ -41,7 +59,12 @@
 .mx-slider>.mx-thumb{transition:none}
 .mx-track:has(input:focus-visible){outline:2px solid var(--mx-focus,#cdf564);outline-offset:3px}
 .mx-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none}
-@media (prefers-reduced-motion: reduce){.mx-track>.mx-thumb{transition:none}}`;
+.mx-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;border-radius:50%}
+.mx-cursor>canvas{width:100%;height:100%;display:block;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
+.mx-cursor.mx-over>canvas{transform:scale(1.5)}
+.mx-icon{display:inline-block;position:relative;vertical-align:middle;width:1.25em;height:1.25em;flex:none;background:currentColor;-webkit-mask:var(--mx-mask) center/contain no-repeat;mask:var(--mx-mask) center/contain no-repeat}
+.mx-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+@media (prefers-reduced-motion: reduce){.mx-track>.mx-thumb{transition:none}.mx-cursor>canvas{transition:none}}`;
     document.head.appendChild(s);
   }
   // a canvas behind `host`'s content, filling it
@@ -63,6 +86,26 @@
     const th = document.createElement('span'); th.className = 'mx-thumb'; th.setAttribute('aria-hidden', 'true');
     t.appendChild(c); t.appendChild(input); t.appendChild(th);
     return { t, c, th };
+  }
+
+  // one rAF for the pieces that move something themselves (the cursor's follow)
+  const tickers = new Set();
+  let raf = 0;
+  const loop = now => { raf = 0; for (const f of tickers) f(now); if (tickers.size) raf = requestAnimationFrame(loop); };
+  const tick = f => { tickers.add(f); if (!raf) raf = requestAnimationFrame(loop); return () => tickers.delete(f); };
+
+  /**
+   * iconMask(svg, { weight }) — an icon's SVG (one or more <path d>, any viewBox) as a CSS mask
+   * value, url("data:…"): the paths filled, and stroked `weight` viewBox units wider, so a light
+   * icon keeps enough body to carry paint. Use it as mask-image / -webkit-mask-image.
+   */
+  function iconMask(svg, opts) {
+    const o = Object.assign({ weight: 0 }, opts);
+    const vb = (svg.match(/viewBox="([^"]+)"/) || [0, '0 0 256 256'])[1];
+    const ds = Array.from(svg.matchAll(/\sd="([^"]+)"/g), m => m[1]);
+    const st = o.weight ? ` stroke="#000" stroke-width="${o.weight}" stroke-linejoin="round"` : '';
+    const out = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${ds.map(d => `<path d="${d}"${st}/>`).join('')}</svg>`;
+    return `url("data:image/svg+xml,${encodeURIComponent(out)}")`;
   }
 
   /** A live sheet behind a section: drifting, combed by the pointer, a drop on click. opts go to live(). */
@@ -192,5 +235,64 @@
     return live(backdrop(el), Object.assign({ mode: 'marble', ramp: 'ember', develop: 'scroll', pointer: 0.6, hand: el, own: false }, opts));
   }
 
-  P.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition };
+  /**
+   * A wet ring of paint that trails the mouse inside `area` and swells over anything clickable;
+   * a press drops paint into it. The system cursor stays. Mouse only: hidden on touch and pen,
+   * and with reduced motion. opts: size (px), band (px), lag (s), and live() options.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ size: 40, band: 5, lag: 0.09, mode: 'swirl', ramp: 'citric acid citric+50 mint', scale: 0.25, grain: 0.25 }, opts);
+    style();
+    const box = document.createElement('div');
+    box.className = 'mx-cursor'; box.setAttribute('aria-hidden', 'true');
+    Object.assign(box.style, { width: o.size + 'px', height: o.size + 'px' });
+    const c = document.createElement('canvas'); box.appendChild(c);
+    document.body.appendChild(box);
+    const so = Object.assign({}, o); delete so.size; delete so.band; delete so.lag;
+    const ring = { pad: o.band / 2, band: o.band, radius: (o.size - o.band) / 2 };
+    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
+    const show = v => { box.style.display = v ? 'block' : 'none'; };
+    area.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
+      tx = e.clientX; ty = e.clientY;
+      box.classList.toggle('mx-over', !!(e.target.closest && e.target.closest('a,button,input,label,select,textarea,[tabindex]')));
+      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, Object.assign({ drift: 1, wet: 1.2, pointer: 0, alive: true, own: false, ring }, so)); }
+    }, { passive: true });
+    area.addEventListener('pointerleave', () => { on = false; show(false); });
+    area.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 1); });
+    tick(now => {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+      if (!on) return;
+      const k = 1 - Math.exp(-dt / o.lag);
+      x += (tx - x) * k; y += (ty - y) * k;
+      box.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
+    });
+    return { get ctl() { return ctl; }, el: box };
+  }
+
+  /**
+   * An icon poured in paint: a small live sheet cut to the icon's shape with a CSS mask. It pours
+   * in when it first scrolls into view, and the paint wakes while its button or link is hovered
+   * or focused. `name` is a key of ICONS or an SVG string; the element sets the size (default
+   * 1.25em) and, without WebGL2, shows the plain shape in currentColor.
+   */
+  function icon(el, name, opts) {
+    const svg = ICONS[name] || name;
+    const o = Object.assign({ mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.2, grain: 0.2, weight: 6, rest: 0.25, hover: 1.4 }, opts);
+    style();
+    el.classList.add('mx-icon'); el.setAttribute('aria-hidden', el.getAttribute('aria-hidden') || 'true');
+    el.style.setProperty('--mx-mask', iconMask(svg, { weight: o.weight }));
+    const c = document.createElement('canvas'); el.appendChild(c);
+    const so = Object.assign({}, o); delete so.weight; delete so.rest; delete so.hover;
+    const ctl = live(c, Object.assign({ drift: 1, wet: o.rest, pointer: 0, alive: false, own: false, develop: 'in', developMs: 1200, seed: name.length || 3 }, so));
+    const host = el.closest('button,a,label,[tabindex]') || el;
+    if (ctl) {
+      const on = v => () => ctl.set({ wet: v ? o.hover : o.rest, alive: v });
+      host.addEventListener('pointerenter', on(true)); host.addEventListener('pointerleave', on(false));
+      host.addEventListener('focusin', on(true)); host.addEventListener('focusout', on(false));
+    }
+    return ctl;
+  }
+
+  P.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS, iconMask };
 })(typeof window !== 'undefined' ? window : globalThis);
