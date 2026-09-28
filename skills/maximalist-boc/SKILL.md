@@ -1,6 +1,6 @@
 ---
 name: maximalist-boc
-description: Design pages in a loud, liquid maximalist colour style led by acid green and Klein blue. Graphics are poured, not drawn: liquid chrome and oil-slick foil, marbling with dark veins, agate, moiré line fields, grain blooms, watercolour, spun and blurred light, splash pours, datamosh, caustics, halftone, flat colour fields and collage, all with film grain, many of them on black. Colour comes from a small set of named palettes, and every graphic draws its inks from them. Grounds come from the graphic: black under chrome and veins, a flat field of one of the two lead colours, white card under a wash. Display type is blobby liquid lettering that melts, drips, glows or echoes. Use it for record pages, tour dates, poster and print shops, festivals, club nights, fashion drops and paint brands. Also use it for liquid, melting, blobby or drippy type, acid or neon green with blue, marbled, chrome or swirled colour, "maximalist" colour, psychedelic-but-clean layouts, or a pour / paint-flow look.
+description: Design pages in a loud, liquid maximalist colour style led by acid green and Klein blue. Graphics are poured, not drawn: liquid chrome and oil-slick foil, marbling with dark veins, agate, moiré line fields, grain blooms, watercolour, spun and blurred light, splash pours, datamosh, caustics, halftone, flat colour fields and collage, all with film grain, many of them on black. Colour comes from a small set of named palettes, and every graphic draws its inks from them. Grounds come from the graphic: black under chrome and veins, a flat field of one of the two lead colours, white card under a wash. Display type is blobby liquid lettering that melts, drips, glows or echoes. Use it for record pages, tour dates, poster and print shops, festivals, club nights, fashion drops and paint brands. Also use it for liquid, melting, blobby or drippy type, acid or neon green with blue, marbled, chrome or swirled colour, "maximalist" colour, psychedelic-but-clean layouts, or a pour / paint-flow look, still or live.
 ---
 
 # Maximalist BOC: poured colour and liquid type
@@ -11,13 +11,14 @@ that were poured the same way: liquid chrome pooled on black, acid ribbons with 
 agate, fine moiré lines, a bloom lost in grain, a watercolour wash, broken video frames. The
 title is not set in a font. It is liquid: fat strokes that melt together, swell into drops at
 their ends and run down off the baseline. The maximalism is in the colour and the surfaces.
-The type is the one thing that moves.
+On a still page the type is the one thing that moves; in live mode (below) the paint flows too.
 
 The files next to this SKILL.md:
 
 - `assets/goo.js`: `window.Goo`, liquid display lettering. One alphabet (a–z, A–Z, 0–9, punctuation) drawn point by point as pen strokes, then stroked fat, blurred and cut back at a threshold so the strokes melt into blob letters. Four finishes, seeded, no dependencies. Each SVG carries its own filter, so it scales with CSS and exports as a self-contained file.
 - `assets/pour.js`: `window.Pour`, liquid colour. Nine named palettes, named ramps built from them, thirteen modes (the graphic families), a collage of modes, and a photograph poured like paint.
-- `reference.html`: a fictional record, "citric" by Tamsin Vey on Slowpour Records. It has a poured cover with dripping lettering, two flat fields with echo lettering, a wall of 47 sheets (one per graphic on the moodboard, listed like a print shop), a tour page on oil-slick chrome with glow lettering, and a "pour your own" bench. **Read it before designing.**
+- `assets/live.js`: `Pour.live`, the same sheets on the GPU, still wet: they flow, the pointer combs them, a click drops paint into them, a section pours in as it scrolls. `assets/live-ui.js`: `Pour.ui`, controls poured in live paint (background, button, card, toggle, slider, progress, loader, focus ring, section transition).
+- `reference.html`: a fictional record, "citric" by Tamsin Vey on Slowpour Records. It has a poured cover with dripping lettering, two flat fields with echo lettering, a wall of 47 sheets (one per graphic on the moodboard, listed like a print shop), a tour page on oil-slick chrome with glow lettering, a "pour your own" bench, a live hero ("still wet") and "pour desk", a small print-room app built from the live pieces. **Read it before designing.**
 
 ## Colour: palettes are sources, not decoration
 
@@ -163,6 +164,106 @@ A page loads only the faces it uses (`font-display: swap`).
 - `Pour.photo(canvas, img, { warp, map, amount, grain })` pushes a photograph's pixels along the warped field; `map` gradient-maps it onto a ramp.
 - `Pour.color(name)` gives the hex of a colour name, `Pour.ramp(spec)` a ramp's hex list, `Pour.PALETTES`, `Pour.RAMPS` and `Pour.MODES` the tables; `Pour.fit(canvas, max)` sizes a canvas to its box at up to 2× DPR; `Pour.contrast(a, b)` is the WCAG ratio.
 
+## Live
+
+Live mode is for apps and sites where the graphics should respond: a hero you can drag through,
+buttons that stir when hovered, a card that pours in as it scrolls up. Use it for heroes,
+section backgrounds and a few key controls; the wall of sheets and small print plates stay
+still (`Pour.plate`). Load the two live files after `pour.js`:
+
+```html
+<script src="assets/pour.js"></script>
+<script src="assets/live.js"></script>     <!-- Pour.live -->
+<script src="assets/live-ui.js"></script>  <!-- Pour.ui -->
+```
+
+**How it works (capture-first).** `live.js` asks the still engine to paint the sheet once on
+the CPU without its grain (a `capture` hook in `pour.js` also hands over the field under the
+paint), uploads both as textures, and each frame a WebGL2 shader moves where every pixel reads
+the paint from, then adds the still's film grain back with the same integer hash, on top and
+unmoved. Palettes and structure are therefore exactly the still's: any mode, ramp or pass that
+`Pour.paint` accepts works live. Every live term is zero at time 0, so frame 0 is the still.
+
+**The motion is the pour's own:**
+
+| Term | What it looks like | Options (defaults) |
+|---|---|---|
+| flow | the paint slides along its own level lines, settles across them and swells slowly, like a sheet that has not dried | `drift` (1), `speed` (1), `wet` (1: 0 is dry and still, 1.6 is runny) |
+| comb | the pointer is a comb dragged through the paint: it pulls the paint along its way, in teeth | `pointer` (0; 1 in `ui.background`), `reach` (0.16 of the short side), `tooth` (14 px), `lag` (0.12 s), `hand` (the element that hears the pointer; default the canvas's parent) |
+| drop | a click drops paint in: a ring pushes out, spreads and settles (up to 4 at once) | `clickPulse` (false), `ctl.pulse(x, y, strength)` |
+| pour-in | the sheet is poured down from the top with a drippy front, onto `ground` | `develop`: a number 0–1, `'in'` (once, when a quarter is in view) or `'scroll'`; `developMs` (1800), `scrollRange`, `ground` ('night') |
+| reveal | controls: poured from the left up to a fraction, its edge running | `reveal` (null or 0–1) |
+| grain | the still's grain, a share of the specks re-rolled 24 times a second, like film boiling | `alive` (true), `grainRate` (24), `boil` (0.3) |
+
+Other motion options: `ease` (0.18 s, how `set()` eases `wet`, `reveal`, `develop`), `ring`
+(`{ pad, band, radius }` px: draw only a band round the edge, transparent inside; the focus
+ring uses it), `own` (own WebGL context; default for canvases ≥ 0.9 MP), `resolution` (1),
+`maxField` (1.2e6: the captured sheet is painted at most this many pixels and scaled up).
+Still options (`mode`, `ramp`, `seed`, `scale`, `warp`, `vein`, `mosh`...) repaint the sheet.
+Bloom's own `radius` is a still option, which is why the comb's size is called `reach`.
+
+**API.** `Pour.live(canvas, opts) → ctl | null`. The canvas fills its box (CSS), DPR is capped at 2.
+
+- `ctl.set(opts)` merges options (motion next frame, still options repaint); `ctl.load(opts)` a new sheet (all still options replaced);
+- `ctl.pulse(x, y, s)` a drop at CSS px of the canvas; `ctl.point(x, y)` / `ctl.point(null)` drags or lifts the comb yourself;
+- `ctl.pause()`, `ctl.resume()`, `ctl.destroy()`;
+- `ctl.state()` → `{ mode: 'gpu'|'still', path, frames, visible, expose, clock, size, ready, reduced }`;
+- `ctl.bench(n)` → `{ sync, pipelined, size, path }` ms per frame with every term on;
+- `Pour.live.parity(opts)`, `Pour.live.TOLERANCE`, `Pour.live.pass(r)`; `window.handPulledLive` holds every controller and the parity cases for `tools/check.sh`.
+
+**UI pieces (`Pour.ui`).** Each keeps the native control; the canvas is `aria-hidden` behind it.
+
+| Piece | Call | Behaviour |
+|---|---|---|
+| background | `ui.background(section, opts)` | a live sheet behind the section: flowing, combed by the pointer, a drop on click |
+| button | `ui.button(btn, opts)` | still at rest (`rest` wet 0), stirred and combed on hover and `:focus-visible` (`hover` 1), a drop on press, Enter and Space |
+| card | `ui.card(el, opts)` | poured in from the top the first time it scrolls in, then flowing and combable |
+| toggle | `ui.toggle(checkbox)` | adds `role="switch"`; paint poured across the track when on; a pale thumb over it |
+| slider | `ui.slider(range)` | paint poured from the left up to the value; the thumb follows |
+| progress | `ui.progress(el, { value })` → `{ ctl, set(p) }` | `role="progressbar"` with `aria-valuenow`; fills as a pour, a drop when it reaches 1 |
+| loader | `ui.loader(el)` → `{ ctl, stop() }` | `role="status"`; a small sheet stirred fast with a drop every beat |
+| focus ring | `ui.focusRing(opts)` | one per page: a band of live paint round whatever has `:focus-visible`; keep a CSS outline too |
+| section transition | `ui.transition(strip, opts)` | a strip between sections poured down as it scrolls up the viewport |
+
+Buttons put their label on busy paint: wrap it in a `<span>` with a dark backing (see `.pill span`
+in `reference.html`), and flip its colour on `:hover` and `:focus-visible`.
+
+**Minimal example:**
+
+```html
+<section class="hero" id="hero"><h1>still wet</h1><button id="go"><span>pour</span></button></section>
+<script>
+  const ui = Pour.ui;
+  ui.focusRing();
+  const hero = ui.background(document.getElementById('hero'), { mode: 'marble', ramp: 'klein cornflower acid citric', vein: 2.2, seed: 4 });
+  ui.button(document.getElementById('go'), { mode: 'chrome', ramp: 'mercury' });
+  document.getElementById('go').addEventListener('click', () => hero.load({ mode: 'bands', ramp: 'agate', seed: 9 }));
+</script>
+<style>
+  .hero { position: relative; min-height: 90svh; }   /* ui.* makes the host position: relative and isolates it */
+  #go span { background: rgba(9,12,8,.74); color: #f3f5ea; padding: 3px 8px; border-radius: 999px; }
+</style>
+```
+
+**Fallbacks.** With `prefers-reduced-motion` every view shows its still frame (clock 0, no flow,
+comb or drops, grain frozen) and `set()` jumps to its target, drawing only when something
+changed; it listens for the setting changing. Without WebGL2, or when the context is lost, the
+view draws the CPU still (`Pour.paint`) and treats state the same way (reveal as a flat ground,
+no motion). Offscreen views pause (IntersectionObserver) and the loop stops on a hidden tab. A
+paused view still draws its first frame.
+
+**Parity and performance.** `live.parity()` paints the still on the CPU and frame 0 on the GPU at
+480×320 and compares them. Five cases (the cover's swirl, marble, moiré, oil-slick chrome, and
+dash with `mosh` and `scan`): mean luminance, SD and grain all identical, mean difference 0.000
+levels, 100 % of pixels within 2 levels: bit-exact, because frame 0 reads the captured sheet
+at its pixel centres and the grain hash is the still's own. Tolerance (from LIVE_PATTERN):
+dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5. The shader is one pass of texture
+reads with a handful of field taps, a four-tap comb and four drops; the cost that matters is
+the one-off CPU paint of the sheet (up to `maxField`, built one per task).
+Frame time in real Chrome has not been measured yet (headless Chrome runs SwiftShader, so its
+numbers mean nothing): measure with `ctl.bench(60)` in a visible Chrome tab against the budget
+of 4 ms per frame at 1440×900 CSS, DPR 2.
+
 ## What makes it authentic
 
 1. **Two colours lead.** Acid green and Klein blue pour into each other on the cover and come back as the flat fields, the lettering and the acid ribbons. Every other colour comes from the palettes, a few per surface.
@@ -202,6 +303,7 @@ Take screenshots in a headless browser at 1440×900 and 390×844, once with redu
 - [ ] Lettering has a screen-reader text (`letter()` does this) and the page makes sense without animation.
 - [ ] There is no horizontal scroll on a phone.
 - [ ] There are no console errors.
+- [ ] Live pages: every `handPulledLive.parity['maximalist-boc']()` case has `.pass`; visible views are moving; with reduced motion every view drew one still frame and does not change.
 
 ## Credits and prior art
 
