@@ -58,7 +58,7 @@
     for (let i = 255; i > 0; i--) { const j = (rand() * (i + 1)) | 0, t = p[i]; p[i] = p[j]; p[j] = t; }
     for (let i = 0; i < 512; i++) P[i] = p[i & 255];
     for (let i = 0; i < 256; i++) { const a = rand() * TAU; GX[i] = Math.cos(a); GY[i] = Math.sin(a); }
-    return function (x, y) {
+    const f = function (x, y) {
       const fx = Math.floor(x), fy = Math.floor(y), X = fx & 255, Y = fy & 255, u = x - fx, v = y - fy;
       const i00 = P[P[X] + Y], i10 = P[P[X + 1] + Y], i01 = P[P[X] + Y + 1], i11 = P[P[X + 1] + Y + 1];
       const a = GX[i00] * u + GY[i00] * v, b = GX[i10] * (u - 1) + GY[i10] * v;
@@ -67,6 +67,8 @@
       const ab = a + (b - a) * su, cd = c + (d - c) * su;
       return (ab + (cd - ab) * sv) * 1.41;
     };
+    f.P = P; f.GX = GX; f.GY = GY;   // live.js uploads the lattice so the shader draws the same noise
+    return f;
   }
   // Octaves turned against each other, so no lattice axis shows through.
   function fbm(n, x, y, oct, gain) {
@@ -890,5 +892,7 @@
     reeded, satin, aurora, streak: streakPlate, bloom, coordinate, glass, words,
     PALETTES: { reeded: Object.keys(REEDED), satin: Object.keys(SATIN), aurora: Object.keys(AURORA), streak: Object.keys(STREAK), bloom: Object.keys(BLOOM), coordinate: ['stock'] },
     SW, RATIO, rng,
+    // for live.js, which draws the reeded and streak fields in a shader from the same numbers
+    _engine: { rng, makeNoise, fbm, hash, hashU, smooth, rgb, typeset, tables: TABLES, SW },
   };
 })(typeof window !== 'undefined' ? window : globalThis);
