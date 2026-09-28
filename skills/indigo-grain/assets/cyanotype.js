@@ -103,13 +103,15 @@
     for (let i = 255; i > 0; i--) { const j = (rand() * (i + 1)) | 0;[perm[i], perm[j]] = [perm[j], perm[i]]; }
     for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
     const fade = t => t * t * t * (t * (t * 6 - 15) + 10), g = (h, x, y) => ((h & 1) ? -x : x) + ((h & 2) ? -y : y);
-    return (x, y) => {
+    const n = (x, y) => {
       const xi = Math.floor(x), yi = Math.floor(y), X = xi & 255, Y = yi & 255; x -= xi; y -= yi;
       const u = fade(x), v = fade(y), a = p[X] + Y, b = p[X + 1] + Y;
       const n0 = g(p[a], x, y) + u * (g(p[b], x - 1, y) - g(p[a], x, y));
       const n1 = g(p[a + 1], x, y - 1) + u * (g(p[b + 1], x - 1, y - 1) - g(p[a + 1], x, y - 1));
       return n0 + v * (n1 - n0);
     };
+    n.perm = p;                    // the table itself, so live.js can run the same noise on the GPU
+    return n;
   }
   const fbm = (n, x, y, o) => { let s = 0, a = 0.5, f = 1; for (let i = 0; i < o; i++) { s += a * n(x * f, y * f); f *= 2.03; a *= 0.5; } return s; };
   function coarse(w, h, step, fn) {
@@ -191,6 +193,9 @@
    *              blue-into-white edge, the ink-into-paper wash)
    */
   function compose(ctx, w, h, pal, T, o, rand) {
+    // live.js passes `capture`: hand over the finished field instead of painting it, so the GPU
+    // runs this same step per frame (the grain below, ported to GLSL, with the same hashes)
+    if (o.capture) { o.capture({ w, h, T, pal, rand, o }); return; }
     const gAmt = o.grain == null ? 1 : o.grain, seed = o.seed | 0;
     const n = makeNoise(rand);
     const blotch = coarse(w, h, 6, (x, y) => fbm(n, x / 230 + 70, y / 230 + 70, 3));
@@ -853,5 +858,5 @@
     return out;
   }
 
-  root.Cyanotype = { field, print, tone, develop, relief, halo, stipple, screen, marble, caustics, blur, brushMask, PALETTES, ramp, mulberry32, noise: makeNoise, fbm, hash2 };
+  root.Cyanotype = { field, print, tone, develop, relief, halo, stipple, screen, marble, caustics, blur, brushMask, PALETTES, ramp, mulberry32, noise: makeNoise, fbm, hash2, autoPools, compose };
 })(typeof window !== 'undefined' ? window : globalThis);
