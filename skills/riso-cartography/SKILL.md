@@ -29,7 +29,7 @@ The files next to this SKILL.md:
 
 | Sheet | Drums, paper | What is on each drum | Look on the board | `Atlas.<call>(canvas, opts)` |
 |---|---|---|---|---|
-| I | bright red twice; white | every block solid, with courtyards, slab estates, stippled parks and open squares. A river with bank lines, bridges, a motorway, the round old square and its monument, a serif title and typed notes | the deep one-ink figure-ground plans, blue or red | `blocks`, `mode: 'solid'`, `ink`, `image` |
+| I | blue twice (red, teal or pink on the switch); white | every block solid, with courtyards, slab estates, stippled parks and open squares. A river with bank lines, bridges, a motorway, the round old square and its monument, a serif title and typed notes | the deep one-ink figure-ground plans, blue or red | `blocks`, `mode: 'solid'`, `ink`, `image` |
 | II | cornflower; white | each block its own wash, pooled darker at its rim and bloomed, in a town with a ragged edge and a river through it | the blue watercolour town | `blocks`, `mode: 'wash'`, `ink` |
 | III | fluorescent pink, bright red; white | pink: house footprints, a many-laned motorway with a cloverleaf, and low cloud. Red: one district and a grain ramp | the pink footprint plan with its interchange | `blocks`, `mode: 'plan'`, `ink` |
 | IV | teal; cream | every block ruled its own way: hatch, crosshatch, stipple or scribble, between two paper avenues | the teal hatched grid | `blocks`, `mode: 'hatch'`, `ink` |
@@ -61,7 +61,7 @@ press day, 2 a sloppy one) and `drums` (indices, to proof one separation). It re
 
 | Role | Value |
 |---|---|
-| inks (Riso names, from `Riso.INKS`) | bright red `#f15060`, cornflower `#62a8e5`, fluorescent pink `#ff48b0`, teal `#00838a`, purple `#765ba7`, green `#00a95c`, black. For sheet I also blue `#0078bf`, and the rest of the table |
+| inks (Riso names, from `Riso.INKS`) | blue `#0078bf` (sheet I, the board's blue), bright red `#f15060`, cornflower `#62a8e5`, fluorescent pink `#ff48b0`, teal `#00838a`, purple `#765ba7`, green `#00a95c`, black, and the rest of the table |
 | papers | white `#f7f6f2`, cream `#efe4cc`, natural `#f3eee2` |
 | page | plan-chest grey `#e8e5dc`, ink `#1c1c1a`, soft `#6d6a62`, rules `#cfcabd`, a bright-red hairline `#f15060` for section rules, a fluorescent-pink dot as the only bullet |
 

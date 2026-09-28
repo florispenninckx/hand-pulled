@@ -156,20 +156,20 @@
       <p class="lede">Stavmere drawn the way old town plans were drawn: every block that someone owns is ink, and everything the town shares is paper. That means the streets, the squares, the quays and the river Wenn. None of the plans was traced. Each street grew along a field of directions laid down by the river and the old square. The river moved its bends for two hundred years before it was printed. Then everything went through the duplicator one drum at a time.</p>
       <dl>
         <dt>Sheets</dt><dd>I–VII, A3, 80 copies of each</dd>
-        <dt>Drums</dt><dd>bright red, cornflower, fluorescent pink, teal, purple, green, black</dd>
+        <dt>Drums</dt><dd>blue, bright red, cornflower, fluorescent pink, teal, purple, green, black</dd>
         <dt>Paper</dt><dd>uncoated white 90 g, cream 100 g</dd>
         <dt>Showing</dt><dd>6–22 November 2026, the Weigh House, Stavmere</dd>
       </dl>
       <p class="mono">Pull sheet I again for a new town, or change its ink. Drop a photograph on it and the town prints the picture: each block takes the tone underneath it.</p>
     </div>
     <figure class="sheet" data-sheet="blocks" data-mode="solid" data-seed="1" data-paper="white" id="hero">
-      <div class="paper" data-status="inking the drums…"><canvas role="img" aria-label="Sheet I, Stavmere: a town plan printed twice in bright red on white. Every block is solid bright red and the streets are white paper. A white river with bright red bank lines curves through the upper left under two bridges, and a motorway crosses on a long diagonal. There are a round old square with a monument, stippled parks, courtyard blocks and an estate of slabs. Printed words: River Wenn; Stavmere; plan of the town, 1 : 12 500; Stavmere Print Club; sheet I, one ink, two hits."></canvas></div>
+      <div class="paper" data-status="inking the drums…"><canvas role="img" aria-label="Sheet I, Stavmere: a town plan printed twice in blue on white. Every block is solid blue and the streets are white paper. A white river with blue bank lines curves through the upper left under two bridges, and a motorway crosses on a long diagonal. There are a round old square with a monument, stippled parks, courtyard blocks and an estate of slabs. Printed words: River Wenn; Stavmere; plan of the town, 1 : 12 500; Stavmere Print Club; sheet I, one ink, two hits."></canvas></div>
       <figcaption>
         <span class="no">I</span>
         <span class="t">The town, figure and ground</span>
         <span class="m mono">one ink, two hits, on white</span>
         <span></span>
-        <span class="ctl"><button type="button" data-again>[another pull]</button><span class="ink" role="group" aria-label="Ink"><span>ink:</span><button type="button" data-ink="bright-red" aria-pressed="true">red</button><button type="button" data-ink="blue" aria-pressed="false">blue</button><button type="button" data-ink="teal" aria-pressed="false">teal</button><button type="button" data-ink="fluorescent-pink" aria-pressed="false">pink</button></span><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        <span class="ctl"><button type="button" data-again>[another pull]</button><span class="ink" role="group" aria-label="Ink"><span>ink:</span><button type="button" data-ink="blue" aria-pressed="true">blue</button><button type="button" data-ink="bright-red" aria-pressed="false">red</button><button type="button" data-ink="teal" aria-pressed="false">teal</button><button type="button" data-ink="fluorescent-pink" aria-pressed="false">pink</button></span><label>[+ photograph]<input type="file" accept="image/*"></label></span>
       </figcaption>
     </figure>
   </div>
@@ -298,10 +298,11 @@
   <section aria-labelledby="h-colo">
     <div class="head">
       <h2 id="h-colo">Inks, and the fortnight</h2>
-      <p>The club keeps seven drums. A sheet uses at most three of them, and sheet I uses one ink twice.</p>
+      <p>The club keeps eight drums. A sheet uses at most three of them, and sheet I uses one ink twice.</p>
     </div>
     <div class="colo">
       <ul class="inks mono">
+        <li><i style="background:#0078bf"></i>Blue<br>#0078bf</li>
         <li><i style="background:#f15060"></i>Bright red<br>#f15060</li>
         <li><i style="background:#62a8e5"></i>Cornflower<br>#62a8e5</li>
         <li><i style="background:#ff48b0"></i>Fluorescent pink<br>#ff48b0</li>
@@ -394,7 +395,7 @@
   // sheet I is live: the same still, captured once, then laid on the paper again every frame.
   // Drums drift out of register and back, a new pull feeds through the press, the pointer is a
   // loupe, a click stamps a fresh dot of ink.
-  const hs = { seed: 1, ink: 'bright-red', image: null }, hc = hero.querySelector('canvas'), hlabel = hc.getAttribute('aria-label');
+  const hs = { seed: 1, ink: 'blue', image: null }, hc = hero.querySelector('canvas'), hlabel = hc.getAttribute('aria-label');
   let hctl = null;
   function heroLive() {
     hctl = Riso.live(hc, { sheet: 'blocks', mode: 'solid', seed: hs.seed, ink: hs.ink, image: null, maxField: 1.3e6, feed: 'in', drift: 1, pointer: 1, radius: 0.15, zoom: 2, clickPulse: true });
@@ -408,7 +409,7 @@
   const hinks = [...hero.querySelectorAll('[data-ink]')];
   hinks.forEach(b => b.addEventListener('click', () => {
     hinks.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-    hc.setAttribute('aria-label', hlabel.replace(/bright red/g, b.dataset.ink.replace('-', ' ')));
+    hc.setAttribute('aria-label', hlabel.replace(/\bblue\b/g, b.dataset.ink.replace('-', ' ')));
     st.get(hero).ink = b.dataset.ink; heroSet({ ink: b.dataset.ink });
   }));
   const heroImage = file => {

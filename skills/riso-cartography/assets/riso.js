@@ -67,13 +67,13 @@
     for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
     const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
     const g = (h, x, y) => ((h & 1) ? -x : x) + ((h & 2) ? -y : y);
-    return function (x, y) {
+    return Object.assign(function (x, y) {
       const xi = Math.floor(x), yi = Math.floor(y), X = xi & 255, Y = yi & 255;
       x -= xi; y -= yi;
       const u = fade(x), v = fade(y), a = p[X] + Y, b = p[X + 1] + Y;
       const n00 = g(p[a], x, y), n10 = g(p[b], x - 1, y), n01 = g(p[a + 1], x, y - 1), n11 = g(p[b + 1], x - 1, y - 1);
       return (n00 + u * (n10 - n00)) + v * ((n01 + u * (n11 - n01)) - (n00 + u * (n10 - n00)));
-    };
+    }, { p });
   }
   function fbm(noise, x, y, oct) {
     let s = 0, a = 0.5, f = 1;
@@ -136,9 +136,10 @@
    * layer.screen         'grain' (stochastic, riso's default look) | 'halftone' | 'solid'
    * layer.angle, cell    halftone screen angle (deg) and cell size (px @ scale 1)
    * layer.density        ink density multiplier (default 1)
-   * opts.capture(cap)    optional (live.js): also hands back the paper and each drum's
-   *                      screened coverage { w, h, paper: Float32 RGB, layers: [{ ink, cov }] };
-   *                      the print itself is unchanged
+   * opts.capture(cap)    optional (live.js): hands back what the press works from and skips
+   *                      the press itself (live.js runs it on the GPU, line for line):
+   *                      { w, h, S, tone, fibre, perm, layers: [{ ink, master, dx, dy, rot,
+   *                      screen, angle, cell, density, seed }] }; the canvas is left blank
    */
   async function print(canvas, opts) {
     const o = Object.assign({ seed: 1, paper: 'natural', misregister: 1, scale: 1 }, opts);
@@ -153,14 +154,14 @@
     // paper fibre: faint long streaks + flecks
     const fibre = coarseField(w, h, 3 * S, (x, y) => fbm(noise, x / (180 * S), y / (14 * S), 3));
 
-    const out = new Float32Array(w * h * 3);
-    for (let p = 0, k = 0; p < w * h; p++, k += 3) {
+    const cap = o.capture ? { w, h, S, tone: pt, fibre: paper.fibre, perm: noise.p, layers: [] } : null;
+    const out = new Float32Array(cap ? 0 : w * h * 3);
+    for (let p = 0, k = 0; p < out.length / 3; p++, k += 3) {
       const x = p % w, y = (p / w) | 0;
       const f = 1 - paper.fibre * (0.5 + fibre(x, y)) - (hash2(x, y, 911) > 0.9993 ? 0.12 : 0);
       out[k] = pt[0] * f; out[k + 1] = pt[1] * f; out[k + 2] = pt[2] * f;
     }
 
-    const cap = o.capture ? { w, h, paper: out.slice(), layers: [] } : null;
     const masters = [];
     for (let li = 0; li < o.layers.length; li++) {
       const L = Object.assign({ screen: 'grain', angle: 15 + 30 * li, cell: 6, density: 1 }, o.layers[li]);
@@ -173,6 +174,7 @@
       const dx = (rand() * 2 - 1) * 2.4 * R, dy = (rand() * 2 - 1) * 2.4 * R;
       const rot = (rand() * 2 - 1) * 0.0022 * o.misregister, cr = Math.cos(rot), sr = Math.sin(rot);
       const cx = w / 2, cy = h / 2;
+      if (cap) { cap.layers.push({ ink, master: m, dx, dy, rot, screen: L.screen, angle: L.angle, cell: L.cell, density: L.density, seed: (o.seed * 131 + li * 7919) | 0 }); continue; }
 
       // drum mottle: uneven ink laydown, streaked in the feed direction
       const mottle = coarseField(w, h, 6 * S, (x, y) =>
@@ -180,8 +182,6 @@
 
       const ang = (L.angle * Math.PI) / 180, ca = Math.cos(ang), sa = Math.sin(ang), cell = L.cell * S;
       const seedL = (o.seed * 131 + li * 7919) | 0;
-      const cov = cap ? new Float32Array(w * h) : null;
-      if (cap) cap.layers.push({ ink, cov });
 
       for (let y = 0; y < h; y++) {
         for (let x = 0; x < w; x++) {
@@ -208,7 +208,6 @@
           // solids are never solid: starved specks of paper show through
           if (hash2(x, y, seedL + 2) < 0.035 * d) c *= 0.35;
           if (c <= 0) continue;
-          if (cov) cov[y * w + x] = c;
           const k = (y * w + x) * 3;
           out[k] *= 1 - c + (c * ink[0]) / 255;
           out[k + 1] *= 1 - c + (c * ink[1]) / 255;
@@ -219,13 +218,13 @@
       else await new Promise(r => setTimeout(r, 0)); // let the page breathe between drums
     }
 
+    if (cap) { o.capture(cap); return { canvas, masters, seed: o.seed }; }
     const ctx = canvas.getContext('2d');
     const img = ctx.createImageData(w, h);
     for (let p = 0, k = 0, q = 0; p < w * h; p++, k += 3, q += 4) {
       img.data[q] = out[k]; img.data[q + 1] = out[k + 1]; img.data[q + 2] = out[k + 2]; img.data[q + 3] = 255;
     }
     ctx.putImageData(img, 0, 0);
-    if (cap) o.capture(cap);
     return { canvas, masters, seed: o.seed };
   }
 
