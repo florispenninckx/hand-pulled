@@ -666,5 +666,6 @@
     return el;
   }
 
-  root.Haze = { bloom, field, ribbon, silk, meadow, poppies, develop, grain, defocus, motion, PALETTES, FIELD, RIBBON, LOOKS, mulberry32 };
+  // tile, spline and PATHS are exported for live.js, which draws the same scenes on the GPU
+  root.Haze = { bloom, field, ribbon, silk, meadow, poppies, develop, grain, defocus, motion, PALETTES, FIELD, RIBBON, LOOKS, mulberry32, tile, spline, PATHS };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -101,6 +101,9 @@
   .field-l span { display: flex; justify-content: space-between; }
   .bar { height: 10px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(43,35,32,.18); }
   .panel small { color: var(--ink2); font-size: 11.5px; letter-spacing: .04em; }
+  .ic { width: 22px; height: 22px; flex: none; }
+  .hz-btn .ic { width: 18px; height: 18px; margin: -4px 8px -4px -6px; }
+  .panel h3, .row label { display: flex; align-items: center; gap: 10px; }
 
   footer { padding: 44px 16px 52px; text-align: center; font-size: 11.5px; letter-spacing: .04em; color: var(--ink2); }
   footer p { max-width: 46em; margin: 0 auto .8em; }
@@ -247,7 +250,7 @@
         </div>
         <div class="actions">
           <div class="loader" id="loader" hidden aria-label="blending"></div>
-          <button type="button" class="hz-btn" id="blend">blend</button>
+          <button type="button" class="hz-btn" id="blend"><span class="ic" id="i-blend"></span>blend</button>
           <button type="button" class="hz-btn" id="reset" data-ramp="rose">start again</button>
         </div>
       </div>
@@ -256,9 +259,9 @@
         <article class="note" id="n2" tabindex="0" aria-label="Heart note: iris"><p>heart · 02</p><h3>iris</h3></article>
         <article class="note" id="n3" tabindex="0" aria-label="Base note: amber"><p>base · 03</p><h3>ambre</h3></article>
         <div class="panel">
-          <h3>This blend</h3>
-          <div class="row"><label for="t-night">Night note</label><input type="checkbox" id="t-night"></div>
-          <div class="row"><label for="t-trail">Long trail</label><input type="checkbox" id="t-trail" checked></div>
+          <h3><span class="ic" id="i-blend-h"></span>This blend</h3>
+          <div class="row"><label for="t-night"><span class="ic" id="i-night"></span>Night note</label><input type="checkbox" id="t-night"></div>
+          <div class="row"><label for="t-trail"><span class="ic" id="i-trail"></span>Long trail</label><input type="checkbox" id="t-trail" checked></div>
           <div class="field-l"><span><label for="s-int">Intensity</label><output id="o-int" for="s-int">60%</output></span><input type="range" id="s-int" min="0" max="100" value="60"></div>
           <div class="field-l"><span>Blending</span><div class="bar" id="bar" aria-label="blending progress"></div></div>
           <small id="status" aria-live="polite">Ready. Press blend.</small>
@@ -288,6 +291,11 @@
   ui.card($('#n3'), { form: 'ember', seed: 8 });
   ui.button($('#blend'));
   ui.button($('#reset'), { ramp: 'rose', form: 'flow' });
+  ui.icon($('#i-blend'), 'drop');
+  ui.icon($('#i-blend-h'), 'flower', { ramp: 'rose' });
+  ui.icon($('#i-night'), 'sun', { ramp: 'rose' });
+  ui.icon($('#i-trail'), 'clock', { ramp: 'apricot' });
+  ui.cursor($('#studio'));
   ui.toggle($('#t-night'), { ramp: 'rose' });
   ui.toggle($('#t-trail'));
   const sl = $('#s-int');
