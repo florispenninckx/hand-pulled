@@ -798,5 +798,317 @@
     return canvas;
   }
 
-  root.Glitch = { smear, wave, drip, shatter, collage, scan, type, dusk, macroblock, slitRow, slitCol, scanlines, vivid, PALETTES };
+  // ---- two more stand-ins: a valley between ridges, and paint dragged across a board ----------
+  const SCAPES = {
+    alpine: { sky: [[0, '#9fbcd4'], [0.6, '#d3e2e8'], [1, '#eef3ef']], far: '#b5cde0', near: '#1d3f8a', tree: [[0, '#0c2410'], [0.35, '#2f5a18'], [0.7, '#9cc636'], [1, '#eef36a']], rock: '#dde7ef', snow: '#f5f8f7', haze: '#dce8ee', mist: 0.3, trees: 0.8 },
+    ink: { sky: [[0, '#c9d6d8'], [1, '#f3f4f1']], far: '#b8c8ca', near: '#16282c', tree: [[0, '#081013'], [0.5, '#27454b'], [0.85, '#8aaeb2'], [1, '#e8f0ee']], rock: '#93aaad', snow: '#f4f6f4', haze: '#eef1ef', mist: 0.65, trees: 0.6 },
+    violet: { sky: [[0, '#4cc3da'], [0.55, '#9fe2e6'], [1, '#f1efe6']], far: '#8a6c9c', near: '#4b2a22', tree: [[0, '#1c1236'], [0.45, '#3b31a6'], [0.8, '#8a7ce6'], [1, '#f0d9ec']], rock: '#7a4d45', snow: '#fff2f0', haze: '#f2cfdc', mist: 0.3, trees: 0.7, cloud: '#fff4f6' },
+    tape: { sky: [[0, '#88a2aa'], [0.5, '#c6d3cc'], [1, '#efe6d6']], far: '#a6bab6', near: '#20333b', tree: [[0, '#101e28'], [0.45, '#3a5c69'], [0.8, '#97b7b1'], [1, '#f2eadb']], rock: '#6c8891', snow: '#f4ede0', haze: '#e6e0d1', mist: 0.45, trees: 0.5 },
+  };
+  /**
+   * A valley seen along its floor: five ridges, far to near, each rising to one side, so the
+   * slopes zig-zag into the distance. Far ridges are pale and misted, with snow on their
+   * crests; near ones carry forest in clumps lit from the left, and gullies of rock. Drawn at
+   * half size and enlarged, grained. `name` is a palette in SCAPES. Drawn, not traced.
+   */
+  function scape(W, H, seed, name) {
+    const P = SCAPES[name] || SCAPES.alpine;
+    const w = Math.max(8, Math.round(W / 2)), h = Math.max(8, Math.round(H / 2)), rand = rng(seed * 89 + 5), sd = (seed * 113) | 0, S = Math.min(w, h);
+    const SKY = stops(P.sky), TREE = stops(P.tree), FAR = hex(P.far), NEAR = hex(P.near), ROCK = hex(P.rock), SNOW = hex(P.snow), HAZE = hex(P.haze), CL = P.cloud ? hex(P.cloud) : null;
+    const N = 5, cx = w * (0.3 + rand() * 0.4), L = [];
+    for (let i = 0; i < N; i++) {
+      const u = i / (N - 1), side = i % 2 ? 1 : -1;
+      L.push({ u, side, base: h * (0.38 + 0.48 * u + (rand() - 0.5) * 0.05), amp: h * (0.34 - 0.12 * u), f: 0.6 + u * 1.6, s: sd + 17 * i });
+    }
+    const top = L.map(l => {
+      const t = new Float32Array(w);
+      for (let x = 0; x < w; x++) {
+        const v = l.side > 0 ? clamp((x - cx * 0.7) / (w - cx * 0.7), 0, 1) : clamp((cx * 1.3 - x) / (cx * 1.3), 0, 1);
+        const rg = 1 - Math.abs(2 * fbm(x / (S * 0.3 / l.f), 1.3, l.s, 5) - 1);
+        t[x] = l.base - l.amp * (0.25 * rg + Math.pow(v, 1.3) * (0.75 + 0.3 * rg));
+      }
+      return t;
+    });
+    const c = mk(w, h), ctx = ctx2(c), img = ctx.createImageData(w, h), d = img.data;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      let k = -1;
+      for (let i = N - 1; i >= 0; i--) if (y >= top[i][x]) { k = i; break; }
+      let col;
+      if (k < 0) {   // sky, with a little cloud
+        col = ramp(SKY, y / h);
+        const n = fbm(x / (S * 0.35), y / (S * 0.1), sd + 1, 4);
+        if (CL) col = mix(col, CL, smooth(0.5, 0.72, n) * 0.9);
+        else col = mix(col, HAZE, smooth(0.55, 0.8, n) * 0.5);
+      } else {
+        const l = L[k], dep = (y - top[k][x]) / h, g = S * (0.006 + 0.01 * l.u);
+        const n = fbm(x / g, y / g, l.s + 3, 3), nb = fbm((x + 1) / g, y / g, l.s + 3, 3), lit = clamp(0.5 + (n - nb) * 9, 0, 1);
+        const cover = smooth(0.45, 0.62, fbm(x / (S * 0.12), y / (S * 0.08), l.s + 5, 3) + (P.trees - 0.5) * 0.5 + l.u * 0.1);
+        const gully = fbm(x / (S * 0.01), y / (S * 0.1), l.s + 7, 3);
+        col = mix(mix(FAR, NEAR, l.u * 0.8), ROCK, clamp(gully * 1.2 - 0.3, 0, 1) * 0.6 * (1 - l.u * 0.5));
+        col = mix(col, ramp(TREE, clamp(n * 0.9 + lit * 0.45 - 0.15, 0, 1)), cover * (0.4 + 0.6 * l.u));
+        if (l.side < 0) col = mix(col, NEAR, 0.3);   // the slopes turned from the light
+        if (l.u < 0.3 && dep < 0.035 && n > 0.42) col = mix(col, SNOW, 0.85);   // snow along the far crests
+        col = mix(col, HAZE, clamp(P.mist * (Math.pow(1 - l.u, 1.5) * 0.7 + smooth(0.02, 0.2, dep) * (1 - l.u * 0.8) * 0.8), 0, 0.92));
+      }
+      const i = (y * w + x) * 4; d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return finish(c, W, H, sd, 14);
+  }
+  /** Paint dragged across a dark board in wide pale strokes: what the `foil` band breaks. Drawn, not traced. */
+  function strokes(W, H, seed) {
+    const w = Math.max(8, Math.round(W / 2)), h = Math.max(8, Math.round(H / 2)), sd = (seed * 71) | 0, S = Math.min(w, h);
+    const c = mk(w, h), ctx = ctx2(c), img = ctx.createImageData(w, h), d = img.data;
+    const RAMP = stops([[0, '#0e0c0c'], [0.3, '#2b2525'], [0.55, '#8d8580'], [0.75, '#d8d1ca'], [1, '#f6f2ec']]);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const band = fbm(x / (S * 1.4), y / (S * 0.07), sd, 4), fibre = fbm(x / (S * 0.5), y / (S * 0.004), sd + 3, 3);
+      const t = clamp(smooth(0.36, 0.52, band) * (0.8 + 0.4 * fibre) + (fibre - 0.5) * 0.3 + 0.08, 0, 1);
+      const col = ramp(RAMP, t), i = (y * w + x) * 4;
+      d[i] = col[0]; d[i + 1] = col[1]; d[i + 2] = col[2]; d[i + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    return finish(c, W, H, sd, 16);
+  }
+  function finish(c, W, H, sd, g) {
+    const out = mk(W, H), o = ctx2(out);
+    o.imageSmoothingQuality = 'high'; o.drawImage(c, 0, 0, W, H);
+    o.putImageData(grain(o.getImageData(0, 0, W, H), g, sd + 21), 0, 0);
+    return out;
+  }
+  /** The picture for a plate: your image, or the named stand-in (a SCAPES palette, 'dusk' or 'strokes'). */
+  function picture(o, w, h, name) {
+    if (o.image) { const c = mk(w, h); cover(ctx2(c), o.image, w, h); return c; }
+    const sc = o.scene != null ? o.scene : o.seed;
+    return name === 'dusk' ? dusk(w, h, sc) : name === 'strokes' ? strokes(w, h, sc) : scape(w, h, sc, name);
+  }
+
+  // ---- VIII. fall: a landscape sorted downward ------------------------------------------------
+  /**
+   * The valley with its columns run down. In each run of columns a slit sits on the first edge
+   * found below a random height, and the column under it is read out spread thin, so the ridge,
+   * the tree line or a cloud drags down in a curtain; then every column is interval-sorted, so
+   * what texture is left streaks vertically. `ink` also lets a few blocks slip down the file.
+   * Modes are the palettes: `alpine` (lime forest, blue shade), `ink` (misted grey-teal
+   * ridges), `violet` (teal sky, violet and brown slopes).
+   */
+  function fall(canvas, opts) {
+    const o = Object.assign({ seed: 1, pixel: 1, mode: 'alpine' }, opts);
+    const { w, h } = setup(canvas, o, o.pixel), rand = rng(o.seed * 43 + 9);
+    const c = picture(o, w, h, SCAPES[o.mode] ? o.mode : 'alpine'), ctx = ctx2(c);
+    let img = ctx.getImageData(0, 0, w, h);
+    const d = img.data, src = new Uint8ClampedArray(d);
+    for (let x = 0; x < w;) {
+      const run = 1 + (rand() * rand() * 6 | 0);
+      if (rand() < 0.38) {
+        let y0 = Math.round(h * rand() * 0.75);
+        for (let y = y0 + 1; y < h - 1; y++) if (Math.abs(luma(src, (y * w + x) * 4) - luma(src, ((y - 1) * w + x) * 4)) > 0.05) { y0 = y; break; }
+        const k = rand() < 0.5 ? rand() * 0.06 : 0.1 + rand() * 0.4, reach = Math.round((h - y0) * (0.15 + Math.sqrt(rand()) * 0.6));
+        for (let xx = x; xx < Math.min(w, x + run); xx++) slitCol(d, src, w, h, xx, y0, k, 1, reach);
+      }
+      x += run;
+    }
+    if (o.mode === 'ink') {   // a few blocks slipped down the file, stale
+      const s2 = new Uint8ClampedArray(d);
+      for (let k = 0; k < 14; k++) {
+        const bw = Math.round(w * (0.04 + rand() * 0.22)), bh = Math.round(h * (0.01 + rand() * rand() * 0.08)), x0 = rand() * (w - bw) | 0, y0 = rand() * (h - bh) | 0, dy = Math.round(h * (rand() - 0.3) * 0.2), dx = Math.round(w * (rand() - 0.5) * 0.1);
+        for (let y = 0; y < bh; y++) for (let x = 0; x < bw; x++) {
+          const ty = y0 + y + dy, tx = x0 + x + dx; if (ty < 0 || ty >= h || tx < 0 || tx >= w) continue;
+          const i = (ty * w + tx) * 4, j = ((y0 + y) * w + x0 + x) * 4; d[i] = s2[j]; d[i + 1] = s2[j + 1]; d[i + 2] = s2[j + 2];
+        }
+      }
+    }
+    img = PS().sort(img, { mode: 'threshold', key: 'lightness', lo: 0.45, hi: 0.95, angle: 90, randomness: 0.45, seed: o.seed });
+    vivid(img, o.mode === 'ink' ? 1.05 : o.mode === 'violet' ? 1 : 1.1);
+    ctx.putImageData(grain(img, 30, o.seed * 5), 0, 0);
+    return blit(canvas, c);
+  }
+
+  // ---- IX. band: the picture smeared in horizontal bands --------------------------------------
+  /**
+   * A tape that lost tracking. The picture is cut into bands of rows, and each band fails its
+   * own way: it holds one row and repeats it, it reads its rows through a slit and spreads them
+   * sideways, or it slips left or right; in some bands R, G and B are read a few pixels apart,
+   * so every edge carries a fringe. `tape`: a pale valley in grey-teal and cream, sometimes
+   * split into tiles whose seams show. `foil`: pale paint on a dark board, the fringes wide
+   * and a few bands filmed with a rainbow, like oil on the head.
+   */
+  function band(canvas, opts) {
+    const o = Object.assign({ seed: 1, pixel: 1, mode: 'tape' }, opts);
+    const foil = o.mode === 'foil', { w, h } = setup(canvas, o, o.pixel), rand = rng(o.seed * 53 + 1);
+    const c = picture(o, w, h, foil ? 'strokes' : 'tape'), ctx = ctx2(c);
+    let img = ctx.getImageData(0, 0, w, h);
+    const d = img.data, s = new Uint8ClampedArray(d);
+    const xs = [0]; if (!foil && rand() < 0.7) xs.push(Math.round(w * (0.35 + rand() * 0.3))); xs.push(w);
+    const ys = !foil && xs.length > 2 && rand() < 0.6 ? Math.round(h * (0.4 + rand() * 0.2)) : -1;
+    for (let cI = 0; cI < xs.length - 1; cI++) {
+      const xa = xs[cI], xb = xs[cI + 1];
+      for (let y = 0; y < h;) {
+        const bh = 1 + Math.round(Math.pow(rand(), 2.2) * h * 0.09), r = rand();
+        const kind = r < 0.3 ? 'hold' : r < 0.78 ? 'slit' : 'slip';
+        const x0 = xa + rand() * (xb - xa), k = rand() < 0.6 ? rand() * 0.08 : 0.15 + rand() * 0.5, dx = Math.round((rand() - 0.5) * w * 0.25);
+        const co = foil ? Math.round(2 + rand() * 7) : rand() < 0.45 ? 1 + (rand() * 3 | 0) : 0, jy = Math.round((rand() - 0.5) * h * 0.04);
+        const prism = foil && rand() < 0.3, ph = rand() * 6, fr = 2 + rand() * 6;
+        for (let yy = y; yy < Math.min(h, y + bh); yy++) {
+          if (yy === ys) { for (let x = xa; x < xb; x++) { const i = (yy * w + x) * 4; d[i] = d[i + 1] = d[i + 2] = 236; } continue; }   // a tile seam
+          const sy = clamp((kind === 'hold' ? y : yy) + jy, 0, h - 1);
+          for (let x = xa; x < xb; x++) {
+            const sx = kind === 'slip' ? x - dx : kind === 'slit' ? x0 + (x - x0) * k : x0 + (x - x0) * 0.6;
+            const at = (v, ch) => s[(sy * w + clamp(Math.round(v), 0, w - 1)) * 4 + ch], i = (yy * w + x) * 4;
+            d[i] = at(sx + co, 0); d[i + 1] = at(sx, 1); d[i + 2] = at(sx - co, 2);
+            if (prism) {
+              const l = (d[i] + d[i + 1] + d[i + 2]) / 765, a = TAU * (x / w * fr + ph), m = 0.55 * (1 - Math.abs(l - 0.55) * 1.6);
+              if (m > 0) { d[i] += (128 + 127 * Math.cos(a) - d[i]) * m; d[i + 1] += (128 + 127 * Math.cos(a - 2.1) - d[i + 1]) * m; d[i + 2] += (128 + 127 * Math.cos(a + 2.1) - d[i + 2]) * m; }
+            }
+          }
+        }
+        y += bh;
+      }
+      if (cI > 0) for (let y = 0; y < h; y++) { const i = (y * w + xa) * 4; d[i] = d[i + 1] = d[i + 2] = 236; }   // the seam between tiles
+    }
+    img = PS().sort(img, { mode: 'threshold', key: 'lightness', lo: foil ? 0.5 : 0.55, hi: 0.97, randomness: 0.5, seed: o.seed });
+    scanlines(img, 0.06);
+    ctx.putImageData(grain(img, foil ? 30 : 44, o.seed * 7), 0, 0);
+    return blit(canvas, c);
+  }
+
+  // ---- X. mosh: the picture carried along stale motion vectors --------------------------------
+  /**
+   * Datamosh: the key frame is gone, so the motion vectors of the frames after it keep moving
+   * the last picture the decoder had. Every macroblock carries one vector; each frame the
+   * picture is copied along them, block by block, and a few blocks are refreshed from the
+   * picture somewhere else, as the next shot's intra blocks leak in. R, G and B are carried at
+   * slightly different speeds, so the smear comes apart into oil-film fringes. `melt`: the
+   * vectors swirl and sag, the coast turns to liquid. `burst`: they point out from one spot,
+   * a zoom that never lands. `patch`: blocky regions slide apart, and the picture is first
+   * cut to contour stripes in a few places, so it smears into zebra moiré among flat coral
+   * and grey.
+   */
+  function mosh(canvas, opts) {
+    const o = Object.assign({ seed: 1, pixel: 1, mode: 'melt' }, opts);
+    const M = ['melt', 'burst', 'patch'].includes(o.mode) ? o.mode : 'melt', { w, h } = setup(canvas, o, o.pixel), rand = rng(o.seed * 67 + 5), S = Math.min(w, h), sd = o.seed * 29 | 0;
+    const c = picture(o, w, h, M === 'melt' ? 'dusk' : M === 'burst' ? 'violet' : 'alpine'), ctx = ctx2(c);
+    const img = ctx.getImageData(0, 0, w, h), d = img.data, key = new Uint8ClampedArray(d);
+    if (M === 'patch') {   // a few regions cut to contour stripes, the rest pushed toward coral, grey and black
+      const PAL = [[240, 96, 76], [185, 182, 176], [20, 20, 22], [47, 122, 42], [142, 201, 240], [244, 240, 232]];
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const i = (y * w + x) * 4, l = luma(d, i), r = hash(x / (S * 0.12) | 0, y / (S * 0.12) | 0, sd);
+        if (r < 0.35) { const v = Math.sin(TAU * (l * 4 + x / S)) > 0 ? 244 : 18; d[i] = d[i + 1] = d[i + 2] = v; }
+        else { const p = PAL[(Math.floor(l * 4 + r * 3)) % PAL.length]; d[i] = p[0] * 0.8 + d[i] * 0.2; d[i + 1] = p[1] * 0.8 + d[i + 1] * 0.2; d[i + 2] = p[2] * 0.8 + d[i + 2] * 0.2; }
+      }
+      key.set(d);
+    }
+    const B = Math.max(4, Math.round(S / 36)), bw = Math.ceil(w / B), bh = Math.ceil(h / B), vx = new Float32Array(bw * bh), vy = new Float32Array(bw * bh);
+    const fx = w * (0.3 + rand() * 0.4), fy = h * (0.3 + rand() * 0.4);
+    for (let by = 0; by < bh; by++) for (let bx = 0; bx < bw; bx++) {
+      const k = by * bw + bx, px = (bx + 0.5) * B, py = (by + 0.5) * B;
+      if (M === 'melt') {
+        const a = TAU * 2 * fbm(px / (S * 0.5), py / (S * 0.5), sd, 3), m = S * 0.01 * (0.3 + fbm(px / (S * 0.3), py / (S * 0.3), sd + 4, 2));
+        vx[k] = Math.cos(a) * m; vy[k] = Math.sin(a) * m + S * 0.004;
+      } else if (M === 'burst') {
+        const dx = px - fx, dy = py - fy, r = Math.hypot(dx, dy) || 1, m = S * 0.03 * (r / S) * (0.5 + hash(bx, by, sd));
+        vx[k] = dx / r * m - dy / r * m * 0.15; vy[k] = dy / r * m + dx / r * m * 0.15;
+      } else {
+        const r = hash(bx >> 2, by >> 1, sd);
+        vx[k] = r < 0.25 ? 0 : (hash(bx >> 2, by >> 1, sd + 1) - 0.5) * S * 0.06; vy[k] = (hash(bx >> 2, by >> 1, sd + 2) - 0.5) * S * 0.012;
+      }
+    }
+    const frames = M === 'patch' ? 8 : M === 'burst' ? 14 : 16, ch = M === 'patch' ? 0 : M === 'burst' ? 0.07 : 0.09;
+    let cur = d, nxt = new Uint8ClampedArray(d.length);
+    for (let f = 0; f < frames; f++) {
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const k = ((y / B) | 0) * bw + ((x / B) | 0), i = (y * w + x) * 4;
+        for (let q = 0; q < 3; q++) {
+          const sc = 1 + ch * q, sx = clamp(Math.round(x - vx[k] * sc), 0, w - 1), sy = clamp(Math.round(y - vy[k] * sc), 0, h - 1);
+          nxt[i + q] = cur[(sy * w + sx) * 4 + q];
+        }
+        nxt[i + 3] = 255;
+      }
+      for (let n = 0; n < 3; n++) {   // intra blocks from elsewhere in the picture, leaking in
+        const bx = (rand() * bw | 0) * B, by = (rand() * bh | 0) * B, sxo = (rand() * bw | 0) * B, syo = (rand() * bh | 0) * B, s = B * (1 + (rand() * 3 | 0));
+        for (let y = 0; y < s; y++) for (let x = 0; x < s; x++) {
+          const ty = by + y, tx = bx + x, sy = syo + y, sx = sxo + x; if (ty >= h || tx >= w || sy >= h || sx >= w) continue;
+          const i = (ty * w + tx) * 4, j = (sy * w + sx) * 4; nxt[i] = key[j]; nxt[i + 1] = key[j + 1]; nxt[i + 2] = key[j + 2];
+        }
+      }
+      const t = cur; cur = nxt; nxt = t;
+    }
+    const out = new ImageData(cur === d ? d : new Uint8ClampedArray(cur), w, h);
+    vivid(out, M === 'melt' ? 1.1 : 1.05);
+    ctx.putImageData(grain(out, M === 'patch' ? 22 : 44, o.seed * 11), 0, 0);
+    return blit(canvas, c);
+  }
+
+  // ---- XI. weave: the picture rebuilt on a grid ------------------------------------------------
+  /**
+   * The picture rebuilt from threads or blocks. `plaid`: each run of columns (the warp) is one
+   * pixel of the picture read along a slit row, each run of rows (the weft) one pixel read
+   * along a slit column, and they cross over-two-under-two, so the picture comes back as a
+   * tartan of its own colours. `blocks`: the frame is partitioned the way a codec does it,
+   * split into smaller squares wherever the picture is busy, and each block is kept as its mean,
+   * copied stale from nearby or run down from its top row; wide stale slabs drift over it.
+   * `grid`: the picture cut into cells, each cell holding every third row like a blind, a
+   * little out of step with its neighbours, the seams between them left dark.
+   */
+  function weave(canvas, opts) {
+    const o = Object.assign({ seed: 1, pixel: 1, mode: 'plaid' }, opts);
+    const M = ['plaid', 'blocks', 'grid'].includes(o.mode) ? o.mode : 'plaid', { w, h } = setup(canvas, o, o.pixel), rand = rng(o.seed * 71 + 13), S = Math.min(w, h), sd = o.seed * 19 | 0;
+    const c = picture(o, w, h, M === 'plaid' ? 'alpine' : M === 'blocks' ? 'ink' : 'dusk'), ctx = ctx2(c);
+    let img = ctx.getImageData(0, 0, w, h);
+    const d = img.data, s = new Uint8ClampedArray(d);
+    const px = (x, y) => (clamp(Math.round(y), 0, h - 1) * w + clamp(Math.round(x), 0, w - 1)) * 4;
+    if (M === 'plaid') {
+      const C = new Int32Array(w), R = new Int32Array(h);
+      for (let x = 0; x < w;) { const run = 1 + (rand() * rand() * 7 | 0), j = px(x, h * clamp(0.5 + (fbm(x / w * 2.5, 0.5, sd, 2) - 0.5) * 2.4 + (rand() - 0.5) * 0.3, 0.02, 0.98)); for (let xx = x; xx < Math.min(w, x + run); xx++) C[xx] = j; x += run; }
+      for (let y = 0; y < h;) { const run = 1 + (rand() * rand() * 9 | 0), j = px(w * clamp(0.5 + (fbm(1.5, y / h * 2.5, sd + 1, 2) - 0.5) * 2.4 + (rand() - 0.5) * 0.3, 0.02, 0.98), y); for (let yy = y; yy < Math.min(h, y + run); yy++) R[yy] = j; y += run; }
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const warp = ((x + y) & 3) < 2, j = warp ? C[x] : R[y], v = warp ? 1 : 0.7, i = (y * w + x) * 4;
+        d[i] = s[j] * v; d[i + 1] = s[j + 1] * v; d[i + 2] = s[j + 2] * v;
+      }
+      vivid(img, 0.9);
+    } else if (M === 'blocks') {
+      const leaf = (x0, y0, n) => {
+        let m = 0, m2 = 0, k = 0;
+        for (let y = y0; y < Math.min(h, y0 + n); y += 2) for (let x = x0; x < Math.min(w, x0 + n); x += 2) { const l = luma(s, (y * w + x) * 4); m += l; m2 += l * l; k++; }
+        const v = k ? m2 / k - (m / k) * (m / k) : 0;
+        if (n > 2 && v > 0.0006 * (n / 4) && rand() > 0.08) { const q = n >> 1; leaf(x0, y0, q); leaf(x0 + q, y0, q); leaf(x0, y0 + q, q); leaf(x0 + q, y0 + q, q); return; }
+        const r = rand(), ox = Math.round((rand() - 0.5) * 4) * n, oy = Math.round((rand() - 0.5) * 2) * n;
+        let mr = 0, mg = 0, mb = 0, cnt = 0;
+        for (let y = y0; y < Math.min(h, y0 + n); y++) for (let x = x0; x < Math.min(w, x0 + n); x++) { const i = (y * w + x) * 4; mr += s[i]; mg += s[i + 1]; mb += s[i + 2]; cnt++; }
+        for (let y = y0; y < Math.min(h, y0 + n); y++) for (let x = x0; x < Math.min(w, x0 + n); x++) {
+          const i = (y * w + x) * 4, j = r < 0.55 ? -1 : r < 0.85 ? px(x + ox, y + oy) : px(x, y0);
+          if (j < 0) { d[i] = mr / cnt; d[i + 1] = mg / cnt; d[i + 2] = mb / cnt; } else { d[i] = s[j]; d[i + 1] = s[j + 1]; d[i + 2] = s[j + 2]; }
+        }
+      };
+      const N = 1 << Math.max(3, Math.round(Math.log2(S / 5)));
+      for (let y = 0; y < h; y += N) for (let x = 0; x < w; x += N) leaf(x, y, N);
+      const t = new Uint8ClampedArray(d);
+      for (let k = 0; k < 40; k++) {   // wide stale slabs drifting over the partition
+        const bw = Math.round(S * (0.05 + rand() * 0.3)), bh = Math.max(2, Math.round(bw * (0.15 + rand() * 0.45))), x0 = rand() * w | 0, y0 = (0.15 + rand() * 0.8) * h | 0, dx = Math.round((rand() - 0.5) * S * 0.2), flat = rand() < 0.5;
+        const j0 = px(x0 + bw / 2, y0 + bh / 2);
+        for (let y = y0; y < Math.min(h, y0 + bh); y++) for (let x = x0; x < Math.min(w, x0 + bw); x++) {
+          const i = (y * w + x) * 4, j = flat ? j0 : px(x - dx, y); d[i] = t[j]; d[i + 1] = t[j + 1]; d[i + 2] = t[j + 2];
+        }
+      }
+    } else {
+      const cols = [0]; while (cols[cols.length - 1] < w) cols.push(Math.min(w, cols[cols.length - 1] + Math.round(w * (0.06 + rand() * 0.16))));
+      for (let a = 0; a < cols.length - 1; a++) {
+        for (let y = 0; y < h;) {
+          const ch = Math.round(h * (0.04 + rand() * 0.18)), ox = Math.round((rand() - 0.5) * w * 0.06), oy = Math.round((rand() - 0.5) * h * 0.05), hold = 2 + (rand() * 3 | 0), k = rand() < 0.3 ? rand() * 0.1 : 1;
+          for (let yy = y; yy < Math.min(h, y + ch); yy++) {
+            const sy = y + Math.floor((yy - y) / hold) * hold + oy, dark = (yy - y) % hold === hold - 1 ? 0.7 : 1;
+            for (let x = cols[a]; x < cols[a + 1]; x++) {
+              const i = (yy * w + x) * 4, j = px(cols[a] + (x - cols[a]) * k + ox, sy), e = x === cols[a] || yy === y ? 0.6 : dark;
+              d[i] = s[j] * e; d[i + 1] = s[j + 1] * e; d[i + 2] = s[j + 2] * e;
+            }
+          }
+          y += ch;
+        }
+      }
+      for (let i = 0; i < d.length; i += 4) { d[i] = 38 + d[i] * 0.85; d[i + 1] = 38 + d[i + 1] * 0.85; d[i + 2] = 38 + d[i + 2] * 0.85; }   // the blind lets light through
+    }
+    ctx.putImageData(grain(img, M === 'plaid' ? 28 : 42, o.seed * 13), 0, 0);
+    return blit(canvas, c);
+  }
+
+  root.Glitch = { smear, wave, drip, shatter, collage, scan, type, fall, band, mosh, weave, dusk, scape, strokes, macroblock, slitRow, slitCol, scanlines, vivid, PALETTES, SCAPES };
 })(typeof window !== 'undefined' ? window : globalThis);

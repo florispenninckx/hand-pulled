@@ -1,6 +1,6 @@
 ---
 name: pixelsort-glitch
-description: Design pages and visuals in the pixel-sort and slit-scan glitch style. A picture's rows are sorted and dragged sideways from a slit into saturated teal, pink, orange and violet smears on a dark ground. Rows are pushed by waves until they come apart in moiré contour lines, and columns drip out of macroblocks. A dropped LCD shows cracks, shards and stuck colour columns. The picture is cut on a grid into a collage in hot pink on black, a photocopy is pulled across a scanner until its RGB lines split into fringes, and heavy type is sliced, doubled and streaked on paper or in blue ink. Use it for club nights and festivals, electronic and experimental releases, net art, dev tools and hackathons, editorial headers and zines. Also use it when the user asks for pixel sorting, slit-scan, glitch art, databending, datamosh, macroblocking, melting or dripping pixels, wave or displacement warps, a cracked or broken screen, scanner glitch, glitched typography, or corrupted, broken or lossy images.
+description: Design pages and visuals in the pixel-sort and slit-scan glitch style. A picture's rows are sorted and dragged from a slit into saturated teal, pink and orange smears on dark. Waves pull rows into moiré contours, columns drip from macroblocks, a dropped LCD cracks into shards and stuck columns, a picture is cut into a hot-pink collage, a moved scan splits into RGB fringes, and heavy type is sliced and streaked. Mountain valleys are sorted downward into hanging columns, tape frames smear in bands, datamosh melts a picture along block vectors, and codec blocks are woven into twill and grids. Use it for club nights and festivals, electronic and experimental releases, net art, dev tools and hackathons, editorial headers and zines. Also use it for pixel sorting, slit-scan, glitch art, databending, datamosh, macroblocking, melting or dripping pixels, displacement warps, a cracked screen, scanner glitch, VHS or tape smear, glitched typography, or corrupted, broken or lossy images.
 ---
 
 # Pixel-sort glitch: broken files
@@ -16,12 +16,12 @@ finished design.
 The files next to this SKILL.md:
 
 - `assets/pixelsort.js`: `window.PixelSort`, the low-level tools. It has `sort` (interval pixel sorting by threshold, random, edges, waves or border, at any angle, with a mask), `channelShift`, `slices`, and `crush`, which is real JPEG generation loss through the browser's encoder.
-- `assets/glitch.js`: `window.Glitch`, seven seeded plates built on it (`smear`, `wave`, `drip`, `shatter`, `collage`, `scan`, `type`), `dusk` (the stand-in photograph, a coast at dusk drawn in code), and the helpers `macroblock`, `slitRow`, `slitCol`, `scanlines` and `vivid`. Load `pixelsort.js` first. There are no other dependencies.
+- `assets/glitch.js`: `window.Glitch`, eleven seeded plates built on it (`smear`, `wave`, `drip`, `shatter`, `collage`, `scan`, `type`, `fall`, `band`, `mosh`, `weave`), the stand-in pictures drawn in code (`dusk`, a coast at dusk; `scape`, a mountain valley in one of the `SCAPES` palettes; `strokes`, pale paint on a dark board), and the helpers `macroblock`, `slitRow`, `slitCol`, `scanlines` and `vivid`. Load `pixelsort.js` first. There are no other dependencies.
 - `assets/live.js`: `Glitch.live`, the plates moving on the GPU (WebGL2), for real interfaces. See "Live" below.
-- `assets/live-ui.js`: `Glitch.ui`, interface pieces (button, toggle, slider, progress, loader, card, focus ring, section transition, live background) broken the same way.
-- `reference.html`: "Stale Vector", a fictional weekend of broken files. The smear is the hero, and below it are a lede with one phrase marked in pink and a three-column board of six plates captioned like file names. A smear strip divides the page, and the programme is printed as a listing. The hero is live, and at the end "Slitdeck", a small fictional desk, uses every live UI piece. **Read it before designing.**
+- `assets/live-ui.js`: `Glitch.ui`, interface pieces (button, toggle, slider, progress, loader, card, focus ring, section transition, live background, cursor, icons) broken the same way, and `Glitch.iconMask`.
+- `reference.html`: "Stale Vector", a fictional weekend of broken files. The smear is the hero, and below it are a lede with one phrase marked in pink and a three-column board of six plates captioned like file names, then a second board, "four more machines", with the eleven plates of `fall`, `band`, `mosh` and `weave`. A smear strip divides the page, and the programme is printed as a listing. The hero is live, and at the end "Slitdeck", a small fictional desk, uses every live UI piece. **Read it before designing.**
 
-## The seven plates
+## The eleven plates
 
 | Plate | What happens to the picture | Board pins it answers | `Glitch.<plate>(canvas, opts)` |
 |---|---|---|---|
@@ -32,11 +32,16 @@ The files next to this SKILL.md:
 | `collage` | The picture is cut into rectangles on a loose grid. Some pieces stay in place, some move, and some are blown up until their pixels show. Each piece is broken one way: streaked from one row, seen through a mesh, macroblocked, cut to its darks, or tinted pink, grey, blue or rust. Thin runs of colour leak out of the pieces sideways. `night` uses grey, mesh and hot pink on black. `day` uses pale streaks, one blue, rust and black on white | 8, 13, 16, 7 | `image`, `mode` |
 | `scan` | A black-and-white photocopy on a flatbed whose sheet moved while the head ran. Where the sheet wobbled, edges snake. Where it stalled, rows repeat into streaks. Where it was jerked, a line blurs flat. The head reads R, G and B a few lines apart, so every moved edge splits into a rainbow fringe | 10, 17 | `image` |
 | `type` | `ink`: a one-colour print in blue on cream, with rules, numbers, a dot grid and a ghost of the title. Columns of the sheet are dragged down where the scanner stuck on a line, the words are set large, and small print is knocked out of a solid band. `paper`: heavy lowercase words, loosely spaced, over a band of the picture pulled sideways. The lines are sliced and shifted, one is doubled, and ink is flicked over them | 19, 14 | `image`, `mode`, `text` |
+| `fall` | A mountain valley sorted **downward**. From the first edge below a random height, runs of columns are dragged down, a few short and most long, so ridges and tree lines hang into the valley as streaks; then every column is interval-sorted in its light half. `alpine`: pale sky, blue ridges, lit green forest. `ink`: grey-teal and misted, with stale blocks left behind. `violet`: cyan sky over violet forest and rust rock | 33, 34, 41, 46 | `image`, `mode` |
+| `band` | A frame off a worn tape. The picture is cut into horizontal bands: some hold, some are read through a slit so their rows smear the full width, some slip sideways with R, G and B read a few pixels apart. Then the rows are sorted and scanlines go on. `tape`: a pale valley, sometimes two frames with a light seam between. `foil`: the dusk coast with prism bands where the tape's coating flaked | 25, 38, 43, 44 | `image`, `mode` |
+| `mosh` | Datamosh: a key frame is lost and each macroblock keeps moving along its last vector for 8–16 frames, dragging the picture with it, while a few intra blocks leak the real picture back in. R, G and B move at slightly different speeds, so every smear has a colour edge. `melt`: the coast swirls and sags. `burst`: a violet valley blown out from a point. `patch`: the valley cut to contour stripes in coral, grey and black, then moved in blocks | 23, 24, 27, 28 | `image`, `mode` |
+| `weave` | Codec blocks woven like cloth. `plaid`: warp and weft are strips of the picture read along slits, crossed in a 2/2 twill with the weft darker. `blocks`: a quadtree of the ink valley, each leaf kept as its mean, copied stale from a neighbour or run down from its top row, with wide stale slabs drifting over. `grid`: the coast cut into cells, each showing its rows like a blind | 35, 37, 45 | `image`, `mode` |
 
 "Board pins" are the pins on the pixel-glitch reference board that each plate was built
 against. They were used as reference only (see Credits). Every plate also takes `seed`,
 `width`, `height`, `cssWidth` and `scene`. `scene` picks the stand-in picture and
-defaults to the seed. `pixel` sets the size of a work pixel in CSS px: 1 by default and
+defaults to the seed. `fall`, `band`, `mosh` and `weave` draw their own stand-in (a `scape`,
+`dusk` or `strokes`) unless you pass `image`. `pixel` sets the size of a work pixel in CSS px: 1 by default and
 2 for `drip`. `type` is drawn at device resolution, so its letters stay sharp.
 
 ## What makes it authentic
@@ -58,6 +63,8 @@ defaults to the seed. `pixel` sets the size of a work pixel in CSS px: 1 by defa
 | `collage` | night: ground `#050506`, pink `#12000a` → `#ff2e8b` → `#ffd6ea`, blue `#9fd6ff`; day: ground `#f5f4f0`, blue `#78b6e6`, bar `#111214` |
 | `scan` | bed `#f4f3ef`, toner `#0c0c0e` |
 | `type` | paper `#f7f6f2`, ink `#111114`, grey `#8d9296`; ink mode: cream `#eee7d7`, blue `#1f3c93` |
+| `scape` palettes (`Glitch.SCAPES`) | alpine: sky `#9fbcd4` → `#eef3ef`, ridges `#b5cde0` / `#1d3f8a`, forest `#0c2410` → `#9cc636` → `#eef36a`; ink: sky `#c9d6d8` → `#f3f4f1`, near `#16282c`, forest `#081013` → `#8aaeb2`; violet: sky `#4cc3da` → `#f1efe6`, forest `#1c1236` → `#3b31a6` → `#8a7ce6`, rock `#7a4d45`; tape: sky `#88a2aa` → `#efe6d6`, near `#20333b`, seam `#ececec` |
+| `mosh` patch | coral `#f0604c`, grey `#b9b6b0`, black `#141416`, green `#2f7a2a`, sky `#8ec9f0`, paper `#f4f0e8`; stripes `#f4f4f4` / `#121212` from the valley's own contour lines |
 | `drip` mint | ground `#e9f7f5` → `#cdeeed` → `#b9e2e0`, mass `#27353a #3d5b5c #6c9d9b #8c7652 #a7d8d5 #f6fcfb` |
 
 Type: use one monospace for everything small (IBM Plex Mono 400/500/700, 12–13 px) and
@@ -128,10 +135,11 @@ Both are classic scripts with no dependencies; load them after `pixelsort.js` an
 The canvas is sized from its CSS box (DPR capped at 2); do not set `width`/`height` yourself.
 
 **Still options.** `mode` names the plate: `smear`, `wave`, `drip`, `shatter`, `collage`,
-`scan`, `type`, or `sorted` (a strip of the stand-in with its rows sorted, what the UI pieces
+`scan`, `type`, `fall`, `band`, `mosh`, `weave`, or `sorted` (a strip of the stand-in with its rows sorted, what the UI pieces
 use; options `scene`, `seed`, `lo`, `hi`, `angle`, `pixel`, `image`, `shape`), or a function
 `(ctx, w, h) => {}` that draws your own still. The plate's own mode (`ripple`, `water`,
-`dusk`, `mint`, `night`, `day`, `ink`, `paper`) is **`variant`**, because `mode` is taken.
+`dusk`, `mint`, `night`, `day`, `ink`, `paper`, `alpine`, `violet`, `tape`, `foil`, `melt`,
+`burst`, `patch`, `plaid`, `blocks`, `grid`) is **`variant`**, because `mode` is taken.
 Everything else (`seed`, `scene`, `image`, `text`, `pixel`) is the still function's. Changing a
 still option re-renders the plate (20–300 ms, one per task).
 
@@ -157,7 +165,7 @@ The controller: `set(opts)`, `load(opts)` (drops every still option: a new plate
 clock, size, ready, reduced }`, and `bench(n)` → `{ sync, pipelined, size, path }` in ms a frame.
 Every controller is pushed to `window.handPulledLive.views`.
 
-**What is live.** All seven plates and `sorted` are captured and move the same way. No stage
+**What is live.** All eleven plates and `sorted` are captured and move the same way. No stage
 is ported to GLSL: the sort, slit, wave and codec passes stay on the CPU, and the motion is
 the shader re-reading the finished plate. Every offset is a whole work pixel, so pixels stay
 square. The sweep, mosh, tear and burst are all zero at clock 0, and the sweep fades in over
@@ -166,7 +174,8 @@ square. The sweep, mosh, tear and burst are all zero at clock 0, and the sweep f
 **Parity.** `Glitch.live.parity(opts)` renders the still on a 2D canvas and frame 0 on the
 GPU and compares luminance mean, SD, grain (mean |ΔL| between neighbours), mean |pixel
 difference| in 8-bit levels and the share of pixels within 2 levels. At 480×320 (sorted
-320×96) in headless Chrome, `smear`, `wave` (ripple), `drip` and `sorted` all give
+320×96) in headless Chrome, `smear`, `wave` (ripple), `drip`, `sorted`, `fall` (ink), `band` (tape), `mosh` (melt) and
+`weave` (plaid) all give
 dMean 0, dSdRel 0, dGrainRel 0, MAD 0.000 levels, 100% within 2 levels: the texture is the
 still. `live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`.
 
@@ -198,6 +207,14 @@ at 1440×900, which says nothing about a GPU. The CPU cost is the one-off still 
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | a strip sorting fast with a tear running along it; `role=status`; holds still under reduced motion |
 | focus ring | `ui.focusRing(opts)` | a frame of sorted rows around `:focus-visible`, on a transparent overlay; keep a CSS outline too |
 | section transition | `ui.transition(strip)` | a strip of the picture loading row by row as it scrolls into view |
+| cursor | `ui.cursor(area, { w, h, lag })` | a short strip of sorted rows (120×12) trailing the mouse pointer on the side it came from, streaking; a press bursts it. Mouse only: never shown for touch or pen, nor under reduced motion. The system cursor stays |
+| icon | `ui.icon(el, name, { weight })` | an icon cut out of a sorted strip: still at rest, sorting while its control is hovered or focused, a burst on press. `name` is one of `ui.ICONS` (`lightning`, `shuffle`, `export`, `scissors`, `film`, `play`, `pause`, `broken`, `waveform`) or your own SVG string |
+
+`Glitch.iconMask(svg, { pad, weight })` turns any 256-unit SVG (the Phosphor format) into a
+`shape` function for `mode: 'sorted'`: the picture shows only inside the glyph, and `weight`
+thickens its strokes in work pixels. The icons in `ui.ICONS` are Phosphor's Light weight,
+generated from the `@phosphor-icons/core` package, not drawn by hand. Put an icon in an
+`<i class="ic" aria-hidden="true">` next to the label, never in place of it.
 
 Every piece keeps the native element and its semantics; the canvas sits behind it with
 `aria-hidden`. Labels stay calm: put a button's label in a `<span>` with the page colour
@@ -240,14 +257,18 @@ Take screenshots in a headless browser at 1440×900 and 390×844, scrolled to ea
 - [ ] Each plate reads as a picture that something happened to (a slit, a sort, a wave, a codec, a dropped screen, a cut-up, a scanner, a stuck print) and not as an effect.
 - [ ] The page reads as one picture: the plates share a scene, and the hero is saturated smears on dark.
 - [ ] Pixels are square and sharp at 100 %.
-- [ ] The same seed gives the same plate, "another" gives a new one, and the modes of `wave`, `drip`, `collage` and `type` switch.
+- [ ] The same seed gives the same plate, "another" gives a new one, and the modes of `wave`, `drip`, `collage`, `type`, `fall`, `band`, `mosh` and `weave` switch.
+- [ ] `fall` hangs downward from the ridges, `band` smears whole bands across, `mosh` moves the picture in blocks, and `weave` crosses strips over and under.
 - [ ] A dropped photograph is broken each plate's way.
 - [ ] There is no horizontal scroll on a phone and there are no console errors.
 
 ## Credits and prior art
 
 This is an original implementation. The plates, the stand-in coast and the listing were
-written for `glitch.js`, and no photograph or found glitch is included. The interval
+written for `glitch.js`, and no photograph or found glitch is included. The mountain valleys
+are drawn in code from noise, not traced from any picture. The icons in `live-ui.js` are
+Phosphor Icons, Light weight (MIT, Copyright (c) 2023 Phosphor Icons), generated from the
+`@phosphor-icons/core` package. The interval
 sorting model in `pixelsort.js` follows the one popularised by Kim Asendorf's
 ASDFPixelSort and used by Akascape/Pixelort (MIT) and satyarth/pixelsort.
 Krzysztofz01/pixel-sorter is GPL-3.0, so it was read for ideas only and none of its code
