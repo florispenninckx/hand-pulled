@@ -118,7 +118,7 @@
   .desk-panel .lbl { font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
   .pills { display: flex; flex-wrap: wrap; gap: 8px; }
   .pill { font: 600 14px/1 var(--sans); color: var(--paper); padding: 13px 18px; border-radius: 999px; border: 1.5px solid var(--night); background: var(--night); text-shadow: 0 1px 3px rgba(0,0,0,.7); overflow: hidden; }
-  .pill span { display: inline-block; background: rgba(9,12,8,.74); padding: 3px 8px; margin: -3px -8px; border-radius: 999px; }
+  .pill > span { display: inline-block; background: rgba(9,12,8,.74); padding: 3px 8px; margin: -3px -8px; border-radius: 999px; }
   .pill[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--night); }
   .pill:hover, .pill:focus-visible { color: var(--citric); }
   .pill:focus-visible { outline: 2px solid var(--night); outline-offset: 3px; }
@@ -126,6 +126,8 @@
   .switch-row { display: flex; align-items: center; gap: 12px; font: 500 15px/1.2 var(--sans); }
   .bar { height: 16px; border-radius: 999px; overflow: hidden; background: var(--night); }
   .run { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+  .desk .ico { width: 17px; height: 17px; margin: -3px 7px 0 0; }
+  .go .ico { width: 30px; height: 30px; margin: -6px 10px 0 -4px; }
   .spin { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--night); }
   .spin[hidden] { display: none; }
   @media (max-width: 820px) { .desk-grid { grid-template-columns: 1fr; } }
@@ -199,17 +201,17 @@
   <div class="desk-grid">
     <div class="sheet-live" id="sheet-live"><span class="tag-no" id="tag-no">SP07 · MARBLE · 01</span></div>
     <div class="desk-panel">
-      <div class="row"><span class="lbl" id="kind-l">sheet</span>
+      <div class="row"><span class="lbl" id="kind-l"><span class="ico" data-icon="waves"></span>sheet</span>
         <div class="pills" role="group" aria-labelledby="kind-l">
           <button class="pill" type="button" data-kind="marble" aria-pressed="true"><span>marble</span></button>
           <button class="pill" type="button" data-kind="bands" aria-pressed="false"><span>agate</span></button>
           <button class="pill" type="button" data-kind="chrome" aria-pressed="false"><span>chrome</span></button>
           <button class="pill" type="button" data-kind="moire" aria-pressed="false"><span>lines</span></button>
         </div></div>
-      <div class="row"><label class="lbl" for="wetness">wetness</label><input id="wetness" type="range" min="0" max="100" value="60"></div>
-      <div class="row"><span class="switch-row"><input id="keep" type="checkbox" checked><label for="keep">keep the sheet wet</label></span></div>
-      <div class="row"><span class="lbl" id="run-l">run</span><div class="bar" id="bar" aria-labelledby="run-l"></div></div>
-      <div class="run"><button class="pill go" type="button" id="pour-run"><span>pour a run</span></button><div class="spin" id="spin" hidden aria-label="pouring"></div></div>
+      <div class="row"><label class="lbl" for="wetness"><span class="ico" data-icon="drop"></span>wetness</label><input id="wetness" type="range" min="0" max="100" value="60"></div>
+      <div class="row"><span class="switch-row"><input id="keep" type="checkbox" checked><label for="keep"><span class="ico" data-icon="drop-half"></span>keep the sheet wet</label></span></div>
+      <div class="row"><span class="lbl" id="run-l"><span class="ico" data-icon="hourglass-medium"></span>run</span><div class="bar" id="bar" aria-labelledby="run-l"></div></div>
+      <div class="run"><button class="pill go" type="button" id="pour-run"><span><span class="ico" data-icon="paint-bucket"></span>pour a run</span></button><div class="spin" id="spin" hidden aria-label="pouring"></div></div>
     </div>
   </div>
 </section>
@@ -404,6 +406,8 @@
   const wetNow = () => sheet && sheet.set({ wet: keep.checked ? wetness.value / 100 * 1.6 : 0 });
   wetness.addEventListener('input', wetNow); keep.addEventListener('change', wetNow);
   const bar = ui.progress($('#bar'), { value: 0 });
+  document.querySelectorAll('.desk .ico').forEach(e => ui.icon(e, e.dataset.icon));
+  ui.cursor(document.querySelector('.desk'));
   const spin = $('#spin'), spinner = ui.loader(spin);
   $('#pour-run').addEventListener('click', () => {
     spin.hidden = false; bar.set(0);
