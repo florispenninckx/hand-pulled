@@ -1,0 +1,95 @@
+{
+  "name": "Soak",
+  "file": "soak",
+  "skill": "maximalist-boc",
+  "about": "Blur and ink-bleed display: a black grotesk soaked until its corners melt and its edges blot.",
+  "base": {
+    "family": "Archivo Black",
+    "repo": "google/fonts",
+    "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+    "path": "ofl/archivoblack/ArchivoBlack-Regular.ttf",
+    "sha256": "dd9a89a019b4849f66ab75455fe7bdf931311042cbb0f0f97acc061539703180"
+  },
+  "axis": {
+    "tag": "BLED",
+    "name": "Bleed",
+    "default": 500,
+    "masters": [
+      0,
+      500,
+      1000
+    ],
+    "instances": {
+      "Dry": 0,
+      "Regular": 500,
+      "Soaked": 1000
+    }
+  },
+  "trace": 0,
+  "track": {
+    "0": 10,
+    "1000": 50
+  },
+  "ops": [
+    {
+      "op": "noise",
+      "amp": {
+        "0": 0.0,
+        "500": 0.12,
+        "1000": 0.2
+      },
+      "cell": 150,
+      "octaves": 2,
+      "seed": 1
+    },
+    {
+      "op": "blur",
+      "r": {
+        "0": 4,
+        "500": 26,
+        "1000": 44
+      }
+    },
+    {
+      "op": "level",
+      "at": {
+        "0": 0.5,
+        "500": 0.46,
+        "1000": 0.43
+      }
+    },
+    {
+      "op": "noise",
+      "amp": {
+        "0": 0.0,
+        "500": 0.2,
+        "1000": 0.32
+      },
+      "cell": 110,
+      "octaves": 1,
+      "band": 36,
+      "seed": 2
+    },
+    {
+      "op": "blur",
+      "r": {
+        "0": 2,
+        "1000": 8
+      }
+    },
+    {
+      "op": "level",
+      "at": 0.5
+    }
+  ],
+  "fit": {
+    "mode": "spline",
+    "tol": 3.5,
+    "seg": 60,
+    "bend": 4,
+    "corner": 50,
+    "smooth": 8,
+    "nsmooth": 16,
+    "reach": 160
+  }
+}

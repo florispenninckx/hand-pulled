@@ -1,0 +1,103 @@
+{
+ "name": "Sunprint",
+ "file": "sunprint",
+ "skill": "indigo-grain",
+ "about": "A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print to a long exposure where the light creeps under the edges and the strokes swell and pool like liquid.",
+ "base": {
+  "family": "Unbounded",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/unbounded/Unbounded[wght].ttf",
+  "sha256": "323b511be380c8d474ef030686b71aedde501f8d9cd46da558b7c40454372c3f",
+  "location": {
+   "wght": 520
+  }
+ },
+ "axis": {
+  "tag": "EXPO",
+  "name": "Exposure",
+  "default": 300,
+  "masters": [
+   0,
+   300,
+   1000
+  ],
+  "instances": {
+   "Contact": 0,
+   "Regular": 300,
+   "Long": 1000
+  }
+ },
+ "trace": 0,
+ "track": 20,
+ "ops": [
+  {
+   "op": "noise",
+   "amp": {
+    "0": 0.0,
+    "300": 0.14,
+    "1000": 0.3
+   },
+   "cell": {
+    "0": 90,
+    "1000": 120
+   },
+   "octaves": 2,
+   "band": 40,
+   "seed": 3
+  },
+  {
+   "op": "blur",
+   "r": {
+    "0": 3,
+    "300": 20,
+    "1000": 42
+   }
+  },
+  {
+   "op": "level",
+   "at": {
+    "0": 0.5,
+    "300": 0.43,
+    "1000": 0.37
+   }
+  },
+  {
+   "op": "noise",
+   "amp": {
+    "0": 0.0,
+    "300": 0.18,
+    "1000": 0.34
+   },
+   "cell": {
+    "0": 36,
+    "1000": 46
+   },
+   "octaves": 2,
+   "band": 24,
+   "seed": 4
+  },
+  {
+   "op": "blur",
+   "r": {
+    "0": 1.5,
+    "300": 4,
+    "1000": 7
+   }
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 4,
+  "seg": 70,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 6,
+  "nsmooth": 14,
+  "reach": 160
+ }
+}

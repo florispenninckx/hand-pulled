@@ -1,0 +1,75 @@
+{
+ "name": "Sunprint Halo",
+ "file": "sunprint-halo",
+ "skill": "indigo-grain",
+ "about": "The halation of Sunprint: the light that crept under the letters, a soft swollen ghost with a stippled, grainy edge. Set it behind Sunprint in the same size and tracking; the advances match.",
+ "base": {
+  "family": "Unbounded",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/unbounded/Unbounded[wght].ttf",
+  "sha256": "323b511be380c8d474ef030686b71aedde501f8d9cd46da558b7c40454372c3f",
+  "location": {
+   "wght": 520
+  }
+ },
+ "axis": {
+  "tag": "EXPO",
+  "name": "Exposure",
+  "default": 1000,
+  "masters": [
+   1000
+  ]
+ },
+ "variable": false,
+ "trace": 1000,
+ "track": 20,
+ "pad": 200,
+ "ops": [
+  {
+   "op": "blur",
+   "r": 46
+  },
+  {
+   "op": "level",
+   "at": 0.24,
+   "soft": 0.06
+  },
+  {
+   "op": "noise",
+   "amp": 0.22,
+   "cell": 60,
+   "octaves": 2,
+   "band": 40,
+   "seed": 5
+  },
+  {
+   "op": "grain",
+   "amp": 0.5,
+   "size": 9,
+   "band": 36,
+   "seed": 6
+  },
+  {
+   "op": "level",
+   "at": 0.5,
+   "soft": 0.02
+  },
+  {
+   "op": "clean",
+   "min": 260,
+   "holes": 260
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 5,
+  "seg": 60,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 0,
+  "nsmooth": 8,
+  "reach": 160,
+  "min_area": 40
+ }
+}

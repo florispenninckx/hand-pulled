@@ -51,7 +51,7 @@ the work done.
 - `Mercury` (chrome aurora) shades its surfaces in WebGL with its own shaders, and falls
   back to a 2D canvas when WebGL is missing. `Goo` writes its letters as SVG with their own
   filters. Everything else is drawn on a 2D canvas. The
-  only external resource is Google Fonts.
+  only external resource is Google Fonts or the repo's own OFL fonts.
 - Every engine is seeded, so the same seed gives the same plate. A plate can be named by
   its settings and pulled again.
 - Each reference page takes your own photograph and puts it through the same process as
