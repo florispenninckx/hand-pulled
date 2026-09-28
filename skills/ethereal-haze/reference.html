@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faye</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #e6ddd6; }
+  body { font: 300 14px/1.6 'Jost', sans-serif; color: #5f4f4b; overflow-x: hidden; }
+
+  .plate { position: relative; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: var(--ground); color: var(--ink); }
+  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  @media (prefers-reduced-motion: no-preference) {
+    .plate canvas { filter: blur(14px); transform: scale(1.03); transition: filter 1.8s cubic-bezier(.2, .7, .2, 1), transform 2.4s cubic-bezier(.2, .7, .2, 1); }
+    .plate.seen canvas { filter: none; transform: none; }
+  }
+  .plate.drag::after { content: ''; position: absolute; inset: 12px; border: 1px solid var(--ink); z-index: 3; pointer-events: none; }
+
+  /* one small wordmark, dead centre, and at most one tiny line under it */
+  .word { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); z-index: 2; text-align: center; pointer-events: none; }
+  .word h1, .word h2 { margin: 0; font: 400 clamp(34px, 5.4vw, 78px)/1 'Marcellus', serif; letter-spacing: .02em; }
+  .word h1 { letter-spacing: .06em; }
+  .word p { margin: .6em 0 0; font: 400 clamp(12px, 1.05vw, 15px)/1 'Jost', sans-serif; letter-spacing: .06em; }
+
+  .cap {
+    position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px;
+    font: 400 10.5px/1 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase;
+  }
+  .cap .ctrl { display: flex; gap: 18px; }
+  .cap button, .cap label {
+    background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit;
+    cursor: pointer; opacity: .82;
+  }
+  .cap button:hover, .cap label:hover { opacity: 1; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  :focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }
+
+  /* the sun print carries its title in the paper margin, like a pencilled plate number */
+  .plate[data-kind="shade"] .word { top: auto; bottom: 0; transform: none; }
+  .plate[data-kind="shade"] .word h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; line-height: 4.5vmin; }
+  .plate[data-kind="shade"] .cap { top: calc(4.5vmin + 12px); bottom: auto; left: calc(4.5vmin + 12px); right: calc(4.5vmin + 12px); }
+
+  .notes { padding: clamp(72px, 14vh, 150px) 16px; text-align: center; }
+  .notes p.lede { max-width: 30em; margin: 0 auto 2.6em; font: 400 clamp(17px, 1.6vw, 21px)/1.55 'Marcellus', serif; color: #6a5651; }
+  .notes ol { list-style: none; margin: 0 auto; padding: 0; max-width: 560px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
+  .notes li b { display: block; font: 400 17px/1.2 'Marcellus', serif; color: #5a4743; margin-bottom: .3em; }
+  .notes li span { font-size: 12.5px; letter-spacing: .04em; }
+  @media (max-width: 480px) { .notes ol { grid-template-columns: 1fr; } }
+
+  footer { padding: 40px 16px 48px; text-align: center; font-size: 11.5px; letter-spacing: .04em; color: #8a7771; }
+  footer a { color: inherit; text-underline-offset: 3px; }
+</style>
+</head>
+<body>
+<main>
+  <section class="plate" data-kind="petals" data-palette="blush" style="--ground:#d6cbc3; --ink:#fff">
+    <canvas aria-label="Pink petals so close to the lens they are only colour and soft edges, on dusty rose air, with fine grain."></canvas>
+    <div class="word"><h1>FAYE</h1></div>
+    <div class="cap">
+      <span>I — tendre</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label for="f1">+ photograph</label><input type="file" id="f1" accept="image/*"></span>
+    </div>
+  </section>
+
+  <section class="notes" aria-label="The four scents">
+    <p class="lede">Four scents, each from one flower held too close to the lens to see. They are made in small batches and worn close to the skin.</p>
+    <ol>
+      <li><b>tendre</b><span>rose petal · pear skin · white musk</span></li>
+      <li><b>corail</b><span>field poppy · blood orange · pink pepper</span></li>
+      <li><b>ombre verte</b><span>fig leaf · vetiver · cut stem</span></li>
+      <li><b>sépia</b><span>tobacco leaf · old paper · dry hay</span></li>
+    </ol>
+  </section>
+
+  <section class="plate" data-kind="poppies" data-palette="coral" style="--ground:#ecd8d4; --ink:#fff">
+    <canvas aria-label="Coral and red poppies on long green stems, swaying past a slow shutter, on milky pink."></canvas>
+    <div class="word"><h2>corail</h2><p>eau de parfum, 50 ml</p></div>
+    <div class="cap">
+      <span>II — corail</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label for="f2">+ photograph</label><input type="file" id="f2" accept="image/*"></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="shade" data-palette="sage" style="--ground:#b3b467; --ink:#6f7337">
+    <canvas aria-label="A sun print on green paper: pale leaf shapes, the near ones sharp and the lifted ones soft, inside a butter-coloured margin."></canvas>
+    <div class="word"><h2>ombre verte</h2></div>
+    <div class="cap">
+      <span>III — sun print</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label for="f3">+ photograph</label><input type="file" id="f3" accept="image/*"></span>
+    </div>
+  </section>
+
+  <section class="plate" data-kind="streak" data-palette="sepia" style="--ground:#766140; --ink:#efe6d2">
+    <canvas aria-label="A figure moving through the frame in sepia, smeared sideways by a slow shutter, under heavy grain."></canvas>
+    <div class="word"><h2>sépia</h2><p>eau de parfum, 50 ml</p></div>
+    <div class="cap">
+      <span>IV — sépia</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label for="f4">+ photograph</label><input type="file" id="f4" accept="image/*"></span>
+    </div>
+  </section>
+</main>
+<footer>
+  Faye is fictional. No plate is a photograph: each is drawn by <code>haze.js</code>, defocused the way a lens defocuses and grained the way film grains. Press <i>another</i> for a new print, or drop a photograph on a plate to develop it in that plate's look.
+  <br><a href="../../index.html">all styles</a>
+</footer>
+<script src="assets/haze.js"></script>
+<script>
+(function () {
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const LOOK = { petals: 'blush', poppies: 'coral', shade: 'sage', streak: 'sepia' };
+  const plates = $$('.plate').map((section, i) => ({ section, canvas: $('canvas', section), kind: section.dataset.kind, palette: section.dataset.palette, seed: [3, 4, 2, 6][i], photo: null }));
+
+  function render(p) {
+    const r = p.section.getBoundingClientRect(), cw = Math.round(r.width), ch = Math.round(r.height);
+    const o = { width: Math.round(cw * dpr), height: Math.round(ch * dpr), cssWidth: cw, seed: p.seed, palette: p.palette };
+    if (p.photo) Haze.develop(p.canvas, p.photo, Object.assign(o, { look: LOOK[p.kind] }));
+    else Haze[p.kind](p.canvas, o);
+  }
+  // one plate per frame, top first, so the page paints before the last print is developed
+  function renderAll() { plates.forEach((p, i) => setTimeout(() => requestAnimationFrame(() => render(p)), i * 30)); }
+
+  async function take(p, file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    const img = new Image(); img.src = URL.createObjectURL(file);
+    try { await img.decode(); } catch (e) { return; }
+    p.photo = img; render(p);
+  }
+  plates.forEach(p => {
+    $('[data-again]', p.section).addEventListener('click', () => { p.photo = null; p.seed = 1 + Math.floor(Math.random() * 9999); render(p); });
+    $('input[type=file]', p.section).addEventListener('change', e => take(p, e.target.files[0]));
+    p.section.addEventListener('dragover', e => { e.preventDefault(); p.section.classList.add('drag'); });
+    p.section.addEventListener('dragleave', () => p.section.classList.remove('drag'));
+    p.section.addEventListener('drop', e => { e.preventDefault(); p.section.classList.remove('drag'); take(p, e.dataTransfer.files[0]); });
+  });
+
+  // each plate comes into focus the first time it is seen
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); } }), { threshold: 0.25 });
+  plates.forEach(p => io.observe(p.section));
+
+  renderAll();
+  let lastW = innerWidth, t;
+  addEventListener('resize', () => {   // phones fire resize on scroll as the toolbar moves; only a width change re-develops
+    if (innerWidth === lastW) return;
+    lastW = innerWidth; clearTimeout(t); t = setTimeout(renderAll, 200);
+  });
+})();
+</script>
+</body>
+</html>
