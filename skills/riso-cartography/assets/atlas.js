@@ -1,7 +1,7 @@
 /* atlas.js — "Figure & Ground": riso-printed town and river sheets, built on riso.js and cartography.js (load both first).
  *
  *   await Atlas.blocks(canvas, { width, height, seed, mode, ink, image, text });   // a town as figure and ground
- *         mode 'solid'  bright red, twice: every block inked, the streets and the river left as paper
+ *         mode 'solid'  blue, twice (or any `ink`, bright red among them): every block inked, the streets and the river left as paper
  *         mode 'wash'   cornflower: each block its own wash, dried darker at the rim, in a ragged town
  *         mode 'plan'   fluorescent pink + bright red: house footprints, a motorway interchange, low cloud
  *         mode 'hatch'  teal on cream: every block hatched, crossed, stippled or scribbled
@@ -188,7 +188,7 @@
   }
 
   // ---- I. blocks: figure and ground, four ways -------------------------------------------------
-  const MODES = { solid: ['bright-red', 'white'], wash: ['cornflower', 'white'], plan: ['fluorescent-pink', 'white'], hatch: ['teal', 'cream'] };
+  const MODES = { solid: ['blue', 'white'], wash: ['cornflower', 'white'], plan: ['fluorescent-pink', 'white'], hatch: ['teal', 'cream'] };
   function blocks(canvas, opts) {
     const o = Object.assign({ seed: 1, mode: 'solid' }, opts), m = MODES[o.mode];
     if (!m) throw new Error(`atlas: unknown mode "${o.mode}". Use one of: ${Object.keys(MODES).join(', ')}.`);

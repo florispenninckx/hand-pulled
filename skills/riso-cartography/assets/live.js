@@ -1,19 +1,25 @@
 /* live.js — Riso.live(): a pulled print, still wet, on the GPU.
  *
- * Capture-first. The still engine (riso.js, and atlas.js on top of it) is the reference
- * and runs once on the CPU with `capture`: it hands back the paper (tone, fibre, flecks)
- * and every drum's screened coverage (grain or halftone, mottle, starved specks and its
- * own registration error already in it). Those are uploaded as textures and a fragment
- * shader lays the drums on the paper again every frame, multiplying like soy ink:
- *   out = paper × Π (1 − c + c · ink)
- * which is riso.js's own overprint. The live terms sit on top and are all exactly zero at
- * time 0 with the defaults, so frame 0 is the still; live.parity() measures that.
+ * Shader-native press. The still engine (riso.js, and atlas.js on top of it) is the reference.
+ * It runs once on the CPU with `capture`, which stops before the press: it hands back the
+ * geography (every drum's master, as drawn: the grown town, the migrated river, the type),
+ * each drum's registration error and the noise table. Those are uploaded once. The press
+ * itself is ported to GLSL line for line and runs every frame: the paper (tone, fibre on
+ * riso.js's coarse grid, flecks), then per drum the registration, the master's density,
+ * the drum mottle (its coarse grid rendered in a first pass from the same permutation),
+ * the screen (stochastic grain, halftone dot or solid), starved specks, and the overprint,
+ * multiplying like soy ink:  out = paper × Π (1 − c + c · ink).
+ * So the print evolves while the map holds: drums drift out of register and back, the
+ * mottle moves as the drums are re-inked, and the fine grain is re-rolled from the same
+ * hash, each pixel at its own phase. Every live term is exactly zero at time 0 with the
+ * defaults, so frame 0 is the still; live.parity() measures that.
  *
  *   const ctl = Riso.live(canvas, { sheet: 'blocks', mode: 'solid', seed: 3, ink: 'blue',   // still options
  *                                   drift: 1, feed: 'in', pointer: 1, clickPulse: true });   // motion options
  *   ctl.set({ slip: 1 }); ctl.pulse(x, y); ctl.point(x, y); ctl.pause(); ctl.resume(); ctl.destroy();
  *
- * Motion is the press's own: drums wander out of register and back (`drift`) or are
+ * Motion is the press's own: drums wander out of register and back (`drift`), are re-inked
+ * (`reink`) and pull fresh grain (`grainRate`, re-rolls a second), or are
  * knocked off on purpose (`slip`, `offsets`); the sheet feeds through the drums one after
  * another (`feed`: on arrival or with scroll); contour lines of the ground under the sheet
  * are traced level by level in a fresh hit of ink (`trace`); the pointer carries a loupe
@@ -32,23 +38,65 @@
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false, addEventListener() {} };
   // motion options: changing these never reprints the sheet
   const MOTION = {
-    drift: 1, speed: 1, slip: 0, offsets: null, feed: 1, feedMs: 2400, scrollRange: [0, 1],
+    drift: 1, speed: 1, reink: 1, grainRate: 3, slip: 0, offsets: null, feed: 1, feedMs: 2400, scrollRange: [0, 1],
     trace: 0, traceLevels: 14, traceRate: 1.6, traceInk: null,
     pointer: 0, radius: 0.16, zoom: 1.8, lag: 0.16, hand: null, clickPulse: false, stampInk: null,
-    ease: 0.18, own: null, resolution: 1, maxField: 1.6e6,
+    ease: 0.18, own: null, resolution: 1, maxField: 5.3e6,
   };
 
   // ---------------------------------------------------------------- GLSL
   const VS = `#version 300 es
 void main() { vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2)); gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0); }`;
 
+  // the press's noise, riso.js makeNoise + fbm line for line: the permutation is an R8UI texture
+  const NOISE = `
+uniform highp usampler2D uPerm;
+int P(int i) { return int(texelFetch(uPerm, ivec2(i & 255, 0), 0).r); }
+float fade(float t) { return t * t * t * (t * (t * 6. - 15.) + 10.); }
+float gr(int h, float x, float y) { return ((h & 1) != 0 ? -x : x) + ((h & 2) != 0 ? -y : y); }
+float noise(float x, float y) {
+  float xf = floor(x), yf = floor(y); int X = int(xf) & 255, Y = int(yf) & 255;
+  x -= xf; y -= yf;
+  float u = fade(x), v = fade(y); int a = P(X) + Y, b = P(X + 1) + Y;
+  float n00 = gr(P(a), x, y), n10 = gr(P(b), x - 1., y), n01 = gr(P(a + 1), x, y - 1.), n11 = gr(P(b + 1), x - 1., y - 1.);
+  return (n00 + u * (n10 - n00)) + v * ((n01 + u * (n11 - n01)) - (n00 + u * (n10 - n00)));
+}
+float fbm(float x, float y, int oct) {
+  float s = 0., a = .5, f = 1.;
+  for (int i = 0; i < 8; i++) { if (i >= oct) break; s += a * noise(x * f, y * f); f *= 2.03; a *= .5; }
+  return s;
+}`;
+
+  // pass 1, on the still's own coarse grids: paper fibre (step 3S) or drum mottle (step 6S, drum l in channel l).
+  // uInk moves each drum's mottle through the noise: the drum is re-inked as it turns (0 at clock 0)
+  const FS_GRID = `#version 300 es
+precision highp float; precision highp int;
+uniform int uMode; uniform float uStep, uS; uniform vec4 uReink;
+out vec4 outc;
+${NOISE}
+void main() {
+  vec2 ij = floor(gl_FragCoord.xy); float x = ij.x * uStep, y = ij.y * uStep;
+  if (uMode == 0) { outc = vec4(fbm(x / (180. * uS), y / (14. * uS), 3), 0., 0., 1.); return; }
+  vec4 m;
+  for (int l = 0; l < 4; l++) {
+    float L = float(l), ph = uReink[l];
+    m[l] = .7 * fbm(x / (260. * uS) + 31. * L, y / (260. * uS) + ph, 3) + .3 * noise(x / (900. * uS) + 7. * L + .3 * ph, y / (22. * uS) + 4. * ph);
+  }
+  outc = m;
+}`;
+
+  // pass 2, every device pixel: the press. Paper, then per drum: registration, the master's
+  // density, mottle, the screen, starved specks, and the multiplying overprint.
   const FS = `#version 300 es
 precision highp float; precision highp int;
-uniform sampler2D uPaper, uCov, uH;
-uniform vec2 uSize; uniform int uN; uniform float uS;
-uniform vec3 uInk[4]; uniform vec2 uOff[4];
-uniform vec4 uFeed;                          // progress, stagger, soft px, on
-uniform vec4 uLoupe; uniform float uZoom;    // x, y, radius px, amount
+uniform sampler2D uM, uMot, uFib, uH;
+uniform vec2 uSize, uMotN, uFibN; uniform int uN; uniform float uS;
+uniform vec3 uTone; uniform float uFibre;
+uniform vec3 uInk[4]; uniform vec4 uReg[4];     // per drum: dx, dy, cos rot, sin rot
+uniform ivec4 uScreen; uniform vec4 uAng, uCell, uDens; uniform ivec4 uSeedL;
+uniform float uTick;                            // grain re-roll: clock × grainRate, 0 at frame 0
+uniform vec4 uFeed;                             // progress, stagger, soft px, on
+uniform vec4 uLoupe; uniform float uZoom;       // x, y, radius px, amount
 uniform vec4 uPulse[4]; uniform int uNPulse; uniform vec3 uStampInk;   // x, y, r px, amount
 uniform vec4 uTrace; uniform vec3 uTraceInk; uniform vec2 uHN; // amount, front (levels), levels, line px
 uniform int uSeed;
@@ -59,16 +107,18 @@ float hash2(int x, int y, int s) {
   h = (h ^ (h >> 13u)) * 1274126177u;
   return float(h ^ (h >> 16u)) / 4294967296.;
 }
-// the press's stochastic grain screen: density d -> coverage
+// riso.js smooth: also for e0 > e1, where GLSL's smoothstep is undefined
+float sm(float e0, float e1, float x) { float t = clamp((x - e0) / (e1 - e0), 0., 1.); return t * t * (3. - 2. * t); }
+// the stochastic grain screen for the live terms: density d -> coverage
 float grain(ivec2 ip, float d, int s) {
   float g = .6 * hash2(ip.x, ip.y, s) + .4 * hash2(ip.x >> 1, ip.y >> 1, s + 1);
-  return smoothstep(g - .15, g + .15, d * 1.12);
+  return sm(g - .15, g + .15, d * 1.12);
 }
-float cov(vec2 q, int l) {
-  vec2 uv = q / uSize;
-  if (uv.x < 0. || uv.y < 0. || uv.x > 1. || uv.y > 1.) return 0.;
-  vec4 c = texture(uCov, uv);
-  return l == 0 ? c.r : l == 1 ? c.g : l == 2 ? c.b : c.a;
+// riso.js sample(): bilinear, zero off the master
+float master(vec2 u, int l) {
+  if (u.x < 0. || u.y < 0. || u.x > uSize.x - 1.001 || u.y > uSize.y - 1.001) return 0.;
+  vec4 m = texture(uM, (u + .5) / uSize);
+  return l == 0 ? m.r : l == 1 ? m.g : l == 2 ? m.b : m.a;
 }
 void main() {
   vec2 p = vec2(gl_FragCoord.x, uSize.y - gl_FragCoord.y);   // pixel centre, top-down
@@ -80,10 +130,38 @@ void main() {
     q = uLoupe.xy + (p - uLoupe.xy) / (1. + (uZoom - 1.) * uLoupe.w * wgt);
     rim = uLoupe.w * exp(-pow((r - uLoupe.z * .97) / (uLoupe.z * .025 + 1.), 2.));
   }
-  vec3 c = texture(uPaper, q / uSize).rgb;
+  vec2 xy = floor(q); ivec2 iq = ivec2(xy);       // riso.js works on whole pixels
+  // paper: tone × (1 − fibre streaks − flecks)
+  float fib = texture(uFib, (xy / (3. * uS) + .5) / uFibN).r;
+  vec3 c = uTone * (1. - uFibre * (.5 + fib) - (hash2(iq.x, iq.y, 911) > .9993 ? .12 : 0.));
+  vec2 ctr = uSize * .5;
   for (int l = 0; l < 4; l++) {
     if (l >= uN) break;
-    float k = cov(q - uOff[l], l);
+    // registration: every drum lands a little differently (the captured error plus the live drift)
+    vec4 R = uReg[l]; vec2 a = xy - ctr - R.xy;
+    float d = master(ctr + vec2(a.x * R.z - a.y * R.w, a.x * R.w + a.y * R.z), l);
+    if (d < .004) continue;
+    // drum mottle: uneven ink laydown
+    float mot = texture(uMot, (xy / (6. * uS) + .5) / uMotN)[l];
+    d = min(1., d * uDens[l] * (.95 + .18 * mot));
+    int s = uSeedL[l];
+    float k;
+    if (uScreen[l] == 1) {
+      // AM dot: rotate into screen space, distance to cell centre
+      float ca = cos(uAng[l]), sa = sin(uAng[l]);
+      float sx = (xy.x * ca + xy.y * sa) / uCell[l], sy = (-xy.x * sa + xy.y * ca) / uCell[l];
+      float fx = sx - floor(sx) - .5, fy = sy - floor(sy) - .5, r = sqrt(d) * .72;
+      k = sm(r + .06, r - .06, sqrt(fx * fx + fy * fy));
+    } else if (uScreen[l] == 2) {
+      k = d;
+    } else {
+      // stochastic grain; the fine term is re-rolled from the same hash, each pixel at its own phase
+      int roll = int(floor(uTick + hash2(iq.x, iq.y, s + 3)));
+      float g = .6 * hash2(iq.x, iq.y, s + roll * 104729) + .4 * hash2(iq.x >> 1, iq.y >> 1, s + 1);
+      k = sm(g - .15, g + .15, d * 1.12);
+    }
+    // solids are never solid: starved specks of paper show through
+    if (hash2(iq.x, iq.y, s + 2) < .035 * d) k *= .35;
     if (uFeed.w > 0.) {
       float line = (uFeed.x * (1. + uFeed.y * float(uN - 1)) - uFeed.y * float(l)) * (uSize.y + 2. * uFeed.z) - uFeed.z;
       k *= 1. - smoothstep(line - uFeed.z, line, q.y);
@@ -109,9 +187,9 @@ void main() {
 }`;
 
   // ---------------------------------------------------------------- renderers
-  function compile(gl) {
+  function compile(gl, fs) {
     const p = gl.createProgram();
-    for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, FS]]) {
+    for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
       const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS) && !gl.isContextLost()) { console.warn('live.js shader:', gl.getShaderInfoLog(s)); return null; }
       gl.attachShader(p, s);
@@ -123,9 +201,10 @@ void main() {
   function makeRenderer(canvas) {
     let gl = null;
     try { gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
-    if (!gl) return null;
+    // the coarse grids are rendered to half-float targets
+    if (!gl || !gl.getExtension('EXT_color_buffer_float')) return null;
     const R = { gl, canvas, lost: false, gen: 0 };
-    const setup = () => { R.prog = compile(gl); R.gen++; return !!R.prog; };
+    const setup = () => { R.prog = compile(gl, FS); R.grid = compile(gl, FS_GRID); R.fb = gl.createFramebuffer(); R.gen++; return !!(R.prog && R.grid); };
     if (!setup()) return null;
     const lost = e => { e.preventDefault(); R.lost = true; };
     const back = () => { R.lost = false; setup(); for (const v of views) v.dirty = true; wake(); };
@@ -147,12 +226,12 @@ void main() {
     return shared;
   }
   const U = (gl, P, n) => (n in P.u) ? P.u[n] : (P.u[n] = gl.getUniformLocation(P.p, n));
-  function texture(gl, w, h, internal, format, type, data) {
-    const t = gl.createTexture();
+  function texture(gl, w, h, internal, format, type, data, nearest) {
+    const t = gl.createTexture(), f = nearest ? gl.NEAREST : gl.LINEAR;
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, data);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     return t;
   }
@@ -195,43 +274,72 @@ void main() {
   }
 
   // ---------------------------------------------------------------- GPU frame
-  function freeTex(gl, g) { if (g) for (const k of ['paper', 'cov', 'h']) if (g[k]) gl.deleteTexture(g[k]); }
+  function freeTex(gl, g) { if (g) for (const k of ['m', 'mot', 'fib', 'perm', 'h']) if (g[k]) gl.deleteTexture(g[k]); }
+  // the geography, captured once: the drum masters (drum l in channel l), the noise table, the ground
   function upload(v) {
     const gl = v.R.gl, s = v.src, cap = s.cap, n = cap.w * cap.h;
     freeTex(gl, v.g);
-    const g = { gen: v.R.gen, src: s };
-    const P = new Float32Array(n * 4), K = new Float32Array(n * 4);
-    for (let i = 0; i < n; i++) { P[i * 4] = cap.paper[i * 3] / 255; P[i * 4 + 1] = cap.paper[i * 3 + 1] / 255; P[i * 4 + 2] = cap.paper[i * 3 + 2] / 255; P[i * 4 + 3] = 1; }
-    cap.layers.slice(0, 4).forEach((L, l) => { const c = L.cov; for (let i = 0; i < n; i++) K[i * 4 + l] = c[i]; });
-    g.paper = texture(gl, cap.w, cap.h, gl.RGBA16F, gl.RGBA, gl.FLOAT, P);
-    g.cov = texture(gl, cap.w, cap.h, gl.RGBA16F, gl.RGBA, gl.FLOAT, K);
+    const g = { gen: v.R.gen, src: s, reink: null };
+    if (!s.m) {
+      s.m = new Uint8Array(n * 4);
+      cap.layers.slice(0, 4).forEach((L, l) => { const m = L.master; for (let i = 0; i < n; i++) s.m[i * 4 + l] = Math.round(m[i] * 255); L.master = null; });
+    }
+    g.m = texture(gl, cap.w, cap.h, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, s.m);
+    g.perm = texture(gl, 256, 1, gl.R8UI, gl.RED_INTEGER, gl.UNSIGNED_BYTE, cap.perm.subarray(0, 256), true);
     g.h = texture(gl, s.hf.gw, s.hf.gh, gl.R16F, gl.RED, gl.FLOAT, s.hf.g);
+    // riso.js coarseField grids: ceil(w / step) + 2 samples a side
+    const S = cap.S, grid = step => [Math.ceil(cap.w / step) + 2, Math.ceil(cap.h / step) + 2];
+    g.fibN = grid(3 * S); g.motN = grid(6 * S);
+    g.fib = texture(gl, g.fibN[0], g.fibN[1], gl.R16F, gl.RED, gl.HALF_FLOAT, null);
+    g.mot = texture(gl, g.motN[0], g.motN[1], gl.RGBA16F, gl.RGBA, gl.HALF_FLOAT, null);
     v.g = g;
+    renderGrid(v, 0, g.fib, g.fibN, 3 * S, [0, 0, 0, 0]);
   }
+  function renderGrid(v, mode, tex, N, step, reink) {
+    const R = v.R, gl = R.gl, P = R.grid, u = n => U(gl, P, n);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, R.fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.viewport(0, 0, N[0], N[1]); gl.useProgram(P.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, v.g.perm); gl.uniform1i(u('uPerm'), 0);
+    gl.uniform1i(u('uMode'), mode); gl.uniform1f(u('uStep'), step); gl.uniform1f(u('uS'), v.src.cap.S); gl.uniform4fv(u('uReink'), reink);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, null, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+  const SCREENS = { grain: 0, halftone: 1, solid: 2 };
   function drawGPU(v) {
     const R = v.R, gl = R.gl, s = v.src;
     if (R.lost || !s || !s.cap) return false;
     if (!v.g || v.g.gen !== R.gen || v.g.src !== s) upload(v);
     const g = v.g, cv = R.canvas, w = s.w, h = s.h, st = v.st, o = v.o, cap = s.cap, S = Math.min(w, h), k = w / (v.cssW || w);
+    const nL = Math.min(4, cap.layers.length), t = st.clock;
+    // the drums are re-inked as they turn: each one's mottle moves through the noise (0 at clock 0)
+    const reink = [0, 1, 2, 3].map(l => st.env * o.reink * t * 0.035 * (1 + 0.21 * l));
+    const rk = reink.join();
+    if (g.reink !== rk) { renderGrid(v, 1, g.mot, g.motN, 6 * cap.S, reink); g.reink = rk; }
     if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
     const P = R.prog, u = n => U(gl, P, n);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null); gl.viewport(0, 0, w, h); gl.useProgram(P.p);
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, g.paper); gl.uniform1i(u('uPaper'), 0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, g.cov); gl.uniform1i(u('uCov'), 1);
-    gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, g.h); gl.uniform1i(u('uH'), 2);
-    gl.uniform2f(u('uSize'), w, h); gl.uniform1f(u('uS'), S); gl.uniform1i(u('uSeed'), s.seed);
-    const nL = Math.min(4, cap.layers.length), ink = new Float32Array(12), off = new Float32Array(8);
+    [['uM', g.m], ['uMot', g.mot], ['uFib', g.fib], ['uH', g.h]].forEach(([n, tx], i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, tx); gl.uniform1i(u(n), i); });
+    gl.uniform2f(u('uSize'), w, h); gl.uniform1f(u('uS'), cap.S); gl.uniform1i(u('uSeed'), s.seed);
+    gl.uniform2f(u('uMotN'), g.motN[0], g.motN[1]); gl.uniform2f(u('uFibN'), g.fibN[0], g.fibN[1]);
+    gl.uniform3f(u('uTone'), cap.tone[0] / 255, cap.tone[1] / 255, cap.tone[2] / 255); gl.uniform1f(u('uFibre'), cap.fibre);
+    const ink = new Float32Array(12), reg = new Float32Array(16), scr = new Int32Array(4), ang = new Float32Array(4), cell = new Float32Array(4), dens = new Float32Array(4), sd = new Int32Array(4);
     cap.layers.slice(0, 4).forEach((L, l) => {
       ink.set([L.ink[0] / 255, L.ink[1] / 255, L.ink[2] / 255], l * 3);
       // drums wander out of register and back: every term is zero at clock 0
-      const ph = 1.3 + 2.1 * l, wv = 0.8 + 0.23 * l, a = st.env * o.drift * S * 0.0038, t = st.clock;
+      const ph = 1.3 + 2.1 * l, wv = 0.8 + 0.23 * l, a = st.env * o.drift * S * 0.0038;
       let dx = a * (Math.sin(t * 0.61 * wv + ph) - Math.sin(ph)), dy = a * 0.8 * (Math.cos(t * 0.47 * wv + ph * 1.7) - Math.cos(ph * 1.7));
+      const rot = L.rot + st.env * o.drift * 0.0009 * (Math.sin(t * 0.37 * wv + ph * 2.3) - Math.sin(ph * 2.3));
       // slip: knocked off register on purpose, each drum its own way
       const sa = 2.4 * l + 0.6; dx += st.slip * S * 0.03 * Math.cos(sa) * (l ? 1 : 0.35); dy += st.slip * S * 0.03 * Math.sin(sa) * (l ? 1 : 0.35);
       if (st.offsets && st.offsets[l]) { dx += st.offsets[l][0] * k; dy += st.offsets[l][1] * k; }
-      off.set([dx, dy], l * 2);
+      reg.set([L.dx + dx, L.dy + dy, Math.cos(rot), Math.sin(rot)], l * 4);
+      scr[l] = SCREENS[L.screen] == null ? 0 : SCREENS[L.screen]; ang[l] = L.angle * Math.PI / 180; cell[l] = L.cell * cap.S; dens[l] = L.density; sd[l] = L.seed;
     });
-    gl.uniform1i(u('uN'), nL); gl.uniform3fv(u('uInk'), ink); gl.uniform2fv(u('uOff'), off);
+    gl.uniform1i(u('uN'), nL); gl.uniform3fv(u('uInk'), ink); gl.uniform4fv(u('uReg'), reg);
+    gl.uniform4iv(u('uScreen'), scr); gl.uniform4fv(u('uAng'), ang); gl.uniform4fv(u('uCell'), cell); gl.uniform4fv(u('uDens'), dens); gl.uniform4iv(u('uSeedL'), sd);
+    gl.uniform1f(u('uTick'), st.env > 0 ? t * o.grainRate : 0);
     gl.uniform4f(u('uFeed'), st.feed, 0.25, S * 0.04, st.feed < 1 ? 1 : 0);
     const pool = st.pool;
     gl.uniform4f(u('uLoupe'), pool.x, pool.y, o.radius * S, pool.amp * o.pointer); gl.uniform1f(u('uZoom'), o.zoom);
@@ -241,7 +349,7 @@ void main() {
     gl.uniform3f(u('uStampInk'), si[0] / 255, si[1] / 255, si[2] / 255);
     const ti = o.traceInk ? inkOf(o.traceInk) : cap.layers[nL - 1] ? cap.layers[nL - 1].ink : [0, 0, 0];
     gl.uniform3f(u('uTraceInk'), ti[0] / 255, ti[1] / 255, ti[2] / 255);
-    const lv = o.traceLevels, front = (st.clock * o.traceRate) % (lv + 6) - 2;
+    const lv = o.traceLevels, front = (t * o.traceRate) % (lv + 6) - 2;
     gl.uniform2f(u('uHN'), s.hf.gw, s.hf.gh);
     gl.uniform4f(u('uTrace'), st.env * o.trace, front, lv, Math.max(1.2, S / 420));
     gl.drawArrays(gl.TRIANGLES, 0, 3);

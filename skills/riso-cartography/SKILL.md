@@ -1,6 +1,6 @@
 ---
 name: riso-cartography
-description: Design pages, posters and covers that look like risograph-printed town plans and river maps, in one to three spot inks. Examples are a figure-ground plan with every block in solid red and the streets, squares and river left as paper; the same town as blue watercolour blocks, as pink house footprints under a motorway cloverleaf, or as teal hatched blocks on cream; a purple river with every old course and oxbow behind it; a land-use plan in pastel pink, purple halftone and teal hairlines with hollow arrows; and a walk poster with huge black words over a green valley map. The towns are grown and the rivers migrated, never traced. Grain, misregistration and overprint come from a simulated press, not a filter. Use it for exhibitions, architecture and urbanism, city guides, walks, festivals, zines, record sleeves and cultural sites. Also use it when the user asks for riso, risograph, spot colour, two-colour print, overprint, grain or halftone, or a figure-ground, Nolli, town, site, zoning or land-use map.
+description: Design pages, posters, covers and live interfaces that look like risograph-printed town plans and river maps, in one to three spot inks. Examples are a figure-ground plan with every block in solid blue and the streets, squares and river left as paper; the same town as watercolour blocks, as pink house footprints under a cloverleaf, or as teal hatched blocks on cream; a purple river with its old courses and oxbows; a land-use plan in pastel pink, purple halftone and teal hairlines; and a walk poster in huge black words over a green valley. Towns are grown and rivers migrated, never traced. Grain, misregistration and overprint come from a simulated press, which also runs on the GPU so drums drift and re-ink under the pointer. Use it for exhibitions, architecture and urbanism, city guides, walks, festivals, zines, record sleeves and cultural sites, or when the user asks for riso, risograph, spot colour, two-colour print, overprint, grain or halftone, or a figure-ground, Nolli, town, site, zoning or land-use map.
 ---
 
 # Risograph cartography: Figure & Ground
@@ -29,7 +29,7 @@ The files next to this SKILL.md:
 
 | Sheet | Drums, paper | What is on each drum | Look on the board | `Atlas.<call>(canvas, opts)` |
 |---|---|---|---|---|
-| I | bright red twice; white | every block solid, with courtyards, slab estates, stippled parks and open squares. A river with bank lines, bridges, a motorway, the round old square and its monument, a serif title and typed notes | the deep one-ink figure-ground plans, blue or red | `blocks`, `mode: 'solid'`, `ink`, `image` |
+| I | blue twice (red, teal or pink on the switch); white | every block solid, with courtyards, slab estates, stippled parks and open squares. A river with bank lines, bridges, a motorway, the round old square and its monument, a serif title and typed notes | the deep one-ink figure-ground plans, blue or red | `blocks`, `mode: 'solid'`, `ink`, `image` |
 | II | cornflower; white | each block its own wash, pooled darker at its rim and bloomed, in a town with a ragged edge and a river through it | the blue watercolour town | `blocks`, `mode: 'wash'`, `ink` |
 | III | fluorescent pink, bright red; white | pink: house footprints, a many-laned motorway with a cloverleaf, and low cloud. Red: one district and a grain ramp | the pink footprint plan with its interchange | `blocks`, `mode: 'plan'`, `ink` |
 | IV | teal; cream | every block ruled its own way: hatch, crosshatch, stipple or scribble, between two paper avenues | the teal hatched grid | `blocks`, `mode: 'hatch'`, `ink` |
@@ -61,7 +61,7 @@ press day, 2 a sloppy one) and `drums` (indices, to proof one separation). It re
 
 | Role | Value |
 |---|---|
-| inks (Riso names, from `Riso.INKS`) | bright red `#f15060`, cornflower `#62a8e5`, fluorescent pink `#ff48b0`, teal `#00838a`, purple `#765ba7`, green `#00a95c`, black. For sheet I also blue `#0078bf`, and the rest of the table |
+| inks (Riso names, from `Riso.INKS`) | blue `#0078bf` (sheet I, the board's blue), bright red `#f15060`, cornflower `#62a8e5`, fluorescent pink `#ff48b0`, teal `#00838a`, purple `#765ba7`, green `#00a95c`, black, and the rest of the table |
 | papers | white `#f7f6f2`, cream `#efe4cc`, natural `#f3eee2` |
 | page | plan-chest grey `#e8e5dc`, ink `#1c1c1a`, soft `#6d6a62`, rules `#cfcabd`, a bright-red hairline `#f15060` for section rules, a fluorescent-pink dot as the only bullet |
 
@@ -105,17 +105,28 @@ Type, each face with one job:
 
 ## Live
 
-`assets/live.js` makes the press move, for real interfaces. It is **capture-first**: the CPU
-still (`Riso.print`, or an `Atlas` sheet on top of it) runs once, and hands over its paper and
-each drum's screened coverage. These go up to the GPU as float textures. A WebGL2 shader then
-recomposes the multiply overprint, `paper × Π(1 − c + c·ink)`, exactly as `riso.js` does. Every
-motion term is zero at time 0, so frame 0 is the still. The motion is the medium's own:
+`assets/live.js` makes the press move, for real interfaces. The press itself runs on the GPU.
+The CPU still engine (`Riso.print`, or an `Atlas` sheet on top of it) runs once with `capture`,
+which stops before the press and hands over the geography: each drum's master as drawn (the
+grown town, the migrated river, the type), each drum's registration error and the noise table.
+These are uploaded once. Then a WebGL2 shader, ported from `riso.js` line for line, pulls the
+print every frame:
 
-- drums drift out of registration and back;
+1. the paper: tone, fibre on the same coarse grid, flecks;
+2. per drum, the registration (shift and rotation), the master's density and the drum mottle
+   (its coarse grid rendered in a first pass from the same permutation table);
+3. the screen (stochastic grain, halftone dot or solid) and starved specks;
+4. the overprint, `paper × Π(1 − c + c·ink)`.
+
+The hash and the Perlin noise are bit for bit the CPU's, and every motion term is zero at time
+0, so frame 0 is the still. After that the print evolves while the map holds:
+
+- the drums drift out of registration and back;
+- they are re-inked: the mottle moves;
+- the fine grain is re-rolled from the same hash, each pixel at its own phase;
 - the paper feeds through the drums, top down and staggered (on first view, or tied to scroll);
 - contours are traced along the terrain in fresh ink;
-- the pointer is a loupe;
-- a click is a stamp of fresh ink with starved specks.
+- the pointer is a loupe, and a click is a stamp of fresh ink with starved specks.
 
 Load the scripts in this order. All are classic scripts with no dependencies.
 
@@ -146,6 +157,8 @@ Load the scripts in this order. All are classic scripts with no dependencies.
 | option | default | what it does |
 |---|---|---|
 | `drift`, `speed` | 1, 1 | the drums wander out of registration and back, each on its own slow period |
+| `reink` | 1 | the drums are re-inked: each drum's mottle moves along the feed, at its own rate |
+| `grainRate` | 3 | fresh grain: re-rolls a second per pixel, each at its own phase (0 holds the grain) |
 | `slip` | 0 | deliberate misregistration: each drum knocked its own way, 1 = 3% of the canvas size; buttons use 0.5 for hover |
 | `offsets` | null | per-layer `[dx, dy]` in CSS px (`null` for a layer at rest): slides a drum's image; toggles, sliders and progress run on it |
 | `feed`, `feedMs`, `scrollRange` | 1, 2400, [0, 1] | the paper feed, 0–1; `'in'` feeds once on first view, `'scroll'` follows the section through the viewport |
@@ -153,7 +166,7 @@ Load the scripts in this order. All are classic scripts with no dependencies.
 | `pointer`, `radius`, `zoom`, `lag`, `hand` | 0, 0.16, 1.8, 0.16, parent | the loupe: strength, radius (fraction of the short side), magnification, trailing; `hand` is the element that listens |
 | `clickPulse`, `stampInk` | false, first ink | pointerdown stamps a disc of fresh ink |
 | `ease` | 0.18 | how fast `set()` targets are reached |
-| `resolution`, `maxField`, `own` | 1, 1.6e6, auto | resolution scale; pixel cap of the capture; `own: true` forces a dedicated WebGL context |
+| `resolution`, `maxField`, `own` | 1, 5.3e6, auto | resolution scale; pixel cap of the capture (5.3e6 holds 2880×1800); `own: true` forces a dedicated WebGL context |
 
 **The controller:**
 
@@ -167,52 +180,65 @@ Load the scripts in this order. All are classic scripts with no dependencies.
 
 Every view is listed in `window.handPulledLive.views`. `tools/check.sh` reads it.
 
-**What is live.** Anything printed by `Riso.print` is live: all four `Atlas` sheets through
-`sheet`, and any `layers` you draw. Drift, slip, offsets, feed, trace, loupe and stamp all run
-in the shader on the captured drums. What stays still: the geography itself. A new town, river,
-or layout is a CPU reprint; this happens on `set({ seed })` and is queued so that only one runs
-at a time. The trace runs on its own smooth ground (`Riso.live.ground(w, h, seed)`), not on
-`Carto`'s terrain. `Riso.ui.mapLayers` prints its contours from that same ground so the two line
-up. On the reference page, sheets II–VII and the drum-by-drum proof are still.
+**What evolves, what is captured.** The press evolves: paper, registration, mottle, grain,
+specks and overprint are computed every frame, for all seven sheets and any `layers` you draw
+(up to four drums). The geography is captured once: the masters, and each drum's registration
+error at rest. A new town, river or layout is a CPU capture, which happens on `set({ seed })`
+and is queued so that only one runs at a time. The trace runs on its own smooth ground
+(`Riso.live.ground(w, h, seed)`), not on `Carto`'s terrain. `Riso.ui.mapLayers` prints its
+contours from that same ground so the two line up. On the reference page sheet I is live, and
+each of sheets II–VII has a `[live]` switch: its live view is made on the first press, and after
+that the switch only swaps which canvas shows and pauses the hidden one. The drum-by-drum proof
+stays still.
 
-**Parity.** `Riso.live.parity()` prints each case three times: the still, a capture run, and
-the GPU's frame 0. It compares their luminance: mean, standard deviation (contrast), mean
-absolute difference of neighbouring pixels (grain), and mean absolute difference per pixel.
-`Riso.live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`. The
-page registers it as `handPulledLive.parity['riso-cartography']`. It is computed once after the
-first view, and `state().ready` waits for it.
-
-Measured headless (SwiftShader) at 360 wide for the sheets and 320×240 for the print. In Chrome
-on the M1 Pro all four also pass, the worst being blocks at a 0.047-level mean difference and
-99.9% within 2 levels.
+**Parity.** `Riso.live.parity(opts)` prints the still on the CPU, captures the same sheet, draws
+the GPU's frame 0 at the same size and compares their luminance: mean, standard deviation
+(contrast), mean absolute difference of neighbouring pixels (grain), and mean absolute
+difference per pixel. `Riso.live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03,
+madLevels 1.5 }`. The page registers blocks/solid, zoning, poster and the print case as
+`handPulledLive.parity['riso-cartography']`. They are computed once after the first view, and
+`state().ready` waits for them. Sheets at 360 wide, the print at 320×240; the numbers are the
+same in Chrome (ANGLE/Metal) and headless (SwiftShader):
 
 | case | Δmean | Δcontrast | Δgrain | mean pixel diff | within 2 levels |
 |---|---|---|---|---|---|
-| blocks, solid, blue | 0 | 0.01% | 0.01% | 0.013 levels | 100% |
-| zoning | 0 | 0.01% | 0.01% | 0.019 levels | 100% |
-| poster | 0 | 0.01% | 0.01% | 0.015 levels | 100% |
-| `Riso.print`: grain, halftone, solid | 0 | 0.01% | 0.02% | 0.025 levels | 100% |
+| I blocks, solid, blue | 0 | 0 | 0 | 0.039 levels | 99.95% |
+| II blocks, wash | 0 | 0 | 0 | 0.010 levels | 100% |
+| III blocks, plan | 0 | 0 | 0 | 0.027 levels | 99.99% |
+| IV blocks, hatch | 0 | 0 | 0 | 0.057 levels | 99.96% |
+| V river | 0 | 0 | 0.01% | 0.018 levels | 100% |
+| VI zoning | 0 | 0 | 0 | 0.019 levels | 100% |
+| VII poster | 0 | 0 | 0 | 0.025 levels | 99.99% |
+| `Riso.print`: grain, halftone, solid | 0 | 0 | 0 | 0.013 levels | 100% |
 
-**Budget.** One shader pass per frame: a paper fetch, four coverage fetches, and the trace and
-loupe terms. Measured with `ctl.bench(60)` in Chrome on an
-M1 Pro (ANGLE/Metal) with drift, feed, trace, loupe and four stamps on: 1.3–1.7 ms a frame
-with a 1-pixel readPixels after each frame on a 2011×795 own-context view, and 0.5 ms on a
-583×500 shared-context card. The tab was in the background, so the pipelined figure (under
-0.1 ms) is not trustworthy. Printing the still costs far more than any frame (0.2–0.5 s a
-sheet headless at 360 wide), so reprint rarely and keep motion in `set()`. Measure in real
-Chrome, not headless: SwiftShader is a software renderer.
+**Budget.** Two passes: the drums' mottle grid (small, redrawn only while the drums are being
+re-inked) and the press at full resolution. With `ctl.bench(60)` in Chrome on an M1 Pro
+(ANGLE/Metal), at 2880×1800 device px on its own context, with drift, re-ink, grain, feed, trace,
+loupe and four stamps on:
+
+| view | pipelined | sync (1-px readPixels each frame) |
+|---|---|---|
+| sheet I, blocks/solid, 2 drums | 2.2 ms | 3.0 ms (4.1 ms on the first, cold run) |
+| sheet VI, zoning, 3 drums | 2.3 ms | 3.1 ms (4.5 ms cold) |
+| the Drum Room map, 2 drums | 2.2 ms | 3.1 ms (4.4 ms cold) |
+
+The app's browser pane was hidden (`document.hidden`) while these were taken. `bench()` is
+synchronous so it still runs; repeat it in a visible tab to confirm. The capture costs far more
+than any frame (1.5–3 s at 2880×1800), so reprint rarely and keep motion in `set()`. Needs
+`EXT_color_buffer_float` for the grids; without it the view falls back to the still.
 
 **Rules.**
 
-- `prefers-reduced-motion`: every canvas shows its still. There is no drift, feed, trace, loupe
-  or stamp. `set()` still changes state (a toggle still slides its drum) but jumps rather than
-  animates.
+- `prefers-reduced-motion`: every canvas shows its still. There is no drift, re-ink, grain,
+  feed, trace, loupe, stamp or cursor. `set()` still changes state (a toggle still slides its
+  drum) but jumps rather than animates.
 - Offscreen canvases pause (IntersectionObserver), and a hidden tab stops the loop.
 - DPR is capped at 2, captures are capped at `maxField` pixels, and only one print runs at a time.
 - Without WebGL2 (or after a lost context), the still is printed straight onto the canvas. It
   changes state but does not animate.
 - Big canvases (≥ 0.9 MP) get their own context. Small ones share one offscreen context and
   receive frames as ImageBitmaps, so a page can carry dozens of live pieces.
+- Make a view once and swap `hidden`; never make one inside a toggle's handler on every press.
 - The canvas is decoration: it gets `aria-hidden` unless you give it a `role` (a map that
   *is* the content keeps `role="img"` and its label). Native controls stay on top and keep
   their semantics. Pointer events are used throughout, so touch works.
@@ -233,13 +259,20 @@ the board's blue plus fluorescent pink; `ink` and `seed` override them.
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | a small plate with the press running: drums wandering, contours traced fast in pink; `role="status"` |
 | focus ring | `ui.focusRing()` | pink and blue hairlines out of register around the `:focus-visible` element, multiplied over the page. Keep a 1px CSS outline too |
 | section transition | `ui.transition(strip)` | blue contours over a pink tint, fed through as the strip scrolls past |
+| cursor | `ui.cursor(area, { size, inks })` | a registration mark (ring and cross hairs) in blue and pink, out of register, trailing the mouse on a multiplied overlay; the drums wander and a click stamps it. The system cursor stays. Mouse only: off for touch, pen and reduced motion |
+| icon | `ui.icon(el, name, { ink, key, weight })` | the icon on two drums, a grain of blue and a pink hairline, multiplied onto a pale ground; pointing at or focusing its control slips the drums apart. The element sets the size |
 
 Helpers: `ui.mapLayers({ ink, tintInk, seed, levels, lo, hi })` returns tint and contour layers
 for `Riso.live({ layers })`; `ui.contours` and `ui.tint` are its two draw functions.
+`Riso.iconMask(svg, { pad, weight, shade })` turns any SVG of `<path d>` outlines into a layer's
+`draw` (black on the white master). `ui.ICONS` holds eleven Phosphor icons in the light weight
+(MIT, inlined, never fetched): sun, image, drop, sliders, play, pause, aperture, flower,
+butterfly, clock, lightning. Never type an icon's path by hand; copy it from the source.
 
 A made-up app built from these pieces is "The Drum Room" in `reference.html`: toggles and a
 slider drive a live background, a button starts a run, and a progress bar, a loader and job
-cards follow it. Copy its structure, not its names.
+cards follow it; icons head the desk, the proof button and the cards, and the cursor is the
+registration mark. Copy its structure, not its names.
 
 ## Tells that it was generated — avoid all of them
 
