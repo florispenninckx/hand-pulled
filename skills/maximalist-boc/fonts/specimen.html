@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maximalist type specimen</title>
+<meta name="description" content="Soak, Globule, Flatbed and Gouge, the four maximalist-boc faces, each with a live variable axis.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap">
+<link rel="stylesheet" href="fonts.css">
+<style>
+  @property --v { syntax: '<number>'; inherits: true; initial-value: 500; }
+  :root {
+    --paper: #eef0e6;
+    --ink: #0e120c;
+    --klein: #1f2fb0;
+    --citric: #b4f000;
+    --acid: #95d401;
+    --pool: #5fe0c8;
+    --fuchsia: #ed1fb3;
+    --tangerine: #ff5a2a;
+    --gut: clamp(16px, 4vw, 56px);
+    --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); overflow-x: hidden; }
+
+  .soak    { font-family: 'Soak', var(--sans);    font-variation-settings: 'BLED' var(--v); }
+  .globule { font-family: 'Globule', var(--sans); font-variation-settings: 'MELT' var(--v); }
+  .flatbed { font-family: 'Flatbed', var(--sans); font-variation-settings: 'FLAT' var(--v); }
+  .gouge   { font-family: 'Gouge', var(--sans);   font-variation-settings: 'CARV' var(--v); }
+  .soak, .globule, .flatbed, .gouge { font-weight: 400; line-height: .98; }
+
+  .run { animation: sweep 7s ease-in-out infinite alternate; }
+  @keyframes sweep { 0%, 10% { --v: 0; } 90%, 100% { --v: 1000; } }
+  @media (prefers-reduced-motion: reduce) { .run { animation: none; } }
+
+  .label { font: 600 12px/1.3 var(--sans); font-stretch: 75%; letter-spacing: .08em; text-transform: uppercase; }
+
+  /* cover: the four names stacked like a gig poster */
+  .cover { padding: var(--gut); display: grid; gap: clamp(20px, 3vw, 40px); min-height: min(92vh, 880px); align-content: space-between; }
+  .cover .top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; }
+  .stack { display: grid; gap: .08em; font-size: clamp(54px, 10.5vw, 168px); }
+  .stack > * { margin: 0; overflow-wrap: anywhere; }
+  .stack .soak    { color: var(--klein); }
+  .stack .globule { color: var(--fuchsia); }
+  .stack .flatbed { color: var(--ink); font-size: .62em; }
+  .stack .gouge   { color: var(--tangerine); }
+  .cover p.lede { max-width: 56ch; margin: 0; font-size: clamp(15px, 1.3vw, 18px); }
+
+  /* one field per face */
+  .face { padding: clamp(40px, 6vw, 88px) var(--gut); display: grid; gap: clamp(20px, 3vw, 36px); color: var(--fg); background: var(--bg); }
+  .face header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; border-bottom: 2px solid currentColor; padding-bottom: 12px; }
+  .face h2 { margin: 0; font-size: clamp(18px, 2vw, 24px); font-weight: 700; font-stretch: 75%; letter-spacing: .02em; text-transform: uppercase; }
+  .face .big { margin: 0; font-size: clamp(64px, 16vw, 250px); overflow-wrap: anywhere; }
+  .face .alpha { margin: 0; font-size: clamp(26px, 4.6vw, 64px); overflow-wrap: anywhere; line-height: 1.12; }
+  .face .use { margin: 0; font-size: clamp(22px, 3vw, 40px); max-width: 26ch; line-height: 1.1; color: var(--hi); }
+  .face .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 24px 48px; align-items: end; }
+  .face p.note { margin: 0; max-width: 52ch; }
+  .dial { display: grid; grid-template-columns: auto minmax(0, 1fr) 5ch; gap: 14px; align-items: center; max-width: 560px; }
+  .dial input { width: 100%; min-width: 0; accent-color: var(--hi); }
+  .dial output { text-align: right; font-variant-numeric: tabular-nums; }
+
+  #soak    { --bg: var(--klein);     --fg: var(--paper); --hi: var(--citric); }
+  #globule { --bg: var(--citric);    --fg: var(--ink);   --hi: var(--klein); }
+  #flatbed { --bg: var(--fuchsia);   --fg: var(--ink);   --hi: var(--paper); }
+  #flatbed .big { font-size: clamp(40px, 9vw, 150px); }
+  #flatbed .alpha { font-size: clamp(18px, 2.9vw, 42px); }
+  #gouge   { --bg: var(--pool);      --fg: var(--ink);   --hi: var(--klein); }
+
+  .set { padding: clamp(40px, 6vw, 80px) var(--gut); display: grid; gap: 20px; }
+  pre { margin: 0; background: var(--ink); color: var(--paper); padding: 20px; overflow-x: auto; font: 400 13px/1.6 ui-monospace, 'SF Mono', Menlo, monospace; }
+  footer { padding: 0 var(--gut) 40px; font-size: 13px; }
+  footer a { color: var(--klein); }
+</style>
+</head>
+<body>
+  <header class="cover">
+    <div class="top label"><span>hand-pulled foundry · maximalist-boc</span><span>four faces · SIL OFL 1.1</span></div>
+    <div class="stack">
+      <p class="soak run">Soak</p>
+      <p class="globule run">Globule</p>
+      <p class="flatbed run">Flatbed</p>
+      <p class="gouge run">Gouge</p>
+    </div>
+    <p class="lede">Four display faces for the maximalist board: ink that bleeds, liquid that pools, a techno wide pressed flat, and a round fat face cut with light. Each has one variable axis that runs from the clean letter to the full effect.</p>
+  </header>
+
+  <section class="face" id="soak" data-axis="BLED">
+    <header><h2>Soak</h2><span class="label">axis BLED 0–1000 · Dry · Regular · Soaked · 62 KB</span></header>
+    <p class="big soak run">Bleed</p>
+    <p class="alpha soak">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;!?@ éàöç</p>
+    <div class="row">
+      <p class="use soak" style="--v: 700">Warehouse all-nighter, doors at ten, wet paint on the walls</p>
+      <p class="note">A black grotesk soaked until its corners melt and its edges blot. Low on the axis it is a dense heading face; high up, the counters close in and the letters read like a flyer left out in the rain.</p>
+    </div>
+    <label class="dial label"><span>BLED</span><input type="range" min="0" max="1000" value="500" aria-label="Soak bleed"><output>live</output></label>
+  </section>
+
+  <section class="face" id="globule" data-axis="MELT">
+    <header><h2>Globule</h2><span class="label">axis MELT 0–1000 · Poured · Regular · Molten · 59 KB</span></header>
+    <p class="big globule run">Pour</p>
+    <p class="alpha globule">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;!?@ éàöç</p>
+    <div class="row">
+      <p class="use globule" style="--v: 400">Liquid summer, 14.07, pool deck</p>
+      <p class="note">A wide techno skeleton re-inked as poured liquid, with a drop at every free end and joins that swell like mercury. It is the secondary liquid voice: dates, heads and labels next to one goo.js title.</p>
+    </div>
+    <label class="dial label"><span>MELT</span><input type="range" min="0" max="1000" value="500" aria-label="Globule melt"><output>live</output></label>
+  </section>
+
+  <section class="face" id="flatbed" data-axis="FLAT">
+    <header><h2>Flatbed</h2><span class="label">axis FLAT 0–1000 · Standing · Regular · Pressed · 49 KB</span></header>
+    <p class="big flatbed run">Pressed</p>
+    <p class="alpha flatbed">ABCDEFGHIJKLM<br>NOPQRSTUVWXYZ<br>abcdefghijklm<br>nopqrstuvwxyz<br>0123456789 &amp;!?</p>
+    <div class="row">
+      <p class="use flatbed" style="--v: 800">Side A · 12 tracks · 33 rpm</p>
+      <p class="note">A heavy super-extended geometric under a roller: the higher the axis, the lower and wider the letter, with softened corners and ink traps cut into every crotch. Set it small and tracked for labels, huge for a band of colour.</p>
+    </div>
+    <label class="dial label"><span>FLAT</span><input type="range" min="0" max="1000" value="500" aria-label="Flatbed press"><output>live</output></label>
+  </section>
+
+  <section class="face" id="gouge" data-axis="CARV">
+    <header><h2>Gouge</h2><span class="label">axis CARV 0–1000 · Scored · Regular · Gouged · 65 KB</span></header>
+    <p class="big gouge run">Carve</p>
+    <p class="alpha gouge">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;!?@ éàöç</p>
+    <div class="row">
+      <p class="use gouge" style="--v: 650">Open late, fruit, flowers and loud records</p>
+      <p class="note">A fat round display face with a crescent of light gouged inside every stroke, from a hairline score to a deep cut. The cut is a real counter, so any background shows through it.</p>
+    </div>
+    <label class="dial label"><span>CARV</span><input type="range" min="0" max="1000" value="500" aria-label="Gouge carve"><output>live</output></label>
+  </section>
+
+  <section class="set">
+    <span class="label">set it</span>
+    <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
+
+h1  { font-family: 'Soak';    font-variation-settings: 'BLED' 700; }
+h2  { font-family: 'Globule'; font-variation-settings: 'MELT' 400; }
+.tag{ font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; }
+.cut{ font-family: 'Gouge';   font-variation-settings: 'CARV' 650; }
+
+/* The one liquid title stays goo.js lettering, and the board's glow is goo.js's glow finish:
+   no face carries a glow, and a text-shadow glow is not the look. */</pre>
+  </section>
+
+  <footer>Soak, Globule, Flatbed and Gouge are made by tools/foundry.py from OFL fonts (Archivo Black, Michroma, Lexend Zetta, Chango) and carry their own names; see <a href="OFL.txt">OFL.txt</a>.</footer>
+
+<script>
+  document.querySelectorAll('.face').forEach(function (face) {
+    var range = face.querySelector('input'), out = face.querySelector('output'), big = face.querySelector('.big');
+    range.addEventListener('input', function () {
+      big.classList.remove('run');
+      big.style.setProperty('--v', range.value);
+      face.querySelector('.alpha').style.setProperty('--v', range.value);
+      out.textContent = range.value;
+    });
+  });
+</script>
+</body>
+</html>

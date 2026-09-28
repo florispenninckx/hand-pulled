@@ -1,0 +1,69 @@
+{
+ "name": "Gouge",
+ "file": "gouge",
+ "skill": "maximalist-boc",
+ "about": "Shaded display: a fat round display face with a crescent of light gouged inside every stroke, from a hairline to a deep cut.",
+ "base": {
+  "family": "Chango",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/chango/Chango-Regular.ttf",
+  "sha256": "3e566f4b881f24198fe1b6525aae970f9200078136e3416abc7ba0272d2f80d9"
+ },
+ "axis": {
+  "tag": "CARV",
+  "name": "Carve",
+  "default": 500,
+  "masters": [
+   0,
+   500,
+   1000
+  ],
+  "instances": {
+   "Scored": 0,
+   "Regular": 500,
+   "Gouged": 1000
+  }
+ },
+ "trace": 1000,
+ "track": {
+  "0": 0,
+  "1000": 0
+ },
+ "ops": [
+  {
+   "op": "round",
+   "r": 8,
+   "mode": "convex"
+  },
+  {
+   "op": "carve",
+   "inset": {
+    "0": 28,
+    "500": 26,
+    "1000": 24
+   },
+   "width": {
+    "0": 14,
+    "500": 50,
+    "1000": 90
+   },
+   "angle": 135
+  },
+  {
+   "op": "clean",
+   "min": 300,
+   "holes": 60
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 5,
+  "seg": 90,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 6,
+  "nsmooth": 12,
+  "reach": 160
+ }
+}

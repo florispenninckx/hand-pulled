@@ -1,0 +1,7 @@
+/* The indigo-grain faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Sunprint: A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print to a long exposure where the light creeps under the edges and the strokes swell and pool like liquid. Axis 'EXPO' 0–1000, default 300. */
+@font-face { font-family: 'Sunprint'; src: url('sunprint.woff2') format('woff2'); font-display: swap; }
+
+/* Sunprint Halo: The halation of Sunprint: the light that crept under the letters, a soft swollen ghost with a stippled, grainy edge. Set it behind Sunprint in the same size and tracking; the advances match. Static. */
+@font-face { font-family: 'Sunprint Halo'; src: url('sunprint-halo.woff2') format('woff2'); font-display: swap; }
