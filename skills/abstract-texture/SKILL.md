@@ -20,6 +20,7 @@ point.
 The files next to this SKILL.md:
 
 - `assets/surface.js`: `window.Surface`, the engine, with no dependencies. It has six plates (`reeded`, `satin`, `aurora`, `streak`, `bloom`, `coordinate`), each with its own colourways. `Surface.glass(canvas, panes)` puts any canvas through the panes, and `Surface.words(plate, opts)` returns the words a plate prints, for its `aria-label`.
+- `assets/live.js`: `Surface.live(canvas, opts)`, the same plates moving on the GPU (see "Live" below). `assets/live-ui.js`: `Surface.ui`, interface pieces with a live plate behind a native control.
 - `reference.html`: "Kiln Hours", six nights of late listening at a fictional glassworks. It has a reeded season poster beside a thin serif title, six night posters staggered, one field proofed through four panes, a pane library with colourway switches, colour strips and a programme. **Read it before designing.**
 
 ## The six plates
@@ -100,6 +101,78 @@ Type, each face with one job:
 - Before a poster has printed, show a dim wash of its own colour, not a grey box.
 - In React, print in `useEffect` on a canvas ref, keyed on seed, palette, image and size.
 - To make your own plate, copy the pattern in `surface.js`. Fill a field with `paint()` from ramps and warped noise, then hand `run()` the panes and a type layout.
+
+## Live
+
+For a page or app that should move: load `live.js` and `live-ui.js` after `surface.js`. A live
+plate is printed **once** by the still engine on the CPU (a `capture` hook hands back the bare
+field and the finished still), uploaded as two textures, and drawn every frame by one WebGL2
+shader. Every motion term is exactly zero at time 0, so frame 0 **is** the still.
+
+The motion is the medium's, and it is quiet, because it sits under small mono type:
+
+| Motion | What it is | Option (default) |
+|---|---|---|
+| raking light | a low lamp at the pointer, lagged; the pane's relief (still minus field: flute edges, torn rows, grain) catches it on one side and falls into shade on the other | `rake` (0.35), `radius` (0.35 of the short side), `lag` (0.3 s) |
+| contour echoes | thin lines at the field's iso-levels drift slowly outward from its highlights and bend what is seen through them by a pixel or two; they fade in over 4 s | `drift` (1, 0 = off), `speed`, `echoes` (7 levels) |
+| grain lift | fresh fine grain, re-rolled 24 times a second, eased in on hover and settled out again; at most half the still's grain, **never heavier** | `lift` (0..1, 0), `liftGrain` (0.5), `grainRate` |
+| echo ring | a click sends a ring out through the glass | `clickPulse` (false), `ctl.pulse(x, y, s)` |
+| develop | the pane develops over the bare field: 0 = soft colour only, 1 = the finished plate; `'in'` once on entering view, `'scroll'` with scroll | `develop` (1), `developMs`, `scrollRange`, `under` (1 = the field, less mixes in `ground`), `reveal` [from, to, soft] |
+
+```html
+<header class="hero"><p>KILN HOURS</p></header>
+<button class="go">Start</button>
+<script src="assets/surface.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
+<script>
+  const ui = Surface.ui;
+  const bg = ui.background(document.querySelector('.hero'), { mode: 'reeded', palette: 'cobalt', seed: 3 }); // rake + echoes + click rings
+  ui.button(document.querySelector('.go'), { palette: 'ember' });   // half-developed at rest; hover develops, lifts grain; press = ring
+  ui.focusRing();                                                     // one ember ring for every :focus-visible
+  // or a bare view: Surface.live(canvas, { mode: 'streak', palette: 'signal', text: false, develop: 'in', clickPulse: true })
+</script>
+<style>.hero { position: relative; min-height: 60svh; background: #1b2250; }  /* the plate's own colour until it prints */</style>
+```
+
+- `Surface.live(canvas, opts) → ctl | null`. `opts` = a plate's still options (`mode` is the
+  plate name: `reeded` (default), `satin`, `aurora`, `streak`, `bloom`, `coordinate`; then
+  `palette`, `seed`, `panes`, `grain`, `image`, `text`) plus the motion options above. Pass
+  `text: false` for backgrounds and controls: the page's own HTML type goes on top.
+- `ctl.set(opts)` eases motion options and reprints on a still option · `load(opts)` a new
+  plate · `pulse(x, y, s)` (CSS px) · `point(x, y)` / `point(null)` move or put out the lamp ·
+  `pause()` · `resume()` · `destroy()` · `state()` → `{ mode: 'gpu'|'still', path, frames,
+  visible, expose, clock, size, ready, reduced }` · `bench(n)` → `{ sync, pipelined, size, path }` ms.
+- `Surface.ui`, each piece keeps the native control and puts an `aria-hidden` canvas behind it:
+  `background(el, opts)` · `button(btn, { rest: 0.4, hover: 1 })` · `card(el)` (develops in on
+  scroll, hover lifts grain) · `toggle(checkbox)` (off = dim bare field, on = developed, a flat ink
+  thumb) · `slider(range)` (developed up to the value, a hairline at the thumb) ·
+  `progress(el).set(p)` (`role=progressbar`, a ring when it completes) · `loader(el)` (a lamp
+  circling a small plate, a ring each period; `role=status`) · `focusRing()` (a band of the ember
+  plate masked to a rounded rectangle; keep a 1px CSS outline for no-WebGL and forced colours) ·
+  `transition(el)` (a streak strip that develops as it scrolls past). Never set the text of a
+  host with `textContent`: it removes the canvas. Put the label in a `<span>`.
+- Labels on a live button sit on changing colour: give warm plates a dark label on hover
+  (`.warm:hover { color: #1b1216 }`) and cool ones white.
+- Fallbacks: `prefers-reduced-motion` shows the still frame, clock 0, no rake, echo or ring, and
+  `set()` jumps to its target; no WebGL2 (or a lost context) draws the CPU still on a 2D canvas;
+  an offscreen canvas pauses (IntersectionObserver) and a hidden tab stops the loop; DPR is capped
+  at 2 and the captured plate at 1.6 MP. Big canvases (≥ 0.9 MP) get their own context; small
+  ones share one offscreen context.
+- Cost: the CPU print is paid once per size, and plates are printed one per task. The reeded
+  hero printed in 347 ms at 1440 × 575 and in 648 ms at the 1.6 MP cap (1994 × 796, a DPR 2
+  hero), and a 364 × 228 card printed in 43 ms (headless Chrome, load average 64). A frame is
+  two texture reads plus a few neighbours per pixel. `ctl.bench(60)` in real Chrome is the
+  number to quote, and it was **not measured** for v1. Headless gave sync 1.1 ms and pipelined
+  0.06 ms at 1440 × 575, but headless numbers do not count (see LIVE_PATTERN §4).
+- Parity (`Surface.live.parity(opts)`, frame 0 on the GPU against the CPU still, 480 × 320):
+  reeded/ember, reeded/cobalt, satin/opal, aurora/north and streak/signal (320 × 400) all give
+  dMean 0, dSdRel 0, dGrainRel 0, 0.00 levels mean difference, 100 % of pixels within 2
+  levels. It is exact because frame 0 samples the captured still texel for texel.
+  `window.handPulledLive.parity['abstract-texture']()` runs these cases.
+- What is live and what is still: every plate is live, as a captured still with motion on top.
+  No stage of the engine is ported to the shader yet, so a pane itself (the reeds' refraction,
+  the streak's drag) does not re-run per frame. The motion bends and lights the captured surface.
 
 ## Composition
 

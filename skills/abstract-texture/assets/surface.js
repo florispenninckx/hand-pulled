@@ -505,11 +505,13 @@
     const c = { A: H / W, rand, noise: makeNoise(rand), image: !!o.image, px: fw / SW, seed };
     const out = def.make(f, c) || f;
     show(out, canvas, seed);
-    await tick();
+    // live.js: `capture(stage, canvas)` hands back the bare field and the finished still, and runs synchronously
+    if (o.capture) o.capture('field', canvas); else await tick();
     const own = def.panes || [];
     const panes = (o.panes || own).map(p => (typeof p === 'string' ? own.find(q => q.pane === p) || { pane: p } : p));
     glassOver(canvas, panes, seed, o.grain);
     typeset(canvas, o, def.type, SW * H / W);
+    if (o.capture) o.capture('still', canvas);
     return canvas;
   }
   const pick = (table, name, first) => table[name] || table[first];

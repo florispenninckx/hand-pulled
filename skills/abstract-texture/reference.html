@@ -117,6 +117,34 @@
     .strips li { grid-template-columns: minmax(0, 1fr) 11.5em; gap: 10px; }
   }
   @media (prefers-reduced-motion: reduce) { .plate canvas { transition: none; } }
+
+  /* live: a hero of glass under the pointer, and a small app built from the live pieces */
+  .livehero { position: relative; min-height: min(64svh, 620px); display: grid; align-content: space-between; padding: 22px var(--gut); border-bottom: 1px solid var(--rule); background: #1b2250; color: #f3f1ec; overflow: hidden; }
+  .livehero .row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 28px; }
+  .livehero .big { font: 500 clamp(28px, 3.4vw, 44px)/1 var(--mono); letter-spacing: .04em; margin: 0; }
+  .livehero .hint { color: rgba(243, 241, 236, .78); }
+  .strip { height: 120px; margin: 0 var(--gut) 72px; }
+  .app { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: var(--gut); align-items: start; }
+  .panel { border: 1px solid var(--rule); padding: 22px; display: grid; gap: 18px; }
+  .panel h3 { margin: 0; font: 500 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  .readout { display: grid; grid-template-columns: 64px 1fr; gap: 16px; align-items: center; }
+  .lamp { width: 64px; height: 64px; }
+  .readout .temp { font: 300 44px/1 var(--serif); }
+  .bar { height: 14px; box-shadow: inset 0 0 0 1px var(--rule); }
+  .field { display: grid; grid-template-columns: 1fr auto; gap: 10px 16px; align-items: center; font: 400 12px var(--mono); }
+  .field output { color: var(--soft); }
+  .btns { display: flex; flex-wrap: wrap; gap: 12px; }
+  .lbtn { font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: #fff; background: #3a2016; border: 0; padding: 15px 20px; cursor: pointer; text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
+  .lbtn.quiet { background: #1b2250; }
+  .lbtn.warm:hover, .lbtn.warm:focus-visible { color: #1b1216; text-shadow: none; }
+  .lbtn:focus-visible { outline: 1px solid var(--kiln); outline-offset: 3px; }
+  .pieces { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .piece { min-height: 180px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; color: #1b1a22; background: #d8d5ea; }
+  .piece b { font: 400 22px/1 var(--serif); text-transform: uppercase; letter-spacing: .04em; }
+  .piece span { font: 500 11px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .piece.dark { color: #f3f1ec; background: #1d1f2b; }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr; } .pieces { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .pieces { grid-template-columns: 1fr; } .readout .temp { font-size: 36px; } }
 </style>
 </head>
 <body>
@@ -129,6 +157,11 @@
 </header>
 
 <main>
+  <div class="livehero caps" id="livehero">
+    <div class="row"><span>Orrin Glassworks · the glass is live</span><span>Kiln Hours 02</span></div>
+    <p class="big">KILN HOURS</p>
+    <div class="row hint"><span>+ move a lamp across the flutes</span><span>+ click to drop an echo</span><span>+ echoes drift up from the light</span></div>
+  </div>
   <div class="open">
     <div class="words">
       <h1><small>Late listening in the annealing hall</small>Kiln<br>Hours</h1>
@@ -281,6 +314,36 @@
     </div>
   </section>
 
+  <div class="strip" id="strip" aria-hidden="true"></div>
+
+  <section aria-labelledby="h-app">
+    <div class="head">
+      <h2 id="h-app"><span class="plus" aria-hidden="true">+</span>Lehr Log</h2>
+      <p>The hall's own little app for bringing a night's glass down slowly. It is built only from the live pieces: every control is a native one, with a plate behind it that develops, lifts its grain and takes the light from your pointer.</p>
+    </div>
+    <div class="app">
+      <div class="panel">
+        <h3>The lehr, now</h3>
+        <div class="readout"><div class="lamp" id="lamp" aria-label="reading the thermocouple"></div><div><div class="temp" id="temp">512°</div><div class="mono" id="phase">holding at the annealing point</div></div></div>
+        <div class="bar" id="bar" aria-label="cycle progress"></div>
+        <label class="field" for="rate">Cooling rate, degrees an hour <output id="rateOut" for="rate">60</output></label>
+        <input type="range" id="rate" min="20" max="120" value="60">
+        <label class="field"><span>Hold at the strain point</span><input type="checkbox" id="hold" checked></label>
+        <label class="field"><span>Ring the bell when cold</span><input type="checkbox" id="bell"></label>
+        <div class="btns"><button type="button" class="lbtn warm" id="start"><span id="startLabel">Start the cycle</span></button><button type="button" class="lbtn quiet" id="logit">Log a piece</button></div>
+      </div>
+      <div class="panel">
+        <h3>In the lehr tonight</h3>
+        <div class="pieces" id="pieces">
+          <div class="piece" tabindex="0" data-mode="satin" data-palette="opal"><span>No. 118</span><b>Bowl, pale</b><span>blown · 2.1 kg</span></div>
+          <div class="piece dark" tabindex="0" data-mode="reeded" data-palette="cobalt"><span>No. 119</span><b>Fluted panel</b><span>cast · 4.4 kg</span></div>
+          <div class="piece" tabindex="0" data-mode="aurora" data-palette="wash"><span>No. 120</span><b>Cullet vase</b><span>blown · 1.3 kg</span></div>
+        </div>
+        <p class="mono" id="log" aria-live="polite">Three pieces in, the door shut at 20:40.</p>
+      </div>
+    </div>
+  </section>
+
   <section aria-labelledby="h-colo">
     <div class="head">
       <h2 id="h-colo"><span class="plus" aria-hidden="true">+</span>Colours and Fridays</h2>
@@ -315,6 +378,39 @@
 </footer>
 
 <script src="assets/surface.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
+<script>
+// live: the hero, the transition strip and the Lehr Log app, all from Surface.ui
+(() => {
+  const ui = Surface.ui, $ = id => document.getElementById(id);
+  ui.background($('livehero'), { mode: 'reeded', palette: 'cobalt', seed: 3, grain: 0.8 });
+  ui.transition($('strip'));
+  ui.focusRing();
+  const lamp = ui.loader($('lamp'));
+  const bar = ui.progress($('bar'));
+  const rate = $('rate');
+  ui.slider(rate);
+  rate.addEventListener('input', () => { $('rateOut').textContent = rate.value; });
+  ui.toggle($('hold')); ui.toggle($('bell'));
+  document.querySelectorAll('.piece').forEach((el, i) => ui.card(el, { mode: el.dataset.mode, palette: el.dataset.palette, seed: 4 + i }));
+  ui.button($('start'), { palette: 'ember' });
+  ui.button($('logit'), { palette: 'cobalt', mode: 'reeded' });
+  let run = null, n = 121;
+  $('start').addEventListener('click', () => {
+    if (run) return;
+    const t0 = performance.now(), ms = 900000 / +rate.value;
+    $('startLabel').textContent = 'Cooling…'; $('phase').textContent = 'coming down through the strain point';
+    run = setInterval(() => {
+      const p = Math.min(1, (performance.now() - t0) / ms);
+      bar.set(p); $('temp').textContent = Math.round(512 - p * 490) + '°';
+      if (p >= 1) { clearInterval(run); run = null; $('startLabel').textContent = 'Start the cycle'; $('phase').textContent = $('bell').checked ? 'cold · the bell has rung' : 'cold · open the door'; }
+    }, 120);
+  });
+  $('logit').addEventListener('click', () => { $('log').textContent = 'No. ' + (n++) + ' logged into the lehr at ' + new Date().toTimeString().slice(0, 5) + '.'; });
+  void lamp;
+})();
+</script>
 <script>
 (() => {
   // what each colourway shows, for the canvas labels; the printed words are added from the engine
