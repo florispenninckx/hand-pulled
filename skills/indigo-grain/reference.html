@@ -13,12 +13,13 @@
   html, body { margin: 0; background: var(--paper); }
   body { font: 400 13px/1.4 'Space Mono', monospace; color: var(--ink); overflow-x: hidden; }
 
-  header {
-    display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px;
-    padding: 14px 16px 12px;
-  }
-  header h1 { margin: 0; font: italic 400 24px/1 'Fraunces', serif; letter-spacing: 0; }
-  header p { margin: 0; max-width: 64ch; font: 400 11px/1.45 'Space Mono', monospace; letter-spacing: .02em; color: #3c4778; }
+  /* the live hero: a cobalt field that develops in, drifts, follows the hand and flashes on a click */
+  .hero { min-height: min(68vh, 620px); padding: 22px 16px 18px; margin-bottom: 16px; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; cursor: crosshair; }
+  .hero h1 { margin: 0; font: italic 400 clamp(44px, 9vw, 112px)/.95 'Fraunces', serif; letter-spacing: -.01em; }
+  .hero p { margin: 0; max-width: 64ch; font: 400 11px/1.45 'Space Mono', monospace; letter-spacing: .02em; color: #3c4778; }
+  .hero .hint { margin-top: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+  .hero .foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 24px; }
+  .hero .foot span { font: 400 10px/1.4 'Space Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: #eef6fb; text-shadow: 0 0 8px rgba(20,60,120,.4); }
 
   /* the wall: sheets are dealt into columns, each to the shortest one, like a pin board */
   .wall { display: flex; gap: var(--gap); padding: 0 16px; align-items: flex-start; }
@@ -72,10 +73,54 @@
   .tow .pills { right: 6%; bottom: 3.4%; display: flex; gap: .4cqw; }
   .tow .pills i { width: 2.2cqw; height: 2.2cqw; border: .2cqw solid currentColor; border-radius: 50%; }
 
-  footer { padding: 0 16px 28px; font: 400 11px/1.5 'Space Mono', monospace; color: #3c4778; }
+  footer { padding: 8px 16px 28px; font: 400 11px/1.5 'Space Mono', monospace; color: #93a4cf; background: #0b1030; }
+  footer a { color: inherit; }
 
+  /* the hand-over from the pale wall to the dark studio: a strip that develops as it scrolls past */
+  .dev-strip { height: max(220px, 36vh); }
+
+  /* Sun Table: a made-up print-studio app built from the live pieces */
+  .app { --line: rgba(150,180,235,.2); --text: #e3ebf8; --dim: #93a4cf; background: #0b1030; color: var(--text); padding: 8px 16px 40px; }
+  .app h2 { margin: 0; font: italic 400 26px/1 'Fraunces', serif; }
+  .app h3 { margin: 0 0 10px; font: 400 10px/1 'Space Mono', monospace; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .app-lede { max-width: 1180px; margin: 0 auto 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; font-size: 11px; color: var(--dim); }
+  .app-frame { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 84px minmax(0, 1fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  .rail { display: flex; flex-direction: column; gap: 6px; padding: 14px 8px; border-right: 1px solid var(--line); }
+  .rail-b { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px; border: 0; border-radius: 10px; background: none; color: var(--text); font: 400 9px/1 'Space Mono', monospace; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+  .rail-b[aria-current] { box-shadow: inset 0 0 0 1px var(--line); }
+  .ic { width: 24px; height: 24px; flex: none; }
+  .ic[hidden] { display: none; }
+  .desk { padding: 16px; display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 16px 20px; min-width: 0; }
+  .desk > .bar { grid-column: 1 / -1; }
+  .bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .bar .sub { color: var(--dim); font-size: 11px; }
+  .bar .status { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+  .loader { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+  .stage { margin: 0; position: relative; aspect-ratio: 3 / 2; border-radius: 6px; overflow: hidden; background: #2c3c8c; }
+  .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .stage figcaption { position: absolute; left: 12px; bottom: 10px; font: italic 400 14px/1 'Fraunces', serif; color: #eef2fb; text-shadow: 0 0 8px rgba(8,14,40,.6); }
+  .player { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+  .pbtn { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px 9px 10px; border: 0; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--line); background: none; color: var(--text); font: 400 11px/1 'Space Mono', monospace; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; overflow: hidden; }
+  .pbtn .ic { width: 18px; height: 18px; }
+  .prog { flex: 1 1 160px; height: 12px; border-radius: 999px; overflow: hidden; box-shadow: inset 0 0 0 1px var(--line); }
+  .time { font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; min-width: 12ch; text-align: right; }
+  .lower { display: grid; gap: 18px; align-content: start; }
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .gcard { position: relative; aspect-ratio: 4 / 3; border: 0; border-radius: 8px; padding: 0; overflow: hidden; background: #16205a; color: #f2f5fc; cursor: pointer; text-align: left; }
+  .gcard .gname { position: absolute; left: 8px; bottom: 7px; font: italic 400 12px/1.1 'Fraunces', serif; text-shadow: 0 0 6px rgba(8,14,40,.7); }
+  .gcard[aria-pressed=true] { box-shadow: 0 0 0 1px #9cc6ee; }
+  .settings { display: grid; gap: 12px; align-content: start; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 11px; }
+  .row .cy-toggle { width: 50px; height: 26px; }
+  .row .cy-slider { width: min(60%, 220px); height: 22px; }
+  .app { --cy-line: rgba(150,180,235,.35); --cy-focus: #9cc6ee; }
+
+  @media (max-width: 760px) {
+    .app-frame { grid-template-columns: minmax(0, 1fr); }
+    .rail { flex-direction: row; justify-content: space-around; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; }
+    .desk { grid-template-columns: minmax(0, 1fr); }
+  }
   @media (max-width: 600px) {
-    header h1 { font-size: 20px; }
     .tile figcaption { left: 8px; right: 8px; bottom: 6px; }
     .tile .name { font-size: 12px; }
   }
@@ -83,9 +128,13 @@
 </head>
 <body>
 
-<header>
-  <h1>Indigo Grain</h1>
-  <p>Cyanotype sun prints, grain gradients, marbling and spray, all in one blue family. Every sheet is drawn in the page from nothing; “another” pulls a new one.</p>
+<header class="hero" id="hero">
+  <div>
+    <h1>Indigo Grain</h1>
+    <p>Cyanotype sun prints, grain gradients, marbling and spray, all in one blue family. Every sheet is drawn in the page from nothing; “another” pulls a new one.</p>
+    <p class="hint">This field is live: light drifts like water under glass, a hand over the print moves a pool of light, a click is a flash.</p>
+  </div>
+  <div class="foot"><span>cobalt field · live</span><span>scroll down for the wall, then the studio</span></div>
 </header>
 
 <main>
@@ -147,12 +196,57 @@
       <figcaption><span class="name">poster, pool light</span><span class="ctrl"><button type="button" data-again>another</button></span></figcaption>
     </figure>
   </section>
+
+  <div class="dev-strip" id="strip" aria-hidden="true"></div>
+  <section class="app" id="studio" aria-labelledby="studioName">
+    <div class="app-lede"><span>A made-up app, built from the live pieces: every surface is exposed through the grain.</span><span>Sun Table is not a real product.</span></div>
+    <div class="app-frame" id="frame">
+      <nav class="rail" aria-label="Studio">
+        <button type="button" class="rail-b" aria-current="page"><span class="ic" data-icon="sun"></span>Expose</button>
+        <button type="button" class="rail-b" data-go="gallery"><span class="ic" data-icon="image"></span>Prints</button>
+        <button type="button" class="rail-b" data-go="wash"><span class="ic" data-icon="drop"></span>Wash</button>
+        <button type="button" class="rail-b" data-go="settings"><span class="ic" data-icon="sliders"></span>Settings</button>
+      </nav>
+      <div class="desk">
+        <div class="bar"><h2 id="studioName">Sun Table</h2><span class="sub">a print studio</span><span class="status"><span id="status" aria-live="polite">ready</span><span class="loader" id="loader"></span></span></div>
+        <div>
+          <figure class="stage"><canvas id="stage" role="img" aria-label="The print on the table, exposing under the lamp."></canvas><figcaption id="stageName">spider lily</figcaption></figure>
+          <div class="player">
+            <button type="button" class="pbtn" id="play"><span class="ic" data-icon="play"></span><span class="ic" data-icon="pause" hidden></span><span class="lbl">Expose</span></button>
+            <button type="button" class="pbtn" id="flash"><span class="ic" data-icon="lightning"></span>Flash</button>
+            <div class="prog" id="prog" aria-label="Exposure"></div>
+            <span class="time" id="time">0:00 / 0:12</span>
+          </div>
+        </div>
+        <div class="lower">
+          <section id="gallery" aria-label="Prints">
+            <h3>Prints</h3>
+            <div class="cards">
+              <button type="button" class="gcard" data-print="lily" aria-pressed="true"><span class="gname">spider lily</span></button>
+              <button type="button" class="gcard" data-print="moths" aria-pressed="false"><span class="gname">moths</span></button>
+              <button type="button" class="gcard" data-print="eclipse" aria-pressed="false"><span class="gname">eclipse</span></button>
+              <button type="button" class="gcard" data-print="river" aria-pressed="false"><span class="gname">marbled river</span></button>
+            </div>
+          </section>
+          <section class="settings" id="settings" aria-label="Settings">
+            <h3>Settings</h3>
+            <label class="row"><span>Live grain</span><input type="checkbox" id="setGrain" checked></label>
+            <label class="row"><span>Follow hand</span><input type="checkbox" id="setHand" checked></label>
+            <label class="row"><span>Exposure</span><input type="range" id="setExp" min="40" max="140" value="100"></label>
+            <label class="row"><span>Drift</span><input type="range" id="setDrift" min="0" max="200" value="100"></label>
+          </section>
+        </div>
+      </div>
+    </div>
+  </section>
 </main>
 
-<footer>All names on these posters are made up. Engines: <code>cyanotype.js</code> (grain, relief, halo, stipple, screen, marbling, caustics) and <code>botanica.js</code> (lilies, a profile, butterflies and moths, skies, towers).</footer>
+<footer>All names on these posters and in the studio are made up. Engines: <code>cyanotype.js</code> (grain, relief, halo, stipple, screen, marbling, caustics), <code>botanica.js</code> (lilies, a profile, butterflies and moths, skies, towers), <code>live.js</code> (the same pipeline on the GPU, moving) and <code>live-ui.js</code> (the studio's pieces). Icons: Phosphor Icons, light weight, MIT, inlined.</footer>
 
 <script src="assets/cyanotype.js"></script>
 <script src="assets/botanica.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
 <script>
 (function () {
   const $ = (s, r) => (r || document).querySelector(s);
@@ -458,6 +552,117 @@
       sheets.forEach(t => { io.unobserve(t.el); io.observe(t.el); });   // re-check what is in view and now the wrong size
     }, 200);
   });
+
+  // ---- live: the hero, the hand-over strip, the studio (live.js + live-ui.js) ------------------
+  const ui = C.ui, RM = matchMedia('(prefers-reduced-motion: reduce)');
+  const views = {};
+  // hero: the cobalt field from the wall, pools low across the sheet so the title sits on paper
+  views.hero = ui.background($('#hero'), {
+    mode: 'field', palette: 'cobalt', seed: 7, grain: 1.2, coarse: 0.85, develop: 'in', drift: 1, pointer: 0.32, clickPulse: true,
+    pools: (w, h) => { const s = Math.min(w, h); return [
+      { type: 'blob', cx: w * 0.64, cy: h * 1.08, sigma: s * 0.5, amp: 1.3 },
+      { type: 'blob', cx: w * 0.06, cy: h * 1.12, sigma: s * 0.36, amp: 0.8 },
+      { type: 'band', x1: -0.1 * w, y1: h * 1.04, x2: w * 1.1, y2: h * 1.0, sigma: s * 0.14, amp: 0.55 },
+    ]; },
+  });
+  views.strip = ui.transition($('#strip'));
+
+  // the studio: a dusk field under the whole frame, its own darkroom ramp
+  const darkroom = { ground: '#0b1030', stops: [[0, '#0b1030'], [0.3, '#10245c'], [0.6, '#1d56a3'], [0.82, '#3f8fd0'], [1, '#a6d8f0']] };
+  const lamp = { ground: '#0b1030', stops: [[0, '#0b1030'], [0.35, '#16336e'], [0.7, '#2f6fbf'], [1, '#8fc4ee']] };
+  views.frame = ui.background($('#frame'), {
+    mode: 'field', palette: darkroom, seed: 21, grain: 1.3, drift: 1, pointer: 0.22, clickPulse: false,
+    pools: (w, h) => { const s = Math.min(w, h); return [
+      { type: 'blob', cx: w * 0.92, cy: h * -0.05, sigma: s * 0.55, amp: 0.5 },
+      { type: 'blob', cx: w * 0.05, cy: h * 0.95, sigma: s * 0.4, amp: 0.25 },
+    ]; },
+  });
+  $$('#studio [data-icon]').forEach(el => ui.icon(el, el.dataset.icon));
+  const btn = b => ui.button(b, { palette: lamp, rest: 0.06, hover: 0.72, T: (u, v) => 0.9 + 0.1 * (0.5 - u) });
+  $$('#studio .rail-b, #studio .pbtn').forEach(btn);
+
+  // the prints on offer: the wall's own recipes, as options for live()
+  const PRINTS = {
+    lily: { name: 'spider lily', o: { mode: 'print', palette: 'navy', focus: 0.05, haze: 0.1, soft: 0.16, grain: 0.6, objects: spiderLayout } },
+    moths: { name: 'moths', o: { mode: 'print', palette: 'sky', polarity: 'positive', grain: 0.8, layers: [
+      { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.55, y: H * 0.3, size: Math.min(W, H) * 0.46, angle: 0.25, moth: true, open: [1, 0.85], shade: { root: 0.95, wing: 0.5, edge: 0.78, vein: -0.2, spot: -0.15, body: 1 } }), focus: 0.9, haze: 0.8, soft: 0.3 },
+      { objects: (x, W, H, q) => B.butterfly(x, q, { x: W * 0.4, y: H * 0.74, size: Math.min(W, H) * 0.42, angle: -0.4, moth: true, open: [0.8, 1], shade: { root: 0.95, wing: 0.5, edge: 0.78, vein: -0.2, spot: -0.15, body: 1 } }), focus: 1.5, haze: 1.2, soft: 0.45, smear: [0.008, 0.004] },
+    ] } },
+    eclipse: { name: 'eclipse', o: { mode: 'halo', y: 0.36 } },
+    river: { name: 'marbled river', o: { mode: 'marble', res: 520 } },
+  };
+  $$('#studio .gcard').forEach((b, i) => {
+    views['card' + i] = ui.card(b, Object.assign({ seed: 30 + i, drift: 0.5, pointer: 0.25, alive: true, own: false }, PRINTS[b.dataset.print].o));
+    b.addEventListener('click', () => load(b.dataset.print));
+  });
+
+  // the print on the table and its player: Expose runs a 12 s exposure, Flash adds a burst
+  const EXPOSURE = 12;
+  const stage = views.stage = C.live($('#stage'), Object.assign({ seed: 4, develop: 'in', developMs: 3200, drift: 0.7, pointer: 0.25, radius: 0.18, alive: true }, PRINTS.lily.o));
+  const prog = ui.progress($('#prog'), { palette: lamp });
+  const load1 = ui.loader($('#loader'), { palette: lamp });
+  load1.ctl && load1.ctl.pause();
+  let elapsed = EXPOSURE, playing = false, gain = 1, timer = 0;
+  const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  function show(first) {
+    const f = Math.min(1, elapsed / EXPOSURE);
+    if (!first) stage && stage.set({ develop: f * gain });
+    prog.set(f);
+    $('#time').textContent = `${fmt(elapsed)} / ${fmt(EXPOSURE)}`;
+    $('#status').textContent = playing ? `exposing ${Math.round(f * 100)}%` : f >= 1 ? 'exposed' : f > 0 ? 'paused' : 'ready';
+  }
+  function play(on) {
+    playing = on;
+    $('#play .lbl').textContent = on ? 'Pause' : 'Expose';
+    $('#play [data-icon=play]').hidden = on; $('#play [data-icon=pause]').hidden = !on;
+    clearInterval(timer);
+    if (load1.ctl) on ? load1.ctl.resume() : load1.ctl.pause();
+    if (on) {
+      if (elapsed >= EXPOSURE) elapsed = 0;
+      // reduced motion: the exposure is a state, not a film: it lands at once
+      if (RM.matches) { elapsed = EXPOSURE; play(false); return; }
+      let last = performance.now();
+      timer = setInterval(() => {
+        const now = performance.now(); elapsed = Math.min(EXPOSURE, elapsed + (now - last) / 1000); last = now;
+        if (elapsed >= EXPOSURE) play(false);
+        show();
+      }, 100);
+    }
+    show();
+  }
+  function load(key) {
+    const p = PRINTS[key];
+    $$('#studio .gcard').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.print === key)));
+    $('#stageName').textContent = p.name;
+    play(false); elapsed = 0; show();                            // the old print washes out ...
+    setTimeout(() => { stage && stage.load(Object.assign({ seed: 4 }, p.o)); play(true); }, RM.matches ? 0 : 450);   // ... and the new one exposes
+  }
+  $('#play').addEventListener('click', () => play(!playing));
+  $('#flash').addEventListener('click', () => {
+    const r = $('#stage').getBoundingClientRect();
+    stage && stage.pulse(r.width * (0.3 + 0.4 * Math.random()), r.height * (0.3 + 0.4 * Math.random()), 0.9);
+    elapsed = Math.min(EXPOSURE, elapsed + 1.2); show();
+  });
+  $$('#studio [data-go]').forEach(b => b.addEventListener('click', () => {
+    const go = b.dataset.go;
+    if (go === 'wash') { play(false); elapsed = 0; show(); return; }
+    $('#' + go).scrollIntoView({ behavior: RM.matches ? 'auto' : 'smooth', block: 'nearest' });
+    const f = $('#' + go).querySelector('button, input'); f && f.focus({ preventScroll: true });
+  }));
+
+  // settings
+  const all = () => Object.values(views).filter(Boolean);
+  const setGrain = $('#setGrain'), setHand = $('#setHand'), setExp = $('#setExp'), setDrift = $('#setDrift');
+  ui.toggle(setGrain, { palette: 'horizon' }); ui.toggle(setHand, { palette: 'horizon' });
+  ui.slider(setExp, { palette: 'horizon' }); ui.slider(setDrift, { palette: 'horizon' });
+  setGrain.addEventListener('change', () => all().forEach(v => v.set({ alive: setGrain.checked })));
+  setHand.addEventListener('change', () => { stage && stage.set({ pointer: setHand.checked ? 0.25 : 0 }); views.frame && views.frame.set({ pointer: setHand.checked ? 0.22 : 0 }); });
+  setExp.addEventListener('input', () => { gain = setExp.value / 100; show(); });
+  setDrift.addEventListener('input', () => { const d = setDrift.value / 100; [views.frame, stage, views.hero].forEach(v => v && v.set({ drift: d })); });
+
+  ui.focusRing({ palette: 'cobalt' });
+  ui.cursor($('#studio'));
+  show(true);
 })();
 </script>
 </body>

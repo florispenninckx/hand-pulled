@@ -1,6 +1,6 @@
 ---
 name: indigo-grain
-description: Design pages, prints, covers and small-type posters where grain is the medium and everything stays in one blue family — cobalt dissolving into white, navy sinking into black with a light form glowing out of it, pale photogram flowers on navy, soft blurred butterflies and moths, sun-bleached cyanotype photographs with brushed edges, marbled paper, ink spray, halftone screens, all soft-focus and made of dense stochastic film-like grain. Use when the user asks for cyanotype, sun print, Prussian or indigo blue, a photogram, grain gradients, grain/noise as the actual image rather than a filter, marbling in blue, a blue mood board, or a moody blue-violet editorial, cover or poster.
+description: Design pages, prints, covers and small-type posters where grain is the medium and everything stays in one blue family — cobalt dissolving into white, navy sinking into black with a light form glowing out of it, pale photogram flowers on navy, soft blurred butterflies and moths, sun-bleached cyanotype photographs with brushed edges, marbled paper, ink spray, halftone screens, all soft-focus and made of dense stochastic film-like grain. Use when the user asks for cyanotype, sun print, Prussian or indigo blue, a photogram, grain gradients, grain/noise as the actual image rather than a filter, marbling in blue, a blue mood board, or a moody blue-violet editorial, cover or poster. It also runs live on the GPU, for moving backgrounds and interface pieces.
 ---
 
 # Indigo grain
@@ -138,7 +138,7 @@ a faint halo of the other.
 
 Copy both engines into the project. They are dependency-free classic scripts that set
 `window.Cyanotype` and `window.Botanica`, and draw with 2D canvas only (no WebGL, no
-`ctx.filter`).
+`ctx.filter`). For moving versions and interface pieces, see "Live" below.
 
 ```html
 <canvas id="a"></canvas><canvas id="b"></canvas><canvas id="c"></canvas>
@@ -239,6 +239,103 @@ Most sheets render in 70–200 ms at 600×900; `marble` takes under a second. Re
 per change or per "another" click, never per frame. On a wall, render lazily as sheets
 come into view, one at a time, at `devicePixelRatio` capped at 2.
 
+## Live
+
+`assets/live.js` runs the same pipeline on the GPU, moving, for real interfaces: WebGL2
+fragment shaders port the field, then compose() line by line (same integer hashes, block
+scales, blotch, coarse gate, edge band and weave), then the palette ramp as a texture.
+`assets/live-ui.js` builds interface pieces on it. Both are classic scripts with no
+dependencies; load them after `cyanotype.js` (and `botanica.js` for photograms).
+
+```html
+<script src="cyanotype.js"></script><script src="botanica.js"></script>
+<script src="live.js"></script><script src="live-ui.js"></script>
+<script>
+  const ctl = Cyanotype.live(canvas, {
+    mode: 'field', palette: 'cobalt', seed: 7, grain: 1.2, coarse: 0.85,   // still options
+    drift: 1, pointer: 0.3, develop: 'in', clickPulse: true,               // motion options
+  });
+  ctl.set({ develop: 0.4 });   ctl.pulse(x, y);   ctl.pause();   ctl.resume();   ctl.destroy();
+</script>
+```
+
+**Still options** are the ones of the matching still function (`field`, `halo`, `caustics`,
+`print`, `tone`, `relief`, `marble`, `screen`, `develop`), plus `mode`. For caustics the web
+line width is `line`, since `width` and `height` are the canvas size. **Motion options**
+never recompute the field:
+
+| option | default | what it does |
+|---|---|---|
+| `drift`, `speed` | 1, 1 | light drifting like water under glass: a slow warp of T and a travelling glint |
+| `pointer`, `radius`, `lag` | 0.18, 0.22, 0.35 | a pool of light trailing the pointer, stretched along its motion, like a hand over the print; `hand` is the element that listens (default: the parent) |
+| `develop` | 1 | exposure, 0–1 (0 is unexposed paper); `'in'` develops once when first on screen over `developMs` (2600); `'scroll'` follows the section through the viewport over `scrollRange` |
+| `ease` | 0.18 | how fast set() targets are reached |
+| `alive`, `grainRate` | true, 24 | grain re-rolled like film: fine grain, 2×2 blocks, coarse speckle and jitter re-seed 24 times a second; the 4×4 clumps and blotch stay put, so it never shimmers |
+| `clickPulse` | false | pointerdown fires `pulse()`: a flash exposure that blooms and fades |
+| `holds` | null | up to 4 `{ x, y, r, soft }` (0–1 units) coins resting on the paper that hold the light back |
+| `reveal` | null | `[from, to, soft]` in 0–1 of the width: only this window is exposed |
+| `transparent` | 0 | alpha from T, for overlays (focus ring, icons) |
+| `resolution`, `own` | 1, auto | resolution scale; `own: true` forces a dedicated WebGL context |
+
+The controller: `set(opts)` (look-only changes on a captured field re-texture without a
+rebuild; still-option changes rebuild), `load(opts)` (replace every still option: a new
+sheet), `pulse(x, y, strength)` in CSS pixels, `point(x, y)` / `point(null)` to steer the
+pool from code, `pause()`, `resume()`, `destroy()`, `state()`, `bench(n)`.
+
+**What is live.** `field`, `halo` and `caustics` are computed in the shader and drift. The
+captured modes (`print` and the photogram, `tone`, `relief`, `marble`, `screen`,
+`develop`) run the still engine once, upload T and the edge band, and then develop, glint,
+follow the hand, flash and re-roll grain on the GPU. The stipple sheets (`orb`, `spray`,
+`isles`) and the stacked undertow poster stay still: they are dots and layers, not a
+T field.
+
+**Parity.** Frame 0 at time 0 matches the still. `Cyanotype.live.parity(opts)` renders both
+and compares luminance: mean, standard deviation (contrast), mean absolute difference of
+neighbouring pixels (grain) and mean absolute difference per pixel. Measured in Chrome on
+an M1 Pro (ANGLE/Metal), 480×320: mean within 0.0016–0.0020 (the GPU rounds ~0.002 darker),
+contrast within 0.15%, grain within 0.4%, mean pixel difference 0.37–0.52 of a level, and
+100% of pixels within 2 levels, for field (cobalt and nightglow), halo, caustics and
+relief. `live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`.
+
+**Budget.** ≤ 4 ms a frame at 1440×900 CSS on this Mac's GPU. Measured with
+`ctl.bench(60)` on a full-window field (2880×1800 device pixels at DPR 2) with drift,
+pool, pulse and live grain on: 1.1–1.3 ms a frame pipelined, 1.6–2.1 ms with a 1-pixel
+readPixels after every frame (4.9 ms cold). Measure in real Chrome, not headless:
+SwiftShader is a software renderer. Timer queries (EXT_disjoint_timer_query) gave numbers
+that climbed regardless of content, so do not trust them.
+
+**Rules.**
+- `prefers-reduced-motion`: every canvas shows its still frame, no drift, pool or pulse,
+  grain frozen; `set()` changes state without animating.
+- Offscreen canvases pause (IntersectionObserver); a hidden tab stops the loop. DPR is
+  capped at 2; captured fields are capped at 1.2 MP and built one per task.
+- No WebGL2 (or a lost context): the CPU still, which changes state and does not animate.
+- Pointer events throughout, so touch works; a tap is a press.
+- Big canvases (≥ 0.9 MP) get their own context; small ones share one offscreen context
+  and receive frames as ImageBitmaps, so a page can carry dozens of live pieces.
+
+### Interface pieces (`Cyanotype.ui`)
+
+| piece | call | behaviour |
+|---|---|---|
+| live background | `ui.background(section, opts)` | a field behind the section, developing in, the hand's pool and a click flash |
+| button | `ui.button(btn)` | at rest barely exposed; hover and focus expose it through the grain; press is a flash |
+| card | `ui.card(el, opts)` | any sheet (`mode: 'print'`, `'halo'`, `'marble'`…) that develops in as it scrolls into view |
+| toggle | `ui.toggle(checkbox)` | the knob is a coin holding back the light; on exposes the track |
+| slider | `ui.slider(range)` | exposed up to the value, a coin at the thumb |
+| progress | `ui.progress(el)` → `{ set(p) }` | an exposure creeping along the strip, a flash at 100%; `role=progressbar` |
+| loader | `ui.loader(el)` | a small pool of light orbiting under the grain |
+| focus ring | `ui.focusRing(opts)` | an exposed band around `:focus-visible` elements, transparent elsewhere |
+| section transition | `ui.transition(strip)` | paper darkening into the next section as it scrolls |
+| cursor | `ui.cursor(area)` | a soft screen-blended spot trailing the mouse; off for touch and reduced motion |
+| icon | `ui.icon(el, name)` | a Phosphor light icon exposed like a botanical; lights on hover |
+
+Every piece keeps the native element and its semantics; the canvas sits under it with
+`aria-hidden`. `Cyanotype.iconMask(svg, { pad, weight })` turns any inline 256-unit SVG
+(path `d`s only) into an `objects` mask for `print`, so your own icons go through the same
+process. `ui.ICONS` carries eleven Phosphor Light paths (sun, image, drop, sliders, play,
+pause, aperture, flower, butterfly, clock, lightning), inlined; nothing is fetched.
+
 ## Tells that it was generated — avoid all of them
 
 - Grain as a faint CSS noise overlay on clean colour. The grain here **is** the pixels.
@@ -266,7 +363,10 @@ board or brief, then zoom in on a patch of grain and one subject edge.
 - [ ] Sheet names are legible on every sheet, on pale and dark alike; posters use small
       type and invented names only.
 - [ ] No console errors; no horizontal scroll at 390px; the same seed reproduces the
-      same sheet; nothing animates, so reduced motion has nothing to stop.
+      same sheet.
+- [ ] Live pieces: frame 0 passes `Cyanotype.live.parity()`; under reduced motion every
+      canvas draws once and holds; an offscreen canvas stops drawing; the grain moves like
+      film, not like TV static; frame time measured in real Chrome is under 4 ms.
 
 ## Credits and prior art
 
@@ -291,6 +391,8 @@ Original implementation: no code was copied from anywhere. The ideas came from:
 - **Blur**: three box passes approximating a Gaussian, after W. M. Wells, "Efficient
   synthesis of Gaussian filters by cascaded uniform filters" (IEEE PAMI, 1986).
 - **Seeded randomness**: Tommy Ettinger's mulberry32 generator.
+- **Icons**: Phosphor Icons (phosphoricons.com), light weight, MIT licence, copyright
+  (c) 2023 Phosphor Icons; the paths are inlined in `live-ui.js` with the notice.
 - **Visual reference**: the indigo column of the mood board credited in the repository
   README. No image from it, or any other third-party image, is in this repository;
   every sheet is generated at runtime, and every name on the posters is invented.

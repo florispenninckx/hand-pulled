@@ -47,5 +47,31 @@ else
   done
 fi
 
+# 5. live pages (those that load a live engine and fill window.handPulledLive): the visible canvases
+#    draw and keep moving, each skill's frame 0 passes parity with its still, and under reduced
+#    motion (scrolled to the end of the page) every canvas on screen draws once and then holds (clock 0, frame counts unchanged). Frame-time
+#    budgets cannot be checked here: headless Chrome renders WebGL in software (SwiftShader), so
+#    measure them by hand in real Chrome with ctl.bench() (see the skill's "Live" section).
+#    READY waits (up to 30 s) for the page and the visible views, so a loaded machine does not flake.
+READY='eval:new Promise(r=>{const t0=Date.now(),f=()=>{const L=window.handPulledLive;if(document.readyState==="complete"&&L&&L.views.length&&L.views.every(v=>{const s=v.state();return s.ready||!s.visible}))return r(Date.now()-t0);if(Date.now()-t0>30000)return r("timeout");setTimeout(f,100)};f()})'
+SNAP='eval:(window.__f=handPulledLive.views.map(v=>v.state().frames)).length'
+MOVING='eval:JSON.stringify((()=>{const L=handPulledLive,s=L.views.map(v=>v.state()),vis=s.filter(x=>x.visible),par=Object.values(L.parity).flatMap(f=>f());return{views:s.length,visible:vis.length,drawn:vis.filter(x=>x.frames>0).length,moving:s.filter((x,i)=>x.visible&&x.frames>__f[i]).length,parity:par.length,bad:par.filter(r=>!r.pass).map(r=>r.mode+":"+(r.gpu===false?"no-webgl2":r.dMean+"/"+r.dSdRel+"/"+r.dGrainRel+"/"+r.madLevels))}})())'
+HELD='eval:JSON.stringify((()=>{const s=handPulledLive.views.map(v=>v.state());return{views:s.length,drawn:s.filter(x=>x.frames>0).length,changed:s.filter((x,i)=>x.frames!==__f[i]).length,clock:s.filter(x=>x.clock!==0).length,notReduced:s.filter(x=>!x.reduced).length}})())'
+if [ -f "$SHOT" ]; then
+  for page in skills/*/reference.html; do
+    grep -qE 'src="assets/live[^"]*\.js"' "$page" || continue
+    url="file://$PWD/$page"
+    out=$(node "$SHOT" "$url" size:1440x900 "$READY" wait:1500 "$SNAP" wait:1000 "$MOVING" 2>&1); code=$?
+    r=$(printf '%s\n' "$out" | sed -n 's/^eval //p' | tail -1)
+    if [ $code -eq 0 ] && python3 -c 'import json,sys;r=json.loads(json.loads(sys.argv[1]));sys.exit(0 if r["visible"]>0 and r["drawn"]==r["visible"] and r["moving"]>0 and r["parity"]>0 and not r["bad"] else 1)' "$r" 2>/dev/null
+    then n=ok; else n="BAD ${r:-$(printf '%s\n' "$out" | tail -1)}"; fail=1; fi
+    out=$(node "$SHOT" "$url" motion:reduced size:1440x900 "$READY" "eval:scrollTo(0,1e9)" wait:1500 "$READY" wait:1500 "$SNAP" wait:1200 "$HELD" 2>&1); code=$?
+    r2=$(printf '%s\n' "$out" | sed -n 's/^eval //p' | tail -1)
+    if [ $code -eq 0 ] && python3 -c 'import json,sys;r=json.loads(json.loads(sys.argv[1]));sys.exit(0 if r["views"]>0 and r["drawn"]>0 and r["changed"]==0 and r["clock"]==0 and r["notReduced"]==0 else 1)' "$r2" 2>/dev/null
+    then m=ok; else m="BAD ${r2:-$(printf '%s\n' "$out" | tail -1)}"; fail=1; fi
+    say "$page live" "moving+parity $n · reduced still $m"
+  done
+fi
+
 [ $fail -eq 0 ] && echo "check passed" || echo "check FAILED"
 exit $fail
