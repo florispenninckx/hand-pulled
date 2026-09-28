@@ -14,7 +14,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | a picture after something happened to the file: macroblocks and sorted drips, 1-bit tears, scanner drag, mojibake, tiles that did not load | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed maps in one to three spot inks, with knockouts, overprint and misregistration | [Low Water](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | cyanotype sun prints: Prussian blue, botanicals, soft contact edges, grain | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
-| [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign: flowers shot too close, motion blur, lens haze | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
+| [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign in warm, saturated colour: the inside of a flower held too close, grain-gradient fields, ribbons of colour on cream, silk, a meadow past a slow shutter | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
 
 Every artist, label, place and brand on the reference pages is invented.
 
@@ -87,7 +87,10 @@ the full account.
 The Riso ink colours follow the ink table published with p5.riso. The map methods
 (marching squares, fractal noise, branching growth) and the cyanotype chemistry are
 textbook. Anna Atkins's *Photographs of British Algae* (1843) is the historical reference
-for the sun print.
+for the sun print. The ethereal haze look answers the author's "Ethereal Haze" Pinterest
+board. It is used as reference only: no pinned image is included or traced, and no real
+brand from it is used. That skill's `SKILL.md` names the uncredited poster layouts it
+follows. Its disc defocus, Catmull-Rom ribbons and Blinn-Phong silk are textbook methods.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
 WebGPU or C++. The skills here are 2D canvas without WebGL, so none of them fed into

@@ -6,107 +6,203 @@
 <title>Faye</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
+  :root { --cream: #f3ede1; --paper: #e9e0d0; --ink: #2b2320; --ink2: #6e5d55; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: #e6ddd6; }
-  body { font: 300 14px/1.6 'Jost', sans-serif; color: #5f4f4b; overflow-x: hidden; }
+  html, body { margin: 0; background: var(--cream); }
+  body { font: 300 14px/1.6 'Jost', sans-serif; color: var(--ink); overflow-x: hidden; }
+  :focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }
+  button, label.ctl { background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; opacity: .82; }
+  button:hover, label.ctl:hover { opacity: 1; }
+  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+  canvas { display: block; }
+  .kicker { margin: 0; font: 400 10.5px/1.4 'Jost', sans-serif; letter-spacing: .18em; text-transform: uppercase; color: var(--ink2); }
 
-  .plate { position: relative; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: var(--ground); color: var(--ink); }
-  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  /* full-bleed plates: one image, one word */
+  .plate { position: relative; width: 100%; height: 100vh; height: 100svh; overflow: hidden; background: var(--ground); color: var(--on, #fff); }
+  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   @media (prefers-reduced-motion: no-preference) {
     .plate canvas { filter: blur(14px); transform: scale(1.03); transition: filter 1.8s cubic-bezier(.2, .7, .2, 1), transform 2.4s cubic-bezier(.2, .7, .2, 1); }
     .plate.seen canvas { filter: none; transform: none; }
   }
-  .plate.drag::after { content: ''; position: absolute; inset: 12px; border: 1px solid var(--ink); z-index: 3; pointer-events: none; }
-
-  /* one small wordmark, dead centre, and at most one tiny line under it */
+  .plate.drag::after { content: ''; position: absolute; inset: 12px; border: 1px solid currentColor; z-index: 3; pointer-events: none; }
   .word { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); z-index: 2; text-align: center; pointer-events: none; }
   .word h1, .word h2 { margin: 0; font: 400 clamp(34px, 5.4vw, 78px)/1 'Marcellus', serif; letter-spacing: .02em; }
-  .word h1 { letter-spacing: .06em; }
-  .word p { margin: .6em 0 0; font: 400 clamp(12px, 1.05vw, 15px)/1 'Jost', sans-serif; letter-spacing: .06em; }
-
+  .word h1 { letter-spacing: .08em; }
+  .word p { margin: .7em 0 0; font: 400 clamp(12px, 1.05vw, 15px)/1 'Jost', sans-serif; letter-spacing: .08em; }
   .cap {
     position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2;
     display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 8px 16px;
     font: 400 10.5px/1 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase;
   }
   .cap .ctrl { display: flex; gap: 18px; }
-  .cap button, .cap label {
-    background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit;
-    cursor: pointer; opacity: .82;
-  }
-  .cap button:hover, .cap label:hover { opacity: 1; }
-  input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  :focus-visible { outline: 1px solid currentColor; outline-offset: 3px; }
 
-  /* the sun print carries its title in the paper margin, like a pencilled plate number */
-  .plate[data-kind="shade"] .word { top: auto; bottom: 0; transform: none; }
-  .plate[data-kind="shade"] .word h2 { font-size: 12px; letter-spacing: .14em; text-transform: uppercase; line-height: 4.5vmin; }
-  .plate[data-kind="shade"] .cap { top: calc(4.5vmin + 12px); bottom: auto; left: calc(4.5vmin + 12px); right: calc(4.5vmin + 12px); }
+  /* two plates side by side */
+  .pair { display: grid; grid-template-columns: 1fr 1fr; }
+  .pair .plate { height: 86vh; height: 86svh; }
+  @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } .pair .plate { height: 72svh; } }
 
-  .notes { padding: clamp(72px, 14vh, 150px) 16px; text-align: center; }
-  .notes p.lede { max-width: 30em; margin: 0 auto 2.6em; font: 400 clamp(17px, 1.6vw, 21px)/1.55 'Marcellus', serif; color: #6a5651; }
-  .notes ol { list-style: none; margin: 0 auto; padding: 0; max-width: 560px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 24px; }
-  .notes li b { display: block; font: 400 17px/1.2 'Marcellus', serif; color: #5a4743; margin-bottom: .3em; }
-  .notes li span { font-size: 12.5px; letter-spacing: .04em; }
-  @media (max-width: 480px) { .notes ol { grid-template-columns: 1fr; } }
+  /* the collection: ribbons on cream cards, a word and a line each */
+  .band { padding: clamp(64px, 11vh, 120px) clamp(16px, 4vw, 56px); background: var(--paper); }
+  .band-head { max-width: 1180px; margin: 0 auto clamp(32px, 6vh, 56px); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 18px 32px; align-items: end; }
+  .band-head h2 { margin: .5em 0 0; max-width: 20em; font: 400 clamp(21px, 2.2vw, 30px)/1.3 'Marcellus', serif; }
+  .band-head p.lede { margin: .9em 0 0; max-width: 34em; font-size: 14.5px; color: var(--ink2); }
+  .band-head button { font: 400 10.5px/1 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); }
+  .cards { list-style: none; margin: 0 auto; padding: 0; max-width: 1180px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 22px); }
+  @media (max-width: 860px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .card { position: relative; aspect-ratio: 3 / 4.4; background: var(--cream); overflow: hidden; }
+  .card canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .card-top, .card-foot { position: absolute; left: 7%; right: 7%; z-index: 1; display: flex; justify-content: space-between; gap: 10px; }
+  .card-top { top: 5.5%; align-items: flex-start; font: 500 clamp(6.5px, .62vw, 9px)/1.45 'Jost', sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+  .card-top .no { font-size: clamp(8px, .8vw, 11.5px); letter-spacing: .06em; padding: 0 0 .35em 2.6em; border-bottom: 1px solid currentColor; }
+  .card-foot { bottom: 6%; align-items: flex-end; }
+  .card h3 { margin: 0; font: 400 clamp(15px, 2vw, 30px)/1 'Marcellus', serif; letter-spacing: .02em; }
+  .card p { margin: .5em 0 0; max-width: 15em; font: 300 clamp(9px, .9vw, 13px)/1.35 'Jost', sans-serif; color: #4a3f3a; }
+  .dots { display: flex; gap: .4em; padding-bottom: .15em; }
+  .dots i { width: clamp(6px, .75vw, 11px); aspect-ratio: 1; border-radius: 50%; background: var(--c); }
 
-  footer { padding: 40px 16px 48px; text-align: center; font-size: 11.5px; letter-spacing: .04em; color: #8a7771; }
+  /* four fields, each labelled like a colour chip */
+  .posters { list-style: none; margin: 0 auto; padding: 0; max-width: 1180px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 22px); }
+  @media (max-width: 860px) { .posters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .poster { position: relative; aspect-ratio: 3 / 4.2; overflow: hidden; background: var(--ground); color: var(--on, var(--ink)); }
+  .poster canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .poster .p-name { position: absolute; left: 8%; top: 6%; z-index: 1; margin: 0; font: 400 clamp(16px, 1.9vw, 26px)/1 'Marcellus', serif; }
+  .poster .p-hex { position: absolute; right: 8%; top: 6%; z-index: 1; margin: 0; text-align: right; font: 400 clamp(8px, .72vw, 10.5px)/1.55 'Jost', sans-serif; letter-spacing: .08em; }
+  .poster .p-hex b { font-weight: 500; display: block; margin-top: .5em; }
+  .poster .p-foot { position: absolute; left: 8%; right: 8%; bottom: 5%; z-index: 1; margin: 0; font: 400 clamp(7.5px, .68vw, 10px)/1.4 'Jost', sans-serif; letter-spacing: .14em; text-transform: uppercase; }
+
+  footer { padding: 44px 16px 52px; text-align: center; font-size: 11.5px; letter-spacing: .04em; color: var(--ink2); }
+  footer p { max-width: 46em; margin: 0 auto .8em; }
   footer a { color: inherit; text-underline-offset: 3px; }
+  @media (max-width: 480px) { .band-head { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
 <main>
-  <section class="plate" data-kind="petals" data-palette="blush" style="--ground:#d6cbc3; --ink:#fff">
-    <canvas aria-label="Pink petals so close to the lens they are only colour and soft edges, on dusty rose air, with fine grain."></canvas>
+  <section class="plate" data-fn="bloom" data-look="bloom" data-seed="6" data-opts='{"palette":"coral"}' style="--ground:#f06a4a">
+    <canvas aria-label="The inside of a coral flower, so close to the lens it is only colour: long petals rising from a golden heart, one rim in focus, under fine grain."></canvas>
     <div class="word"><h1>FAYE</h1></div>
     <div class="cap">
-      <span>I — tendre</span>
-      <span class="ctrl"><button type="button" data-again>another</button><label for="f1">+ photograph</label><input type="file" id="f1" accept="image/*"></span>
+      <span>I — rose corail</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f1">+ photograph</label><input type="file" id="f1" accept="image/*"></span>
     </div>
   </section>
 
-  <section class="notes" aria-label="The four scents">
-    <p class="lede">Four scents, each from one flower held too close to the lens to see. They are made in small batches and worn close to the skin.</p>
-    <ol>
-      <li><b>tendre</b><span>rose petal · pear skin · white musk</span></li>
-      <li><b>corail</b><span>field poppy · blood orange · pink pepper</span></li>
-      <li><b>ombre verte</b><span>fig leaf · vetiver · cut stem</span></li>
-      <li><b>sépia</b><span>tobacco leaf · old paper · dry hay</span></li>
+  <section class="band" aria-labelledby="carnet-h">
+    <div class="band-head">
+      <div>
+        <p class="kicker">II — carnet 02</p>
+        <h2 id="carnet-h">Six scents, each a colour turning slowly in the air.</h2>
+        <p class="lede">Each is blended in small batches and worn close to the skin. A card for each, printed on cream stock.</p>
+      </div>
+      <button type="button" data-again-set="cards">another</button>
+    </div>
+    <ol class="cards">
+      <li class="card" data-fn="ribbon" data-seed="2" data-opts='{"form":"shift"}'>
+        <canvas aria-label="A ribbon of colour on cream, turning from pale blue through violet into red and orange, its edges sprayed to grain."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">01</span></div>
+        <div class="card-foot"><div><h3>TOURNANT</h3><p>Every turn keeps a little of the last colour.</p></div><span class="dots"><i style="--c:#6a84dc"></i><i style="--c:#e22b30"></i><i style="--c:#f5552a"></i></span></div>
+      </li>
+      <li class="card" data-fn="ribbon" data-seed="4" data-opts='{"form":"wave"}'>
+        <canvas aria-label="A blue ribbon on cream that turns warm, coral and peach at its tail."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">02</span></div>
+        <div class="card-foot"><div><h3>MARÉE</h3><p>It comes back a different blue.</p></div><span class="dots"><i style="--c:#0a48ae"></i><i style="--c:#d2442e"></i><i style="--c:#f9a476"></i></span></div>
+      </li>
+      <li class="card" data-fn="ribbon" data-seed="6" data-opts='{"form":"orb"}'>
+        <canvas aria-label="A soft sphere on cream, deep teal at its core and gold at its rim."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">03</span></div>
+        <div class="card-foot"><div><h3>LUEUR</h3><p>A light seen through closed eyes.</p></div><span class="dots"><i style="--c:#1a5a5e"></i><i style="--c:#9aae70"></i><i style="--c:#e6bc62"></i></span></div>
+      </li>
+      <li class="card" data-fn="ribbon" data-seed="8" data-opts='{"form":"ember"}'>
+        <canvas aria-label="An orange ribbon on cream that burns down to near-black and fades to dusty pink."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">04</span></div>
+        <div class="card-foot"><div><h3>BRAISE</h3><p>What is left glows longest.</p></div><span class="dots"><i style="--c:#ee5a22"></i><i style="--c:#8a1a1a"></i><i style="--c:#2f1111"></i></span></div>
+      </li>
+      <li class="card" data-fn="ribbon" data-seed="5" data-opts='{"form":"swirl"}'>
+        <canvas aria-label="A pink and gold spiral on cream, soft as breath on glass."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">05</span></div>
+        <div class="card-foot"><div><h3>SPIRALE</h3><p>Round once more, a little warmer.</p></div><span class="dots"><i style="--c:#f07aa0"></i><i style="--c:#fa7a2e"></i><i style="--c:#fbb640"></i></span></div>
+      </li>
+      <li class="card" data-fn="ribbon" data-seed="9" data-opts='{"form":"smoke"}'>
+        <canvas aria-label="A thin plume of grey smoke on cream with a gold thread through it."></canvas>
+        <div class="card-top"><span>Faye atelier<br>carnet 02</span><span class="no">06</span></div>
+        <div class="card-foot"><div><h3>FUMÉE</h3><p>Gone, and still in the room.</p></div><span class="dots"><i style="--c:#343230"></i><i style="--c:#8c7c60"></i><i style="--c:#e0b860"></i></span></div>
+      </li>
     </ol>
   </section>
 
-  <section class="plate" data-kind="poppies" data-palette="coral" style="--ground:#ecd8d4; --ink:#fff">
+  <section class="plate" data-fn="field" data-look="field" data-seed="4" data-opts='{"form":"fold"}' style="--ground:#ec3860">
+    <canvas aria-label="A grain field in rose, gold and white: a pale fold crossing a pink ground under a gold sheet, every soft edge dissolving into stipple."></canvas>
+    <div class="word"><h2>sanguine</h2><p>eau de parfum, 50 ml</p></div>
+    <div class="cap">
+      <span>III — sanguine</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f2">+ photograph</label><input type="file" id="f2" accept="image/*"></span>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="champs-h" style="background:var(--cream)">
+    <div class="band-head">
+      <div>
+        <p class="kicker">IV — champs</p>
+        <h2 id="champs-h">The colours of the house, as fields.</h2>
+      </div>
+      <button type="button" data-again-set="posters">another</button>
+    </div>
+    <ul class="posters">
+      <li class="poster" data-fn="field" data-seed="3" data-opts='{"form":"sun"}' style="--ground:#f45c2c; --on:#a8201a">
+        <canvas aria-label="A red sun going to white at its heart, grained."></canvas>
+        <p class="p-name">soleil</p><p class="p-hex" data-hex></p><p class="p-foot">champ 01 · midi</p>
+      </li>
+      <li class="poster" data-fn="field" data-seed="2" data-opts='{"form":"flow"}' style="--ground:#fb7a24; --on:#fff">
+        <canvas aria-label="Orange and amber bands flowing diagonally, like light through a curtain."></canvas>
+        <p class="p-name">ambre</p><p class="p-hex" data-hex></p><p class="p-foot">champ 02 · après-midi</p>
+      </li>
+      <li class="poster" data-fn="field" data-seed="5" data-opts='{"form":"flame"}' style="--ground:#f2402e; --on:#fff">
+        <canvas aria-label="Violet dusk above, red and gold tongues of flame rising below, softly dragged upward."></canvas>
+        <p class="p-name">flamme</p><p class="p-hex" data-hex></p><p class="p-foot">champ 03 · soir</p>
+      </li>
+      <li class="poster" data-fn="field" data-seed="7" data-opts='{"form":"blot"}' style="--ground:#dadada">
+        <canvas aria-label="A red-orange blot on mottled grey paper, crisp on one side and sprayed on the other, with a pink bleed."></canvas>
+        <p class="p-name">encre</p><p class="p-hex" data-hex></p><p class="p-foot">champ 04 · nuit</p>
+      </li>
+    </ul>
+  </section>
+
+  <div class="pair">
+    <section class="plate" data-fn="silk" data-look="silk" data-seed="3" data-opts='{"palette":"rouge"}' style="--ground:#b40f0c">
+      <canvas aria-label="Red satin in folds under one light, deep crimson in the creases and orange on the sheen."></canvas>
+      <div class="word"><h2>soie</h2></div>
+      <div class="cap"><span>V — soie</span><span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f3">+ photograph</label><input type="file" id="f3" accept="image/*"></span></div>
+    </section>
+    <section class="plate" data-fn="silk" data-look="silk" data-seed="6" data-opts='{"palette":"bleu"}' style="--ground:#235aa8">
+      <canvas aria-label="Blue satin in folds, navy in the creases and pale sky blue where the light catches it."></canvas>
+      <div class="word"><h2>nuit</h2></div>
+      <div class="cap"><span>VI — nuit</span><span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f4">+ photograph</label><input type="file" id="f4" accept="image/*"></span></div>
+    </section>
+  </div>
+
+  <section class="plate" data-fn="meadow" data-look="meadow" data-seed="2" style="--ground:#98b858">
+    <canvas aria-label="A green and yellow meadow seen from a moving train: grass, rapeseed and a few poppies drawn out into long streaks."></canvas>
+    <div class="word"><h2>passage</h2><p>eau de toilette, 100 ml</p></div>
+    <div class="cap">
+      <span>VII — passage</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f5">+ photograph</label><input type="file" id="f5" accept="image/*"></span>
+    </div>
+  </section>
+
+  <section class="plate" data-fn="poppies" data-look="poppies" data-seed="4" style="--ground:#ecd8d4">
     <canvas aria-label="Coral and red poppies on long green stems, swaying past a slow shutter, on milky pink."></canvas>
     <div class="word"><h2>corail</h2><p>eau de parfum, 50 ml</p></div>
     <div class="cap">
-      <span>II — corail</span>
-      <span class="ctrl"><button type="button" data-again>another</button><label for="f2">+ photograph</label><input type="file" id="f2" accept="image/*"></span>
-    </div>
-  </section>
-
-  <section class="plate" data-kind="shade" data-palette="sage" style="--ground:#b3b467; --ink:#6f7337">
-    <canvas aria-label="A sun print on green paper: pale leaf shapes, the near ones sharp and the lifted ones soft, inside a butter-coloured margin."></canvas>
-    <div class="word"><h2>ombre verte</h2></div>
-    <div class="cap">
-      <span>III — sun print</span>
-      <span class="ctrl"><button type="button" data-again>another</button><label for="f3">+ photograph</label><input type="file" id="f3" accept="image/*"></span>
-    </div>
-  </section>
-
-  <section class="plate" data-kind="streak" data-palette="sepia" style="--ground:#766140; --ink:#efe6d2">
-    <canvas aria-label="A figure moving through the frame in sepia, smeared sideways by a slow shutter, under heavy grain."></canvas>
-    <div class="word"><h2>sépia</h2><p>eau de parfum, 50 ml</p></div>
-    <div class="cap">
-      <span>IV — sépia</span>
-      <span class="ctrl"><button type="button" data-again>another</button><label for="f4">+ photograph</label><input type="file" id="f4" accept="image/*"></span>
+      <span>VIII — corail</span>
+      <span class="ctrl"><button type="button" data-again>another</button><label class="ctl" for="f6">+ photograph</label><input type="file" id="f6" accept="image/*"></span>
     </div>
   </section>
 </main>
 <footer>
-  Faye is fictional. No plate is a photograph: each is drawn by <code>haze.js</code>, defocused the way a lens defocuses and grained the way film grains. Press <i>another</i> for a new print, or drop a photograph on a plate to develop it in that plate's look.
-  <br><a href="../../index.html">all styles</a>
+  <p>Faye is fictional. No image here is a photograph: each is drawn by <code>haze.js</code>, defocused the way a lens defocuses, sprayed and grained the way a print grains. Press <i>another</i> for a new print, or drop a photograph on a plate to develop it in that plate's look.</p>
+  <a href="../../index.html">all styles</a>
 </footer>
 <script src="assets/haze.js"></script>
 <script>
@@ -114,17 +210,30 @@
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
   const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const LOOK = { petals: 'blush', poppies: 'coral', shade: 'sage', streak: 'sepia' };
-  const plates = $$('.plate').map((section, i) => ({ section, canvas: $('canvas', section), kind: section.dataset.kind, palette: section.dataset.palette, seed: [3, 4, 2, 6][i], photo: null }));
+  const items = $$('[data-fn]').map(el => ({ el, canvas: $('canvas', el), fn: el.dataset.fn, look: el.dataset.look, seed: +el.dataset.seed, opts: JSON.parse(el.dataset.opts || '{}'), photo: null }));
+
+  // a field poster is labelled with the two ends of its own ramp, as a colour chip would be
+  $$('[data-hex]').forEach(p => {
+    const c = Haze.FIELD[JSON.parse(p.parentNode.dataset.opts).form].colors, a = c[0].toUpperCase(), b = c[c.length - 1].toUpperCase();
+    p.innerHTML = `▾<b>${a}</b>100%–0%<br>▾<b>${b}</b>100%–0%`;
+  });
 
   function render(p) {
-    const r = p.section.getBoundingClientRect(), cw = Math.round(r.width), ch = Math.round(r.height);
-    const o = { width: Math.round(cw * dpr), height: Math.round(ch * dpr), cssWidth: cw, seed: p.seed, palette: p.palette };
-    if (p.photo) Haze.develop(p.canvas, p.photo, Object.assign(o, { look: LOOK[p.kind] }));
-    else Haze[p.kind](p.canvas, o);
+    const r = p.canvas.getBoundingClientRect(), cw = Math.round(r.width), ch = Math.round(r.height);
+    if (!cw || !ch) return;
+    const o = Object.assign({}, p.opts, { width: Math.round(cw * dpr), height: Math.round(ch * dpr), cssWidth: cw, seed: p.seed });
+    if (p.photo) Haze.develop(p.canvas, p.photo, Object.assign(o, { look: p.look }));
+    else Haze[p.fn](p.canvas, o);
   }
-  // one plate per frame, top first, so the page paints before the last print is developed
-  function renderAll() { plates.forEach((p, i) => setTimeout(() => requestAnimationFrame(() => render(p)), i * 30)); }
+  // one image per frame, top first, so the page paints and scrolls while the rest develop
+  let queue = [];
+  function pump() {
+    const p = queue.shift();
+    if (!p) return;
+    render(p);
+    requestAnimationFrame(() => setTimeout(pump, 0));
+  }
+  function renderAll(list) { const idle = !queue.length; queue = queue.concat(list.filter(p => !queue.includes(p))); if (idle) pump(); }
 
   async function take(p, file) {
     if (!file || !/^image\//.test(file.type)) return;
@@ -132,23 +241,28 @@
     try { await img.decode(); } catch (e) { return; }
     p.photo = img; render(p);
   }
-  plates.forEach(p => {
-    $('[data-again]', p.section).addEventListener('click', () => { p.photo = null; p.seed = 1 + Math.floor(Math.random() * 9999); render(p); });
-    $('input[type=file]', p.section).addEventListener('change', e => take(p, e.target.files[0]));
-    p.section.addEventListener('dragover', e => { e.preventDefault(); p.section.classList.add('drag'); });
-    p.section.addEventListener('dragleave', () => p.section.classList.remove('drag'));
-    p.section.addEventListener('drop', e => { e.preventDefault(); p.section.classList.remove('drag'); take(p, e.dataTransfer.files[0]); });
+  const fresh = p => { p.photo = null; p.seed = 1 + Math.floor(Math.random() * 9999); };
+  items.filter(p => p.look).forEach(p => {
+    $('[data-again]', p.el).addEventListener('click', () => { fresh(p); render(p); });
+    $('input[type=file]', p.el).addEventListener('change', e => take(p, e.target.files[0]));
+    p.el.addEventListener('dragover', e => { e.preventDefault(); p.el.classList.add('drag'); });
+    p.el.addEventListener('dragleave', () => p.el.classList.remove('drag'));
+    p.el.addEventListener('drop', e => { e.preventDefault(); p.el.classList.remove('drag'); take(p, e.dataTransfer.files[0]); });
   });
+  $$('[data-again-set]').forEach(b => b.addEventListener('click', () => {
+    const set = items.filter(p => p.el.parentNode.classList.contains(b.dataset.againSet));
+    set.forEach(fresh); renderAll(set);
+  }));
 
   // each plate comes into focus the first time it is seen
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); } }), { threshold: 0.25 });
-  plates.forEach(p => io.observe(p.section));
+  $$('.plate').forEach(s => io.observe(s));
 
-  renderAll();
+  renderAll(items);
   let lastW = innerWidth, t;
   addEventListener('resize', () => {   // phones fire resize on scroll as the toolbar moves; only a width change re-develops
     if (innerWidth === lastW) return;
-    lastW = innerWidth; clearTimeout(t); t = setTimeout(renderAll, 200);
+    lastW = innerWidth; clearTimeout(t); t = setTimeout(() => renderAll(items), 200);
   });
 })();
 </script>
