@@ -1,7 +1,7 @@
 # hand-pulled
 
 Seven graphic-design skills for Claude. Each builds its style from the process that
-makes it, and not from a filter over a finished layout: letters drawn stroke by stroke,
+makes it, and not from a filter over a finished layout: colour poured into colour,
 files broken by a codec, maps pulled through ink drums, sheets exposed in the sun,
 photographs shot through a soft lens, a lamp caught in liquid metal, colour seen through
 fluted glass. Each skill ships an original engine with no
@@ -11,7 +11,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 
 | Skill | Looks like | Reference page | Engine |
 |---|---|---|---|
-| [`maximalist-pop`](skills/maximalist-pop/SKILL.md) | an indie record cover: hand-drawn bubble and curl lettering, one-line writing, stamps, printed paper | [Sweet William](skills/maximalist-pop/reference.html) | `hand.js` |
+| [`maximalist-boc`](skills/maximalist-boc/SKILL.md) | a record rolled out in colour: acid green and Klein blue poured into each other, agate bands, marbling, moiré, palette cards, and liquid lettering that melts, drips, glows or echoes | [citric](skills/maximalist-boc/reference.html) | `goo.js`, `pour.js` |
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | one picture after a machine got hold of it: saturated sort and slit-scan smears on dark, wave warps, sorted drips, a dropped screen, a grid collage, scanner drag, sliced type | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | a blue board made of grain: cyanotype botanicals and sun-printed photographs, light forms out of navy-black, blurred butterflies, marbling, spray and halftone | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
@@ -45,11 +45,12 @@ the work done.
 
 ## How the engines work
 
-- Each engine is one classic script that sets a global (`Hand`, `PixelSort`, `Glitch`,
+- Each engine is one classic script that sets a global (`Goo`, `Pour`, `PixelSort`, `Glitch`,
   `Riso`, `Carto`, `Atlas`, `Cyanotype`, `Botanica`, `Haze`, `Mercury`, `Surface`). There
   is no build step, no npm package and no network call. The pages open straight from disk.
 - `Mercury` (chrome aurora) shades its surfaces in WebGL with its own shaders, and falls
-  back to a 2D canvas when WebGL is missing. Everything else is drawn on a 2D canvas. The
+  back to a 2D canvas when WebGL is missing. `Goo` writes its letters as SVG with their own
+  filters. Everything else is drawn on a 2D canvas. The
   only external resource is Google Fonts.
 - Every engine is seeded, so the same seed gives the same plate. A plate can be named by
   its settings and pulled again.
@@ -126,10 +127,11 @@ none of them fed into the code:
 kevinsqi/react-mesh-gradient, JimmyBeldone/react-native-grainy-gradient, l-ir/webgl-grain,
 jordienr/mesh-gradient, lokesh-coder/react-animated-css-mesh-gradient.
 
-**Visual reference.** Six styles are aimed at Floris Penninckx's own Pinterest boards,
-one each: "Riso Cartography", "Pixel Glitch", "Ethereal Haze", "Indigo Grain", "Chrome
-Aurora" and "Abstract texture". The first versions of the older styles, and
-`maximalist-pop` still, followed the "10 niche design styles" board by A Song Studio.
+**Visual reference.** All seven styles are aimed at Floris Penninckx's own Pinterest
+boards, one each: "Riso Cartography", "Pixel Glitch", "Ethereal Haze", "Indigo Grain",
+"Chrome Aurora", "Abstract texture" and "Maximalist BOC" (its lettering also looked at his
+"Fonts" board). The first versions of the older styles followed the "10 niche design
+styles" board by A Song Studio.
 All of them were used as reference only. None of their images, or any other third-party
 image, are in this repository. The plates in `plates/` are
 screenshots of this repository's own reference pages.

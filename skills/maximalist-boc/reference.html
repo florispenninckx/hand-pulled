@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>citric — Tamsin Vey</title>
+<meta name="description" content="Reference page for the maximalist-boc skill: a fictional record poured in liquid colour, with acid green and Klein blue swirls, agate bands, marbling, a bloom, flat colour fields, palette cards and melted display type. Fictional artist, label and venues.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #eef0e6;          /* daylight: the page is white card, never black */
+    --ink: #0e120c;
+    --klein: #1f2fb0; --citric: #b4f000; --acid: #95d401; --pool: #5fe0c8; --fuchsia: #ed1fb3; --tangerine: #ff5a2a;
+    --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+    --gut: clamp(16px, 3.4vw, 44px);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--paper); color: var(--ink); font: 500 15px/1.5 var(--sans); overflow-x: hidden; }
+  a { color: inherit; }
+  h1, h2, h3, p { margin: 0; font-weight: inherit; }
+  section, header { position: relative; overflow: clip; }
+  canvas.pour { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .facts { font: 600 11px/1.35 var(--sans); font-stretch: 85%; letter-spacing: .02em; text-transform: uppercase; }
+  button, .tag { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .ctl button, .ctl label { cursor: pointer; border-bottom: 1.5px solid currentColor; padding-bottom: 1px; position: relative; }
+  .ctl label { text-transform: none; }
+  .ctl input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .ctl button:focus-visible, .ctl label:focus-within, .tag:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+  /* the mast: one line of typed facts */
+  .mast { display: flex; flex-wrap: wrap; gap: 4px 22px; padding: 12px var(--gut); background: var(--ink); color: var(--paper); }
+  .mast span:last-child { margin-left: auto; }
+  .mast a { text-decoration: none; border-bottom: 1px solid currentColor; }
+
+  /* I. cover: Klein blobs on acid green, the title poured over it */
+  .cover { min-height: 100svh; color: var(--paper); display: grid; place-items: center; padding: 64px var(--gut); }
+  .cover h1 { position: relative; width: min(88vw, 1180px); }
+  .cover h1 svg { display: block; width: 100%; }
+  .cover .corner { position: absolute; }
+  .cover .tl { left: var(--gut); top: 20px; } .cover .bl { left: var(--gut); bottom: 20px; } .cover .br { right: var(--gut); bottom: 20px; text-align: right; }
+
+  /* II. the tracklist is the colour card */
+  .card { background: var(--ink); color: var(--paper); }
+  .card .head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 18px var(--gut); }
+  .bars { height: min(82svh, 760px); min-height: 520px; }
+  @media (max-width: 640px) { .bars { height: auto; } }
+
+  /* III. two flat fields and the date across them */
+  .fields { display: grid; grid-template-columns: 1fr 1fr; }
+  .field { position: relative; min-height: min(70svh, 620px); display: grid; place-items: center; padding: 56px var(--gut); }
+  .field h2 { position: relative; width: 100%; max-width: 620px; }
+  .field h2 svg { display: block; width: 100%; }
+  .field .facts { position: absolute; left: var(--gut); bottom: 18px; }
+  .field.acid { color: var(--klein); --goo-echo: var(--klein); }
+  .field.klein { color: var(--citric); --goo-echo: var(--citric); }
+  @media (max-width: 760px) { .fields { grid-template-columns: 1fr; } .field { min-height: 56svh; } }
+
+  /* IV. the pours: prints flat on card, a chip strip under each */
+  .prints { padding: clamp(40px, 6vw, 88px) var(--gut); }
+  .prints > h2 { width: min(62vw, 440px); margin: 0 auto; color: var(--ink); }
+  .prints > h2 svg { display: block; width: 100%; }
+  .prints .lede { max-width: 56ch; margin: 18px auto clamp(28px, 4vw, 52px); text-align: center; font-weight: 500; }
+  .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(18px, 3vw, 40px); max-width: 1240px; margin: 0 auto; }
+  .print { margin: 0; }
+  .sheet { position: relative; aspect-ratio: 3 / 4; background: #d9dbd0; overflow: hidden; }
+  .sheet.over { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .print .pour-strip { margin-top: 0; }
+  .print figcaption { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; font-size: 13px; line-height: 1.45; }
+  .print figcaption b { font-weight: 700; }
+  .print figcaption .ctl { font-size: 11px; }
+  @media (max-width: 900px) { .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } }
+
+  /* V. on tour: acid ribbons on black, the name in a halo, the dates on tabs */
+  .tour { min-height: min(96svh, 900px); color: var(--fuchsia); --goo-glow: var(--paper); display: grid; grid-template-rows: 1fr auto; padding: 56px var(--gut) 44px; }
+  .tour h2 { position: relative; align-self: center; justify-self: center; width: min(80vw, 860px); }
+  .tour h2 svg { display: block; width: 100%; }
+  .dates { position: relative; margin: 32px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; align-items: flex-start; }
+  .dates li { border-radius: 0 999px 999px 0; padding: 8px 30px 8px 14px; min-width: min(100%, 360px); font-weight: 600; font-size: 14px; line-height: 1.2; }
+  .dates li small { display: block; font-weight: 500; font-size: 11px; opacity: .8; }
+  .dates li.gone { text-decoration: line-through; }
+
+  /* VI. pour your own */
+  .bench { padding: clamp(40px, 6vw, 88px) var(--gut); display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: clamp(20px, 3vw, 44px); max-width: 1320px; margin: 0 auto; }
+  .bench h2 { grid-column: 1 / -1; width: min(70vw, 520px); }
+  .bench h2 svg { display: block; width: 100%; }
+  .stage { position: relative; aspect-ratio: 16 / 10; background: #d9dbd0; overflow: hidden; color: var(--paper); }
+  .stage.over { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .stage .word { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+  .stage .word svg { width: 80%; height: auto; }
+  .panel { display: grid; gap: 18px; align-content: start; }
+  .panel .grp { display: grid; gap: 7px; }
+  .panel .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { border: 1.5px solid var(--ink); padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 600; }
+  .tag[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .panel input[type=text] { font: 600 20px/1.2 var(--sans); padding: 8px 10px; border: 1.5px solid var(--ink); background: transparent; color: var(--ink); width: 100%; }
+  .inks { display: flex; gap: 6px; }
+  .inks button { width: 30px; height: 30px; border-radius: 50%; background: var(--c); border: 1.5px solid var(--ink); }
+  .inks button[aria-pressed="true"] { outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (max-width: 820px) { .bench { grid-template-columns: 1fr; } }
+
+  footer { display: flex; flex-wrap: wrap; gap: 6px 22px; justify-content: space-between; padding: 18px var(--gut) 26px; background: var(--ink); color: var(--paper); }
+</style>
+</head>
+<body>
+
+<div class="mast facts">
+  <span><a href="../../index.html">hand-pulled ↩</a></span>
+  <span>Slowpour Records · SP 07</span>
+  <span>Tamsin Vey — citric</span>
+</div>
+
+<header class="cover" id="cover">
+  <p class="corner tl facts">Tamsin Vey<br>a new record</p>
+  <h1 data-text="citric">citric</h1>
+  <p class="corner bl facts">out the fourteenth of november</p>
+  <div class="corner br facts"><span class="ctl"><button type="button" id="cover-again">[another pour]</button></span></div>
+</header>
+
+<section class="card" aria-labelledby="card-h">
+  <div class="head facts"><h2 id="card-h">seven tracks, seven colours</h2><span>side a 01–04 · side b 05–07 · 27:15</span></div>
+  <div class="bars" id="bars"></div>
+</section>
+
+<section class="fields" aria-label="release date">
+  <div class="field acid" id="f-acid"><h2 data-text="out on">out on</h2><p class="facts">vinyl, tape and download</p></div>
+  <div class="field klein" id="f-klein"><h2 data-text="14.11">14.11</h2><p class="facts" style="color:var(--citric)">pre-order from slowpour</p></div>
+</section>
+
+<section class="prints" aria-labelledby="prints-h">
+  <h2 id="prints-h" data-text="pours">pours</h2>
+  <p class="lede">Nine sheets poured for the record and printed flat, each with the colours it was poured from. Drop a photograph on any sheet to pour it instead.</p>
+  <div class="row" id="row"></div>
+</section>
+
+<section class="tour" id="tour" aria-labelledby="tour-h">
+  <h2 id="tour-h" data-text="on tour">on tour</h2>
+  <ol class="dates" id="dates">
+    <li style="background:var(--citric);color:var(--klein)">15.11 · the dye works<small>doors 19:30 · sold out</small></li>
+    <li style="background:var(--pool);color:var(--ink)">17.11 · hall nine<small>doors 20:00 · tickets</small></li>
+    <li style="background:var(--fuchsia);color:var(--ink)">21.11 · the lye rooms<small>doors 19:00 · tickets</small></li>
+    <li style="background:var(--tangerine);color:var(--ink)">22.11 · pumphouse loft<small>doors 20:30 · a few left</small></li>
+    <li style="background:var(--klein);color:var(--citric)">28.11 · the vat<small>doors 19:30 · tickets</small></li>
+  </ol>
+</section>
+
+<section class="bench" aria-labelledby="bench-h">
+  <h2 id="bench-h" data-text="pour your own">pour your own</h2>
+  <figure class="stage" id="stage" style="margin:0"><div class="word" id="word"></div></figure>
+  <div class="panel">
+    <div class="grp"><label class="facts" for="t">word</label><input id="t" type="text" value="citric" maxlength="22" autocomplete="off" spellcheck="false"></div>
+    <div class="grp"><span class="facts">finish</span><div class="tags" data-k="finish"><button class="tag" type="button" data-v="blob">blob</button><button class="tag" type="button" data-v="drip">drip</button><button class="tag" type="button" data-v="glow">glow</button><button class="tag" type="button" data-v="echo">echo</button></div></div>
+    <div class="grp"><span class="facts">pour</span><div class="tags" data-k="mode"><button class="tag" type="button" data-v="swirl">swirl</button><button class="tag" type="button" data-v="bands">bands</button><button class="tag" type="button" data-v="moire">moiré</button><button class="tag" type="button" data-v="marble">marble</button><button class="tag" type="button" data-v="bloom">bloom</button><button class="tag" type="button" data-v="field">field</button></div></div>
+    <div class="grp"><span class="facts">colours</span><div class="tags" data-k="palette" id="pals"></div></div>
+    <div class="grp"><span class="facts">ink</span><div class="inks" id="inks"></div></div>
+    <div class="ctl facts"><button type="button" id="again">[another pour]</button><label>[+ photograph]<input type="file" id="photo" accept="image/*"></label><button type="button" id="png">[save png]</button><button type="button" id="svg">[save lettering svg]</button></div>
+  </div>
+</section>
+
+<footer class="facts">
+  <span>Every artist, label, venue and colour name here is invented.</span>
+  <span>goo.js + pour.js · <a href="SKILL.md">the brief</a> · <a href="../../index.html">hand-pulled</a></span>
+</footer>
+
+<script src="assets/goo.js"></script>
+<script src="assets/pour.js"></script>
+<script>
+(function () {
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Lettering pours in once, when it is first seen.
+  const seen = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { seen.unobserve(e.target); Goo.pour(e.target.querySelector('svg.goo'), { duration: 1500 }); } }), { threshold: 0.35 });
+  const pourIn = (el, opts) => { const svg = Goo.letter(el, opts); if (!reduced) { Goo.pour(svg, { hold: true }); seen.observe(el); } return svg; };
+
+  /* I. cover */
+  const coverOpts = { mode: 'swirl', palette: { colors: ['#1a2a9c', '#1f2fb0', '#2536bc', '#7cc41e', '#b4f000'] }, seed: 1, scale: 0.62, warp: 0.8, octaves: 2, contrast: 1.8 };
+  const cover = Pour.plate($('#cover'), coverOpts);
+  $('#cover').prepend(cover);
+  pourIn($('#cover h1'), { finish: 'drip', seed: 11 });
+  let coverSeed = 7;
+  $('#cover-again').addEventListener('click', () => cover.repaint({ seed: ++coverSeed }));
+
+  /* II. colour card */
+  Pour.swatches($('#bars'), [
+    { name: 'Klein', hex: '#1f2fb0', label: '01 — 3:41' },
+    { name: 'Citric', hex: '#b4f000', label: '02 — 2:58' },
+    { name: 'Pool', hex: '#5fe0c8', label: '03 — 4:12' },
+    { name: 'Fuchsia', hex: '#ed1fb3', label: '04 — 3:05' },
+    { name: 'Tangerine', hex: '#ff5a2a', label: '05 — 3:27' },
+    { name: 'Ink', hex: '#0e120c', label: '06 — 4:50' },
+    { name: 'Pour', label: '07 — 5:02', stops: ['#1f2fb0', '#5fe0c8', '#b4f000', '#ff5a2a', '#0e120c'], names: ['klein', 'pool', 'citric', 'tangerine', 'ink'], ink: '#5fe0c8' },
+  ], { layout: 'bars' });
+
+  /* III. flat fields */
+  Pour.plate($('#f-acid'), { mode: 'field', palette: 'acid', seed: 2 });
+  Pour.plate($('#f-klein'), { mode: 'field', palette: 'klein', seed: 3 });
+  document.querySelectorAll('.field').forEach(f => f.prepend(f.querySelector('canvas.pour')));
+  pourIn($('#f-acid h2'), { finish: 'echo', seed: 5 });
+  pourIn($('#f-klein h2'), { finish: 'echo', seed: 8 });
+
+  /* IV. prints */
+  pourIn($('#prints-h'), { finish: 'blob', seed: 4 });
+  const PRINTS = [
+    { t: 'Agate', mode: 'bands', palette: 'agate', seed: 3, spec: 'A2 · four inks · edition of 60 · €55' },
+    { t: 'Lava', mode: 'marble', palette: 'lava', seed: 5, spec: 'A2 · five inks · edition of 40 · €60' },
+    { t: 'Bloom', mode: 'bloom', palette: 'bloom', seed: 2, spec: 'A2 · five inks · edition of 60 · €55' },
+    { t: 'Plum lines', mode: 'moire', palette: 'plum', seed: 6, spec: 'A2 · five inks · edition of 30 · €70' },
+    { t: 'Lime', mode: 'swirl', palette: 'lime', seed: 3, twirl: 4, warp: 1.6, octaves: 3, contrast: 2.2, scale: 2.2, center: [0.55, 0.5], spec: 'A2 · four inks · edition of 60 · €55' },
+    { t: 'Ink', mode: 'marble', palette: 'ink', seed: 4, spec: 'A2 · four inks on black · edition of 40 · €60' },
+    { t: 'Cobalt', mode: 'marble', palette: 'cobalt', seed: 6, spec: 'A2 · four inks and white · edition of 40 · €60' },
+    { t: 'Deep', mode: 'swirl', palette: 'aqua', seed: 5, spec: 'A2 · five inks · edition of 60 · €55' },
+    { t: 'Shallows', mode: 'moire', palette: 'aqua', seed: 2, spec: 'A2 · five inks · edition of 30 · €70' },
+  ];
+  const row = $('#row');
+  PRINTS.forEach(p => {
+    const fig = document.createElement('figure'); fig.className = 'print';
+    fig.innerHTML = `<div class="sheet" role="img" aria-label="${p.t}: a ${p.mode === 'moire' ? 'moiré' : p.mode} pour"></div><div class="strip"></div>
+      <figcaption><span><b>${p.t}</b><br>${p.spec}</span><span class="ctl"><button type="button" data-again>[another pour]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>`;
+    row.append(fig);
+    const sheet = fig.querySelector('.sheet'), opts = Object.assign({}, p);
+    const c = Pour.plate(sheet, opts);
+    Pour.swatches(fig.querySelector('.strip'), Pour.PALETTES[p.palette].colors.map(h => ({ hex: h })), { layout: 'strip' });
+    fig.querySelector('[data-again]').addEventListener('click', () => c.repaint({ seed: (opts.seed = opts.seed + 1), src: null }));
+    const use = file => {
+      if (!file || !file.type.startsWith('image/')) return;
+      const img = new Image(), url = URL.createObjectURL(file);
+      img.onload = () => { c.repaint({ src: img, map: p.palette, amount: 0.85, warp: 1 }); URL.revokeObjectURL(url); };
+      img.src = url;
+    };
+    const inp = fig.querySelector('input[type=file]');
+    inp.addEventListener('change', () => { use(inp.files[0]); inp.value = ''; });
+    sheet.addEventListener('dragover', e => { e.preventDefault(); sheet.classList.add('over'); });
+    sheet.addEventListener('dragleave', () => sheet.classList.remove('over'));
+    sheet.addEventListener('drop', e => { e.preventDefault(); sheet.classList.remove('over'); use(e.dataTransfer.files[0]); });
+  });
+
+  /* V. tour */
+  Pour.plate($('#tour'), { mode: 'marble', palette: 'ink', seed: 9, scale: 1.3 });
+  $('#tour').prepend($('#tour canvas.pour'));
+  pourIn($('#tour-h'), { finish: 'glow', seed: 3 });
+
+  /* VI. pour your own */
+  const st = { text: 'citric', finish: 'drip', mode: 'swirl', palette: 'citric', seed: 7, ink: '#eef0e6', img: null };
+  const INKS = ['#eef0e6', '#0e120c', '#1f2fb0', '#b4f000', '#ed1fb3', '#ff5a2a'];
+  const pals = $('#pals');
+  ['citric', 'lime', 'agate', 'lava', 'ink', 'bloom', 'aqua', 'sherbet', 'pool', 'nectar', 'plum', 'fuchsia', 'acid', 'klein'].forEach(k => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tag'; b.dataset.v = k; b.textContent = k; b.title = Pour.PALETTES[k].note; pals.append(b);
+  });
+  INKS.forEach(h => { const b = document.createElement('button'); b.type = 'button'; b.style.setProperty('--c', h); b.dataset.v = h; b.setAttribute('aria-label', 'ink ' + h); $('#inks').append(b); });
+  const stage = $('#stage'), word = $('#word');
+  const canvas = Pour.plate(stage, { mode: st.mode, palette: st.palette, seed: st.seed, scale: 0.8 });
+  stage.prepend(canvas);
+  const sync = () => {
+    document.querySelectorAll('.panel .tags').forEach(g => g.querySelectorAll('.tag').forEach(b => b.setAttribute('aria-pressed', String(st[g.dataset.k] === b.dataset.v))));
+    document.querySelectorAll('#inks button').forEach(b => b.setAttribute('aria-pressed', String(st.ink === b.dataset.v)));
+  };
+  const glowFor = ink => ink === '#b4f000' ? '#ed1fb3' : '#b4f000';
+  const reword = () => {
+    stage.style.color = st.ink; stage.style.setProperty('--goo-glow', glowFor(st.ink)); stage.style.setProperty('--goo-echo', st.ink);
+    const svg = Goo.letter(word, { text: st.text.trim() || ' ', finish: st.finish, seed: st.seed });
+    Goo.pour(svg, { duration: 900 });
+  };
+  const repaint = () => canvas.repaint(st.img ? { src: st.img, map: st.palette, amount: 0.85, warp: 1, seed: st.seed } : { src: null, mode: st.mode, palette: st.palette, seed: st.seed });
+  document.querySelectorAll('.panel .tags').forEach(g => g.addEventListener('click', e => {
+    const b = e.target.closest('.tag'); if (!b) return;
+    st[g.dataset.k] = b.dataset.v; sync();
+    if (g.dataset.k === 'finish') reword(); else { if (g.dataset.k === 'mode') st.img = null; repaint(); }
+  }));
+  $('#inks').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; st.ink = b.dataset.v; sync(); reword(); });
+  let typing; $('#t').addEventListener('input', e => { st.text = e.target.value; clearTimeout(typing); typing = setTimeout(reword, 160); });
+  $('#again').addEventListener('click', () => { st.seed++; repaint(); reword(); });
+  const usePhoto = file => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { st.img = img; repaint(); URL.revokeObjectURL(url); };
+    img.src = url;
+  };
+  $('#photo').addEventListener('change', e => { usePhoto(e.target.files[0]); e.target.value = ''; });
+  stage.addEventListener('dragover', e => { e.preventDefault(); stage.classList.add('over'); });
+  stage.addEventListener('dragleave', () => stage.classList.remove('over'));
+  stage.addEventListener('drop', e => { e.preventDefault(); stage.classList.remove('over'); usePhoto(e.dataTransfer.files[0]); });
+  const save = (href, name) => { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); };
+  const slug = () => (st.text.trim() || 'pour').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  $('#png').addEventListener('click', async () => {
+    const svg = word.querySelector('svg.goo'), out = document.createElement('canvas');
+    out.width = canvas.width; out.height = canvas.height;
+    const x = out.getContext('2d'); x.drawImage(canvas, 0, 0);
+    const w = out.width * 0.8, lt = await Goo.toCanvas(svg, { width: w, color: st.ink, glow: glowFor(st.ink), echo: st.ink });
+    x.drawImage(lt, (out.width - lt.width) / 2, (out.height - lt.height) / 2);
+    save(out.toDataURL('image/png'), slug() + '.png');
+  });
+  $('#svg').addEventListener('click', () => {
+    const c = Goo.standalone(word.querySelector('svg.goo'), { color: st.ink, glow: glowFor(st.ink), echo: st.ink });
+    save(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: 'image/svg+xml' })), slug() + '.svg');
+  });
+  pourIn($('#bench-h'), { finish: 'blob', seed: 12 });
+  sync(); reword();
+})();
+</script>
+</body>
+</html>

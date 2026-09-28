@@ -1,7 +1,7 @@
 {
   "name": "hand-pulled",
   "version": "0.2.0",
-  "description": "Seven graphic-design skills that build styles from their real processes instead of filters: hand-lettered maximalist pop, pixel-sort glitch, risograph cartography, cyanotype indigo grain, ethereal haze, chrome aurora, abstract texture. Each ships an original dependency-free engine and a live reference page.",
+  "description": "Seven graphic-design skills that build styles from their real processes instead of filters: poured maximalist colour with liquid type, pixel-sort glitch, risograph cartography, cyanotype indigo grain, ethereal haze, chrome aurora, abstract texture. Each ships an original dependency-free engine and a live reference page.",
   "author": {
     "name": "Floris Penninckx"
   },
@@ -19,7 +19,8 @@
     "cyanotype",
     "ethereal",
     "maximalist",
-    "hand-lettering",
+    "liquid-type",
+    "marbling",
     "chrome",
     "iridescent",
     "grain",
