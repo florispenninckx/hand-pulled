@@ -1,0 +1,97 @@
+{
+ "name": "Seep",
+ "file": "seep",
+ "skill": "indigo-grain",
+ "about": "The wide melting title cut: an extended geometric softened like a wet cyanotype, whose ink seeps down out of every bottom edge. At MELT 0 it is soft and whole; as MELT rises the letters sag into long, tapering runs.",
+ "base": {
+  "family": "Krona One",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/kronaone/KronaOne-Regular.ttf",
+  "sha256": "273463916f96a4707e697e3013d955cde8154b4e6d635a55132e7a12f276534c"
+ },
+ "axis": {
+  "tag": "MELT",
+  "name": "Melt",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Wet": 0,
+   "Regular": 400,
+   "Run": 1000
+  }
+ },
+ "trace": 0,
+ "warp": {
+  "sx": 1.12
+ },
+ "track": 20,
+ "pad": 260,
+ "ops": [
+  {
+   "op": "round",
+   "r": 22,
+   "mode": "convex"
+  },
+  {
+   "op": "blur",
+   "r": {
+    "0": 8,
+    "1000": 18
+   }
+  },
+  {
+   "op": "level",
+   "at": {
+    "0": 0.5,
+    "1000": 0.46
+   }
+  },
+  {
+   "op": "drip",
+   "len": {
+    "0": 0,
+    "400": 100,
+    "1000": 260
+   },
+   "cell": 110,
+   "fade": 0.7,
+   "seed": 3
+  },
+  {
+   "op": "blur",
+   "r": {
+    "0": 4,
+    "400": 10,
+    "1000": 16
+   }
+  },
+  {
+   "op": "level",
+   "at": {
+    "0": 0.5,
+    "1000": 0.44
+   }
+  },
+  {
+   "op": "clean",
+   "min": 300,
+   "holes": 200
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 4,
+  "seg": 60,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 4,
+  "nsmooth": 10,
+  "reach": 300
+ },
+ "px": 2.5
+}

@@ -1,0 +1,98 @@
+{
+ "name": "Lull",
+ "file": "lull",
+ "skill": "ethereal-haze",
+ "about": "A thin high-contrast serif that goes out of focus: at FOCS 0 its hairlines are razor-sharp; as FOCS rises the light blooms, the hairlines thicken, the stems and serifs swell and soften, like a word photographed through a soft-focus lens.",
+ "base": {
+  "family": "Bodoni Moda",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/bodonimoda/BodoniModa[opsz,wght].ttf",
+  "sha256": "550f5e34ee0a828d7941b1fe9bc58b34e5260d3f33a61532e6d0a0114e79a5cf",
+  "location": {
+   "wght": 400,
+   "opsz": 96
+  }
+ },
+ "axis": {
+  "tag": "FOCS",
+  "name": "Focus",
+  "default": 0,
+  "masters": [
+   0,
+   500,
+   1000
+  ],
+  "instances": {
+   "Sharp": 0,
+   "Soft": 500,
+   "Bloom": 1000
+  }
+ },
+ "trace": 1000,
+ "px": 1.5,
+ "track": {
+  "0": 6,
+  "1000": 22
+ },
+ "ops": [
+  {
+   "op": "blur",
+   "r": {
+    "0": 0,
+    "250": 6,
+    "500": 12,
+    "1000": 24
+   }
+  },
+  {
+   "op": "level",
+   "at": {
+    "0": 0.5,
+    "250": 0.32,
+    "500": 0.24,
+    "1000": 0.15
+   },
+   "soft": 0.05
+  },
+  {
+   "op": "noise",
+   "amp": {
+    "0": 0.0,
+    "1000": 0.1
+   },
+   "cell": 40,
+   "octaves": 1,
+   "band": 18,
+   "seed": 2
+  },
+  {
+   "op": "blur",
+   "r": {
+    "0": 0,
+    "1000": 3
+   }
+  },
+  {
+   "op": "level",
+   "at": 0.5,
+   "soft": 0.03
+  },
+  {
+   "op": "clean",
+   "min": 80,
+   "holes": 40
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 50,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 3,
+  "nsmooth": 8,
+  "reach": 100,
+  "min_area": 30
+ }
+}

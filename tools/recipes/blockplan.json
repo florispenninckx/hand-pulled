@@ -1,0 +1,63 @@
+{
+ "name": "Blockplan",
+ "file": "blockplan",
+ "skill": "riso-cartography",
+ "about": "A stencil face cut from a condensed poster grotesk: a bridge through every counter so no island falls out of the screen. CUTS runs from hairline bridges to wide gaps you can read the paper through.",
+ "base": {
+  "family": "Anton",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/anton/Anton-Regular.ttf",
+  "sha256": "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab"
+ },
+ "axis": {
+  "tag": "CUTS",
+  "name": "Cut",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Hairline": 0,
+   "Regular": 400,
+   "Open": 1000
+  }
+ },
+ "trace": 1000,
+ "warp": {
+  "sx": 1.08
+ },
+ "track": 12,
+ "ops": [
+  {
+   "op": "stencil",
+   "w": {
+    "0": 12,
+    "1000": 64
+   },
+   "min": 1500
+  },
+  {
+   "op": "round",
+   "r": 5,
+   "mode": "convex"
+  },
+  {
+   "op": "clean",
+   "min": 150,
+   "holes": 40
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 3,
+  "seg": 80,
+  "bend": 4,
+  "corner": 45,
+  "smooth": 3,
+  "nsmooth": 8,
+  "reach": 80
+ }
+}

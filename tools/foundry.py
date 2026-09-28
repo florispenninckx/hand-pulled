@@ -440,17 +440,23 @@ def op_extrude(f, o, pos, g, seed):
 
 def op_drip(f, o, pos, g, seed):
     """Melt: every column of ink sags down by up to `len` units, the length varying across the
-    letter as smooth noise over `cell` units, fading with `fade` (0 = a hard drag, 1 = a taper)."""
+    letter as smooth noise over `cell` units, fading with `fade` (0 = a hard drag, 1 = a taper).
+    With `outer` (the default) only the bottom of each column drips."""
     L = at(o['len'], pos) / g.px
     if L <= 0:
         return f
     n = value_noise((1, f.shape[1]), at(o.get('cell', 80), pos) / g.px, seed + o.get('seed', 0), 2)[0]
     Lc = L * np.clip(0.5 + 0.9 * n, 0.05, 1.0)
     fade = at(o.get('fade', 0.6), pos)
+    src = f
+    if o.get('outer', True):                      # only the lowest edge of each column runs, so
+        m = f > 0.5                               # nothing drips into a counter and floods it
+        below = np.cumsum(m[::-1], 0)[::-1] - m
+        src = f * (below == 0)
     out = f.copy()
     for k in range(1, int(L) + 1):
         sh = np.zeros_like(f)
-        sh[k:] = f[:-k]
+        sh[k:] = src[:-k]
         wgt = np.clip((Lc - k) / np.maximum(Lc, 1e-6), 0, 1)
         out = np.maximum(out, sh * ((1 - fade) + fade * wgt) * (k <= Lc))
     return out

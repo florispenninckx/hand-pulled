@@ -1,0 +1,81 @@
+{
+ "name": "Blockplan Drop",
+ "file": "blockplan-drop",
+ "skill": "riso-cartography",
+ "about": "The second ink for Blockplan: the same letters, uncut, a little fat and rough at the edge as a riso drum leaves them, extruded into a solid drop shadow by DROP. Set it under Blockplan at the same size and tracking (the advances match) in a second spot colour, and nudge it out of register.",
+ "base": {
+  "family": "Anton",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/anton/Anton-Regular.ttf",
+  "sha256": "a4ba3a92350ebb031da0cb47630ac49eb265082ca1bc0450442f4a83ab947cab"
+ },
+ "axis": {
+  "tag": "DROP",
+  "name": "Drop",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Flat": 0,
+   "Regular": 400,
+   "Deep": 1000
+  }
+ },
+ "trace": 0,
+ "warp": {
+  "sx": 1.08
+ },
+ "track": 12,
+ "pad": 200,
+ "ops": [
+  {
+   "op": "offset",
+   "d": 9
+  },
+  {
+   "op": "extrude",
+   "d": {
+    "0": 0,
+    "500": 40,
+    "1000": 80
+   },
+   "angle": -40
+  },
+  {
+   "op": "grain",
+   "amp": 0.5,
+   "size": 6,
+   "band": 16,
+   "seed": 4
+  },
+  {
+   "op": "blur",
+   "r": 1.5
+  },
+  {
+   "op": "level",
+   "at": 0.5,
+   "soft": 0.03
+  },
+  {
+   "op": "clean",
+   "min": 120,
+   "holes": 120
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 3.5,
+  "seg": 60,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 3,
+  "nsmooth": 8,
+  "reach": 140,
+  "min_area": 40
+ }
+}
