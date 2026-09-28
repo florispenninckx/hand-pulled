@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiln Hours — Orrin Glassworks</title>
+<meta name="description" content="Kiln Hours, six nights of late listening in the annealing hall, with a poster for each night: a reference page for the abstract-texture skill. Fictional glassworks, fictional season.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Geist:wght@400;500;600;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hall: #0c0d0f;           /* the hall with the lights at a tenth */
+    --ink: #e8e6e1;
+    --soft: #8a8a86;
+    --rule: #2c2d31;
+    --kiln: #ff4a12;           /* the one hot colour: crosshairs and focus only */
+    --sans: 'Geist', 'Helvetica Neue', Arial, sans-serif;
+    --serif: 'Cormorant Garamond', Georgia, serif;
+    --mono: 'Geist Mono', ui-monospace, Menlo, monospace;
+    --gut: clamp(16px, 4vw, 48px);
+    --hw: min(30vw, calc((100svh - 150px) / 1.778));
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--hall); color-scheme: dark; }
+  body { margin: 0; color: var(--ink); background: var(--hall); font: 15px/1.55 var(--sans); }
+  a { color: inherit; }
+  .caps { font: 500 11px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+  .mono { font: 400 12px/1.55 var(--mono); }
+  .plus { color: var(--kiln); font-family: var(--mono); font-weight: 400; }
+
+  /* masthead: one line of mono caps over a hairline */
+  .mast { display: flex; flex-wrap: wrap; gap: 6px 28px; padding: 14px var(--gut); border-bottom: 1px solid var(--rule); color: var(--soft); }
+  .mast span:first-child { color: var(--ink); }
+  .mast span:last-child { margin-left: auto; }
+  .mast a { text-decoration: none; color: var(--ink); }
+  .mast a:hover, .mast a:focus-visible { color: var(--kiln); }
+
+  /* a poster: the canvas at 9:16, a dim wash of its own colour until it has printed */
+  .plate { margin: 0; position: relative; }
+  .glass { position: relative; aspect-ratio: 1000 / 1778; background: var(--pre, #16171a); }
+  .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .6s; }
+  .plate.printed canvas { opacity: 1; }
+  .glass::after { content: attr(data-status); position: absolute; left: 10px; bottom: 8px; right: 10px; font: 400 11px var(--mono); color: rgba(232, 230, 225, .7); }
+  .plate.printed .glass::after { content: none; }
+  .plate.over .glass { outline: 1px dashed var(--kiln); outline-offset: 6px; }
+  figcaption { display: grid; grid-template-columns: 2.2em 1fr; gap: 1px 10px; padding-top: 10px; }
+  figcaption .no { font: 300 26px/1 var(--serif); grid-row: span 3; }
+  figcaption .t { font: 500 14px/1.3 var(--sans); }
+  figcaption .m { color: var(--soft); }
+  .ctl { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 3px; grid-column: 2; }
+  .ctl button, .ctl label { font: 400 12px var(--mono); color: var(--ink); background: none; border: 0; padding: 2px 0; cursor: pointer; }
+  .ctl button:hover, .ctl label:hover, .ctl button:focus-visible, .ctl label:focus-within { color: var(--kiln); outline: none; }
+  .ctl button[aria-pressed="true"] { color: var(--kiln); }
+  .ctl input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  /* opening: the words at the left, the season poster and two small pulls at the right */
+  .open { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--gut); padding: 28px var(--gut) 88px; align-items: start; }
+  .words { display: flex; flex-direction: column; gap: 22px; max-width: 560px; }
+  h1 { margin: 0; font: 300 clamp(72px, 9.4vw, 150px)/.84 var(--serif); letter-spacing: .03em; text-transform: uppercase; }
+  h1 small { display: block; font: 500 11px/1.4 var(--mono); letter-spacing: .1em; margin-bottom: 22px; color: var(--soft); }
+  .lede { font: 400 17px/1.55 var(--sans); margin: 0; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 7px 18px; margin: 0; padding-top: 14px; border-top: 1px solid var(--rule); }
+  dt { font: 400 11px/1.7 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--soft); }
+  dd { margin: 0; }
+  .trio { display: grid; grid-template-columns: var(--hw) calc(var(--hw) * .5); gap: calc(var(--gut) * .6); align-items: start; }
+  .pair { display: grid; gap: 22px; margin-top: 72px; }
+  .pair figcaption { grid-template-columns: 1fr; }
+  .pair figcaption .ctl { grid-column: 1; }
+
+  section { padding: 0 var(--gut) 96px; }
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--gut); align-items: end; padding-top: 18px; border-top: 1px solid var(--rule); margin-bottom: 34px; }
+  h2 { margin: 0; font: 300 clamp(38px, 4.6vw, 64px)/.95 var(--serif); letter-spacing: .03em; text-transform: uppercase; }
+  h2 .plus { font-size: 20px; vertical-align: .9em; margin-right: .4em; }
+  .head p { margin: 0; max-width: 640px; color: #c9c7c1; }
+  .nights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 56px var(--gut); align-items: start; }
+  .nights .plate:nth-child(3n+2) { margin-top: 110px; }
+  .nights .plate:nth-child(3n) { margin-top: 44px; }
+  .panes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--gut) * .6); align-items: start; }
+  .panes figcaption { grid-template-columns: 1.6em 1fr; }
+  .panes figcaption .no { font-size: 20px; }
+  .library { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(var(--gut) * .6); align-items: start; }
+  .library figcaption { grid-template-columns: 1fr; }
+  .library .ctl { grid-column: 1; }
+
+  .colo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gut); }
+  .strips { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; align-content: start; }
+  .strips li { display: grid; grid-template-columns: minmax(0, 1fr) 12.5em; gap: 14px; align-items: center; }
+  .strips i { height: 26px; }
+  .prog { list-style: none; margin: 0; padding: 0; }
+  .prog li { display: grid; grid-template-columns: 76px 1fr; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--rule); }
+  .prog b { font-weight: 600; }
+  footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; padding: 18px var(--gut) 40px; border-top: 1px solid var(--rule); color: var(--soft); }
+  footer a { color: var(--ink); }
+
+  @media (max-width: 1100px) {
+    .open { grid-template-columns: 1fr; }
+    .words { max-width: 680px; }
+    .trio { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+    .library { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .nights { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px var(--gut); }
+    .nights .plate:nth-child(n) { margin-top: 0; }
+    .nights .plate:nth-child(2n) { margin-top: 56px; }
+    .panes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .head, .colo { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .mast span:last-child { margin-left: 0; }
+    .open { padding-top: 22px; }
+    .trio { grid-template-columns: 1fr; }
+    .pair { grid-template-columns: 1fr 1fr; margin-top: 0; gap: calc(var(--gut) * .6); }
+    .library { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    figcaption { grid-template-columns: 1.7em 1fr; }
+    figcaption .no { font-size: 22px; }
+    .strips li { grid-template-columns: minmax(0, 1fr) 11.5em; gap: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .plate canvas { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="mast caps">
+  <span>Orrin Glassworks</span>
+  <span>Kiln Hours · season two</span>
+  <span>Six nights of late listening</span>
+  <span><a href="../../index.html">hand-pulled ↩</a></span>
+</header>
+
+<main>
+  <div class="open">
+    <div class="words">
+      <h1><small>Late listening in the annealing hall</small>Kiln<br>Hours</h1>
+      <p class="lede">Six Friday nights in the hall where the day's glass cools. One record a night, played from the first groove to the last, while the lehr brings the work down from five hundred degrees. Each night has its own poster. Every poster is soft colour behind a surface: fluted glass, a signal dragged sideways, silk folds, grain.</p>
+      <dl>
+        <dt>Nights</dt><dd>six Fridays, 6 November to 11 December 2026</dd>
+        <dt>Hours</dt><dd>21:00 until the lehr is cold</dd>
+        <dt>Hall</dt><dd>the annealing hall, forty cushions, the lights at a tenth</dd>
+        <dt>Posters</dt><dd>one per night, each seen through a different pane</dd>
+      </dl>
+      <p class="mono"><span class="plus">+</span> Drop a photograph on any poster and it becomes that poster's light. The pane stays; the colour is yours.</p>
+    </div>
+    <div class="trio">
+      <figure class="plate" id="hero" data-plate="reeded" data-palette="cobalt" data-seed="3" data-text='{"layout":"block","no":"06 NIGHTS"}' style="--pre:#1b2250">
+        <div class="glass" data-status="the kiln is warming…"><canvas role="img" aria-label="The season poster: cobalt light behind wide reeded glass."></canvas></div>
+        <figcaption>
+          <span class="no plus" aria-hidden="true">+</span>
+          <span class="t">The season poster</span>
+          <span class="m mono">cobalt · reeds · screen · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+      <div class="pair">
+        <figure class="plate" data-plate="satin" data-palette="mint" data-seed="2" style="--pre:#1d4a42">
+          <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Green satin folds."></canvas></div>
+          <figcaption><span class="m mono">satin · mint</span><span class="ctl"><button type="button" data-again>[another pull]</button></span></figcaption>
+        </figure>
+        <figure class="plate" data-plate="bloom" data-palette="lilac" data-seed="5" style="--pre:#4a4068">
+          <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Poppies on lilac, dragged by a slow shutter."></canvas></div>
+          <figcaption><span class="m mono">bloom · lilac</span><span class="ctl"><button type="button" data-again>[another pull]</button></span></figcaption>
+        </figure>
+      </div>
+    </div>
+  </div>
+
+  <section aria-labelledby="h-nights">
+    <div class="head">
+      <h2 id="h-nights"><span class="plus" aria-hidden="true">+</span>Six nights</h2>
+      <p>A poster for every Friday. Each one is a single colour field and one surface. Nothing is drawn on top except the words, and those stay small and sharp, because a rough surface under clean type is the whole look.</p>
+    </div>
+    <div class="nights">
+      <figure class="plate" data-plate="aurora" data-palette="north" data-seed="4" data-text='{"no":"01"}' style="--pre:#07303c">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night I."></canvas></div>
+        <figcaption>
+          <span class="no">I</span>
+          <span class="t">Afterglow · 6 November</span>
+          <span class="m mono">aurora · north · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+      <figure class="plate" data-plate="streak" data-palette="signal" data-seed="3" data-text='{"title":"SLOW SIGNAL","no":"02/06"}' style="--pre:#2a0c10">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night II."></canvas></div>
+        <figcaption>
+          <span class="no">II</span>
+          <span class="t">Slow Signal · 13 November</span>
+          <span class="m mono">streak · signal · streak pane · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+      <figure class="plate" data-plate="aurora" data-palette="dusk" data-seed="6" style="--pre:#172a44">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night III."></canvas></div>
+        <figcaption>
+          <span class="no">III</span>
+          <span class="t">Anneal · 20 November</span>
+          <span class="m mono">aurora · dusk · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+      <figure class="plate" data-plate="coordinate" data-palette="stock" data-seed="3" style="--pre:#8f8d89">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night IV."></canvas></div>
+        <figcaption>
+          <span class="no">IV</span>
+          <span class="t">The Coordinate · 27 November</span>
+          <span class="m mono">coordinate · dither · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+        </figcaption>
+      </figure>
+      <figure class="plate" data-plate="satin" data-palette="rose" data-seed="3" style="--pre:#6a2338">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night V."></canvas></div>
+        <figcaption>
+          <span class="no">V</span>
+          <span class="t">Rose Cullet · 4 December</span>
+          <span class="m mono">satin · rose · screen · grain</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+      <figure class="plate" data-plate="aurora" data-palette="veil" data-seed="3" style="--pre:#262c5c">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Night VI."></canvas></div>
+        <figcaption>
+          <span class="no">VI</span>
+          <span class="t">First Light · 11 December</span>
+          <span class="m mono">aurora · veil · streak pane · grain · dust</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-panes">
+    <div class="head">
+      <h2 id="h-panes"><span class="plus" aria-hidden="true">+</span>One field, four panes</h2>
+      <p>The season poster again, without its words. First the bare colour field, then that same field seen through three different surfaces. The colour stays the same; only the surface changes. If you pull the season poster again, these four follow it.</p>
+    </div>
+    <div class="panes">
+      <figure class="plate" data-follow="hero" data-panes='[]' style="--pre:#1b2250">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="The season poster's colour field alone: soft cobalt with black swells and a warm mauve low down, no surface."></canvas></div>
+        <figcaption><span class="no">a</span><span class="t">The field</span><span class="m mono">soft colour, computed small</span></figcaption>
+      </figure>
+      <figure class="plate" data-follow="hero" data-panes='["reed"]' style="--pre:#1b2250">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="The same field behind reeded glass: every flute a small lens, the edges sheared into steps."></canvas></div>
+        <figcaption><span class="no">b</span><span class="t">Through reeds</span><span class="m mono">each flute a lens</span></figcaption>
+      </figure>
+      <figure class="plate" data-follow="hero" data-panes='[{"pane":"streak","dir":"right","amount":0.75,"drag":220,"band":18,"tear":30,"jag":0.6},{"pane":"grain","amount":0.1}]' style="--pre:#1b2250">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="The same field with its rows dragged to the right and torn, like a signal slipping."></canvas></div>
+        <figcaption><span class="no">c</span><span class="t">Dragged</span><span class="m mono">rows pulled by a running average</span></figcaption>
+      </figure>
+      <figure class="plate" data-follow="hero" data-panes='[{"pane":"screen","cell":7,"amount":0.4},{"pane":"grain","amount":0.2,"chroma":0.4},{"pane":"dust","specks":220,"hairs":5,"creases":6}]' style="--pre:#1b2250">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="The same field printed as a coarse halftone with heavy grain, dust and creases."></canvas></div>
+        <figcaption><span class="no">d</span><span class="t">Screened</span><span class="m mono">halftone, grain, dust</span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-library">
+    <div class="head">
+      <h2 id="h-library"><span class="plus" aria-hidden="true">+</span>The pane library</h2>
+      <p>Every surface the house keeps, one poster per kind. Choose a colourway and the poster is pulled again with the same seed, so the folds, the flowers and the tears land where they were.</p>
+    </div>
+    <div class="library">
+      <figure class="plate" data-plate="reeded" data-palette="ember" data-seed="3" style="--pre:#5a2a24">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Reeded."></canvas></div>
+        <figcaption><span class="t">Reeded</span><span class="ctl" data-pals></span><span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>
+      </figure>
+      <figure class="plate" data-plate="satin" data-palette="crimson" data-seed="3" style="--pre:#4a1426">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Satin."></canvas></div>
+        <figcaption><span class="t">Satin</span><span class="ctl" data-pals></span><span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>
+      </figure>
+      <figure class="plate" data-plate="aurora" data-palette="halo" data-seed="3" style="--pre:#12302a">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Aurora."></canvas></div>
+        <figcaption><span class="t">Aurora</span><span class="ctl" data-pals></span><span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>
+      </figure>
+      <figure class="plate" data-plate="streak" data-palette="drip" data-seed="3" style="--pre:#0a1420">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Streak."></canvas></div>
+        <figcaption><span class="t">Streak</span><span class="ctl" data-pals></span><span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>
+      </figure>
+      <figure class="plate" data-plate="bloom" data-palette="night" data-seed="3" style="--pre:#141618">
+        <div class="glass" data-status="waiting for the lehr"><canvas role="img" aria-label="Bloom."></canvas></div>
+        <figcaption><span class="t">Bloom</span><span class="ctl" data-pals></span><span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-colo">
+    <div class="head">
+      <h2 id="h-colo"><span class="plus" aria-hidden="true">+</span>Colours and Fridays</h2>
+      <p>Each colourway runs dark to light, and grain sits over all of it. The only flat colour on these posters is in the type.</p>
+    </div>
+    <div class="colo">
+      <ul class="strips mono">
+        <li><i style="background:linear-gradient(90deg,#1d1f2b,#2b3a7a,#3659b6,#4769d8,#6474e0)"></i>cobalt<br>#141418 → #6474e0</li>
+        <li><i style="background:linear-gradient(90deg,#fbb04a,#f97a52,#f45a5a,#ec8aa2,#c5a2de,#f6d9ae)"></i>ember<br>#fbb04a → #f6d9ae</li>
+        <li><i style="background:linear-gradient(90deg,#177a6c,#2f9484,#62b19c,#a6d4b6,#d9ecc8)"></i>mint<br>#177a6c → #d9ecc8</li>
+        <li><i style="background:linear-gradient(90deg,#e8416f,#f35681,#f595ae,#fbc0cf,#fde2e9)"></i>rose<br>#e8416f → #fde2e9</li>
+        <li><i style="background:linear-gradient(90deg,#05303f,#0f6e80,#6cc8cd,#e2fbf6)"></i>north<br>#05303f → #e2fbf6</li>
+        <li><i style="background:linear-gradient(90deg,#1f2762,#3c44a4,#f5f0c6,#f7a060,#f09ab8,#aea4e6,#fbfaf5)"></i>veil<br>#1f2762 → #fbfaf5</li>
+        <li><i style="background:linear-gradient(90deg,#03011c,#3a0a14,#b8290a,#e2360a,#ff6224)"></i>signal<br>#03011c → #ff6224</li>
+        <li><i style="background:linear-gradient(90deg,#8f7cbf,#b3a0da,#e3301f,#f39238,#f6d86a)"></i>lilac<br>#8f7cbf · #e3301f</li>
+      </ul>
+      <ol class="prog">
+        <li><span class="mono">6 Nov</span><span><b>Afterglow.</b> The season opens at 21:00, with the first record played while the lehr is still hot.</span></li>
+        <li><span class="mono">13 Nov</span><span><b>Slow Signal.</b> A shortwave set by Maren Oyelaran, tuned live, all static and drift.</span></li>
+        <li><span class="mono">20 Nov</span><span><b>Anneal.</b> One long piece for bowed glass, played by Teodor Vasz while the room slowly cools.</span></li>
+        <li><span class="mono">27 Nov</span><span><b>The Coordinate.</b> Field recordings from the quarry, played on four speakers placed on a grid.</span></li>
+        <li><span class="mono">4 Dec</span><span><b>Rose Cullet.</b> Records brought by the glassblowers, one side each, talk allowed between sides.</span></li>
+        <li><span class="mono">11 Dec</span><span><b>First Light.</b> The last night. It runs until dawn, and there is coffee at the loading door.</span></li>
+      </ol>
+    </div>
+  </section>
+</main>
+
+<footer class="caps">
+  <span>Orrin Glassworks is fictional, and so are the hall, the season and everyone who plays in it</span>
+  <span><a href="SKILL.md">the brief</a> · <a href="../../index.html">hand-pulled</a></span>
+</footer>
+
+<script src="assets/surface.js"></script>
+<script>
+(() => {
+  // what each colourway shows, for the canvas labels; the printed words are added from the engine
+  const SEEN = {
+    reeded: {
+      ember: 'Warm light behind fluted glass: yellow at the top, a band of red, pink and lilac low down, butter at the foot, every strip bent by its own reed.',
+      cobalt: 'Cobalt light with black swells behind wide reeded glass that shears the edges into steps, a warm mauve low down.',
+    },
+    satin: {
+      mint: 'Green and pale mint folded into S-curves like poured satin, in grain.',
+      rose: 'Pink and white bands swirled like marbled silk under a faint halftone screen.',
+      crimson: 'Crimson silk in soft folds with pale pink highlights and a deep shadow across the right side.',
+      neon: 'Black with broad ribbons of teal and hot pink, like neon seen through smoke.',
+      opal: 'Lavender marbling with white pools and thin rainbow edges, like oil on water.',
+    },
+    aurora: {
+      veil: 'A white glow over a V of spectrum, lilac, pink, orange and a pale yellow edge, falling into deep navy.',
+      halo: 'A black arch on creased paper with a rim of yellow, green and cyan that floods out to the left, torn sideways in places.',
+      north: 'Pale cyan smoke curling through deep teal.',
+      wash: 'A pastel grain wash from sage through sky blue and lilac to pink-white.',
+      dusk: 'Soft vertical bands of ice, petrol and navy.',
+    },
+    streak: {
+      coral: 'Coral and grey-green with maroon smudges and teal marks, every row pulled to the right.',
+      signal: 'Orange-red diagonal strokes on navy-black with pale blue breaks, the rows slipping sideways.',
+      drip: 'Colour at the foot, blue, cyan, a red crest and cream, pulled up into black in thin spikes.',
+      shift: 'A pale blotchy frame of pink, cream, grey and mint, with blocks of it slipped, held and dithered.',
+    },
+    bloom: {
+      lilac: 'Red and orange poppies on lilac, dragged down and to the left by a slow shutter.',
+      blush: 'One orange flower, its petals thrown outward by a zoom, on blush pink.',
+      fuchsia: 'Fuchsia flowers smeared sideways across pale pink, inside a white border.',
+      night: 'A pale flower on black on a green stem, doubled, its colours pulled apart at the edges.',
+    },
+    coordinate: {
+      stock: 'Grey stock with dithered shapes: a red four-pointed glow with a white flare, a dark sphere top right, a blue orb and a blue crescent low down, crosshairs and ruled hairlines.',
+    },
+  };
+  const figs = [...document.querySelectorAll('.plate')];
+  const json = s => { try { return s ? JSON.parse(s) : undefined; } catch (e) { return undefined; } };
+  const st = new Map(figs.map(f => [f, { seed: +(f.dataset.seed || 1), palette: f.dataset.palette, image: null, text: json(f.dataset.text), w: 0 }]));
+  const hero = document.getElementById('hero');
+  let queue = Promise.resolve();
+
+  function label(fig) {
+    const s = fig.dataset.follow ? st.get(hero) : st.get(fig), plate = fig.dataset.follow ? hero.dataset.plate : fig.dataset.plate;
+    if (fig.dataset.follow) return;    // the pane proofs keep their own labels
+    const said = Surface.words(plate, { palette: s.palette, text: s.text });
+    const seen = s.image ? 'A photograph used as the light, seen through the ' + plate + ' surface.' : SEEN[plate][s.palette];
+    fig.querySelector('canvas').setAttribute('aria-label', seen + (said.length ? ' Printed type: ' + said.join('; ') + '.' : ''));
+  }
+
+  // one poster in the kiln at a time, top of the page first
+  function pull(fig) {
+    queue = queue.then(async () => {
+      const c = fig.querySelector('canvas'), r = c.getBoundingClientRect();
+      if (!r.width) return;
+      const follow = !!fig.dataset.follow, s = follow ? st.get(hero) : st.get(fig), mine = st.get(fig);
+      const plate = follow ? hero.dataset.plate : fig.dataset.plate;
+      const w = Math.min(1400, Math.round(r.width * Math.min(1.5, devicePixelRatio || 1)));
+      fig.querySelector('.glass').dataset.status = 'in the kiln…';
+      label(fig);
+      await Surface[plate](c, {
+        width: w, height: Math.round(w * Surface.RATIO), seed: s.seed, palette: s.palette, image: s.image,
+        text: follow ? false : mine.text, panes: follow ? json(fig.dataset.panes) : undefined,
+      });
+      mine.w = r.width; fig.classList.add('printed');
+    }).catch(e => { fig.querySelector('.glass').dataset.status = 'it cracked in the kiln: ' + e.message; });
+  }
+  const again = fig => { pull(fig); if (fig === hero) figs.filter(f => f.dataset.follow && st.get(f).w).forEach(pull); };
+
+  const fonts = ['300 40px "Cormorant Garamond"', '400 40px "Cormorant Garamond"', '500 20px "Cormorant Garamond"', 'italic 400 20px "Cormorant Garamond"',
+    '500 20px "Geist"', '600 20px "Geist"', '800 40px "Geist"', '400 12px "Geist Mono"', '500 12px "Geist Mono"'];
+  figs.forEach(label);
+  Promise.all(fonts.map(f => document.fonts.load(f))).catch(() => {}).then(() => {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); pull(e.target); } }), { rootMargin: '600px 0px' });
+    figs.forEach(f => io.observe(f));
+  });
+
+  // phones fire resize while scrolling: pull again only when a poster's width really changed
+  let t;
+  addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => figs.forEach(f => { const s = st.get(f); if (s.w && Math.abs(f.getBoundingClientRect().width - s.w) > 2) pull(f); }), 250); });
+
+  function useImage(fig, file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => { st.get(fig).image = img; again(fig); };
+    img.src = url;
+  }
+  figs.filter(f => !f.dataset.follow).forEach(fig => {
+    const s = st.get(fig);
+    fig.querySelector('[data-again]').addEventListener('click', () => { s.seed = 1 + Math.floor(Math.random() * 9999); s.image = null; again(fig); });
+    const pals = fig.querySelector('[data-pals]');
+    if (pals) Surface.PALETTES[fig.dataset.plate].forEach(name => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = '[' + name + ']'; b.setAttribute('aria-pressed', String(name === s.palette));
+      b.addEventListener('click', () => {
+        s.palette = name; s.image = null;
+        pals.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        pull(fig);
+      });
+      pals.appendChild(b);
+    });
+    const file = fig.querySelector('input[type=file]');
+    if (file) {
+      file.addEventListener('change', () => { useImage(fig, file.files[0]); file.value = ''; });
+      fig.addEventListener('dragover', e => { e.preventDefault(); fig.classList.add('over'); });
+      fig.addEventListener('dragleave', () => fig.classList.remove('over'));
+      fig.addEventListener('drop', e => { e.preventDefault(); fig.classList.remove('over'); useImage(fig, e.dataTransfer.files[0]); });
+    }
+  });
+})();
+</script>
+</body>
+</html>
