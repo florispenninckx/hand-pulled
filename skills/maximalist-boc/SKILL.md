@@ -106,7 +106,7 @@ OFL 1.1, and they are loaded from the skill itself, not from Google Fonts:
 
 | Face | Look | Axis (0–1000) | Use it for |
 |---|---|---|---|
-| **Soak** | A black grotesk soaked until its corners melt and its edges blot | `'BLED'`: Dry 0, Regular 500, Soaked 1000 | Second headlines, club-night names, a big number |
+| **Soak** | A black grotesk soaked until its corners melt, its edges blot and, at full bleed, its letters flood into each other's space (past 750 the letters touch: add tracking, 64 px or more) | `'BLED'`: Dry 0, Regular 500, Soaked 1000 | Second headlines, club-night names, a big number |
 | **Globule** | A wide techno skeleton re-inked as poured liquid, with drops at the ends | `'MELT'`: Poured 0, Regular 500, Molten 1000 | The liquid voice next to a goo title: dates, heads, track names |
 | **Flatbed** | A super-extended geometric pressed flat under a roller, with ink traps | `'FLAT'`: Standing 0, Regular 500, Pressed 1000 | Labels, catalogue numbers, formats, tracked small caps, a colour band |
 | **Gouge** | A fat round display face with a crescent of light cut into every stroke | `'CARV'`: Scored 0, Regular 500, Gouged 1000 | Shop signs, prices, stickers, one shaded word on a flat field |
@@ -128,7 +128,7 @@ OFL 1.1, and they are loaded from the skill itself, not from Google Fonts:
 - **Rule 4 still holds.** "The type is liquid, not a font" is about the title: it stays goo.js,
   bouncing and seeded. The faces carry everything around it, which used to be the sans.
 
-Sizes, full Latin (Western European), `woff2`: Soak 62 KB, Globule 59 KB, Flatbed 49 KB, Gouge 65 KB.
+Sizes, full Latin (Western European), `woff2`: Soak 79 KB, Globule 59 KB, Flatbed 49 KB, Gouge 65 KB.
 A page loads only the faces it uses (`font-display: swap`).
 
 ## Build it
