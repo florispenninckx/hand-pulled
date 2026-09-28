@@ -113,13 +113,15 @@
     for (let i = 0; i < 256; i++) { P[i] = i; G[i] = r() * 2 - 1; }
     for (let i = 255; i > 0; i--) { const j = Math.floor(r() * (i + 1)); const t = P[i]; P[i] = P[j]; P[j] = t; }
     for (let i = 0; i < 256; i++) { P[i + 256] = P[i]; G[i + 256] = G[i]; }
-    return (x, y) => {
+    const n = (x, y) => {
       const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
       const X = xi & 255, Y = yi & 255;
       const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
       const a = G[P[X + P[Y]]], b = G[P[X + 1 + P[Y]]], c = G[P[X + P[Y + 1]]], d = G[P[X + 1 + P[Y + 1]]];
       return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
     };
+    n.P = P; n.G = G;                                                  // live.js bakes the same tables for the GPU
+    return n;
   }
   function fbm(n, x, y, oct) {
     let s = 0, a = 0.5, f = 1;
@@ -203,9 +205,10 @@
       sample.sort((x, y) => x - y);
       const lo = sample[Math.floor(sample.length * 0.02)], hi = sample[Math.floor(sample.length * 0.98)], sc = 1 / ((hi - lo) || 1);
       for (let i = 0; i < a.length; i++) a[i] = (a[i] - lo) * sc;
+      return [lo, sc];
     };
-    norm(g); if (g2) norm(g2); if (g3) norm(g3);
-    return { g, g2, g3, gw, gh, step };
+    const norms = [norm(g), g2 && norm(g2), g3 && norm(g3)];
+    return { g, g2, g3, gw, gh, step, norms };
   }
 
   /* ------------------------------------------------------------------ modes */
@@ -248,7 +251,8 @@
 
     const flat = o.mode === 'field' && (NC === 1 || !o.wobble);
     const F = flat && !o.mask ? null : solve(W, H, o);
-    if (o.capture) o.capture({ W, H, F, o, si: seedInt(o.seed) });   // live.js: the field under the paint
+    // live.js: the field under the paint; returning false stops here (the GPU paints it itself)
+    if (o.capture && o.capture({ W, H, F, o, si: seedInt(o.seed) }) === false) return canvas;
     const g = F && F.g, g2 = F && F.g2, g3 = F && F.g3, gw = F ? F.gw : 0, step = o.step;
     const at = (G, x, y) => { const X = x / step, Y = y / step, i = Math.floor(X), j = Math.floor(Y), u = X - i, v = Y - j, k = j * gw + i; return G[k] * (1 - u) * (1 - v) + G[k + 1] * u * (1 - v) + G[k + gw] * (1 - u) * v + G[k + gw + 1] * u * v; };
 
@@ -560,5 +564,5 @@
   /** WCAG contrast ratio of two colours (names or hex). */
   const contrast = (a, b) => { const x = lum(color(a)), y = lum(color(b)); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 
-  root.Pour = { paint, photo, plate, fit, collage, color: hexOf, ramp: s => rampOf(s).map(rgbHex), PALETTES, COLORS, RAMPS, MODES, contrast, rng, hash, seedInt, rgb: color };
+  root.Pour = { paint, photo, plate, fit, collage, color: hexOf, ramp: s => rampOf(s).map(rgbHex), PALETTES, COLORS, RAMPS, MODES, contrast, rng, hash, seedInt, rgb: color, rampRgb: rampOf, makeNoise };
 })(window);
