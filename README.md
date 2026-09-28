@@ -12,7 +12,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 |---|---|---|---|
 | [`maximalist-pop`](skills/maximalist-pop/SKILL.md) | an indie record cover: hand-drawn bubble and curl lettering, one-line writing, stamps, printed paper | [Sweet William](skills/maximalist-pop/reference.html) | `hand.js` |
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | a picture after something happened to the file: macroblocks and sorted drips, 1-bit tears, scanner drag, mojibake, tiles that did not load | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
-| [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed maps in one to three spot inks, with knockouts, overprint and misregistration | [Low Water](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
+| [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | cyanotype sun prints: Prussian blue, botanicals, soft contact edges, grain | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
 | [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign: flowers shot too close, motion blur, lens haze | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
 
@@ -84,9 +84,12 @@ the full account.
 | [pmndrs/postprocessing](https://github.com/pmndrs/postprocessing) | Zlib | grain and dithering practice |
 | [dashersw/liquid-glass-js](https://github.com/dashersw/liquid-glass-js) | MIT | a direction the haze style decided against: its haze is optical, not glass |
 
-The Riso ink colours follow the ink table published with p5.riso. The map methods
-(marching squares, fractal noise, branching growth) and the cyanotype chemistry are
-textbook. Anna Atkins's *Photographs of British Algae* (1843) is the historical reference
+The Riso ink colours follow the ink table published with p5.riso. The town plans follow
+published methods: tensor-field streets (Chen et al., SIGGRAPH 2008) traced as evenly
+spaced streamlines (Jobard and Lefer, 1997), and river migration after Howard and Knutson
+(1984). The figure-ground manner goes back to Nolli's plan of Rome (1748), and the drawn
+meander history to Fisk's Mississippi maps (1944). Marching squares, fractal noise, chamfer
+distances, connected-component labelling and the cyanotype chemistry are textbook. Anna Atkins's *Photographs of British Algae* (1843) is the historical reference
 for the sun print.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
@@ -107,7 +110,9 @@ kevinsqi/react-mesh-gradient, JimmyBeldone/react-native-grainy-gradient, l-ir/we
 jordienr/mesh-gradient, lokesh-coder/react-animated-css-mesh-gradient.
 
 **Visual reference.** The "10 niche design styles" Pinterest board by A Song Studio set
-the target look for each style. It was used as reference only. None of its images, or
+the target look for each style. For `riso-cartography`, Floris Penninckx's own "Riso
+Cartography" board set the target for the town plans, rivers and zoning sheets. Both
+were used as reference only. None of their images, or
 any other third-party image, are in this repository. The plates in `plates/` are
 screenshots of this repository's own reference pages.
 

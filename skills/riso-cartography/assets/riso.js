@@ -30,6 +30,10 @@
     'fluorescent-pink': '#ff48b0', 'fluorescent-orange': '#ff7477',
     burgundy: '#914e72', purple: '#765ba7', 'flat-gold': '#bb8b41',
     'fluorescent-green': '#44d62c', brown: '#925f52', 'light-gray': '#88898a',
+    red: '#ff665e', scarlet: '#f65058', 'fluorescent-red': '#ff4c65', coral: '#ff8e91',
+    cornflower: '#62a8e5', 'sea-blue': '#0074a2', lake: '#235ba8', 'light-teal': '#009da5',
+    violet: '#9d7ad2', orchid: '#aa60bf', 'light-mauve': '#e6b5c9', bisque: '#f2cdcf',
+    mint: '#82d8d5', 'light-lime': '#e3ed55', 'kelly-green': '#67b346', indigo: '#484d7a', midnight: '#435060',
   };
 
   // Paper stocks: base tone and fibre strength.

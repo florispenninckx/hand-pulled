@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Low Water — Holmsey Print Club</title>
-<meta name="description" content="Low Water, an almanac of one estuary in four risograph sheets: a reference page for the riso-cartography skill. Fictional club, fictional estuary.">
+<title>Figure &amp; Ground — Stavmere Print Club</title>
+<meta name="description" content="Figure &amp; Ground, an atlas of one town and its river in seven risograph sheets: a reference page for the riso-cartography skill. Fictional club, fictional town.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Instrument+Sans:wght@400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
   :root {
     --table: #e8e5dc;          /* the plan chest the sheets lie on */
@@ -15,7 +15,7 @@
     --soft: #6d6a62;
     --rule: #cfcabd;
     --red: #f15060;            /* riso bright red, for rules only */
-    --green: #44d62c;          /* riso fluorescent green, for dots only */
+    --pink: #ff48b0;           /* riso fluorescent pink, for dots and marks only */
     --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
     --serif: 'Instrument Serif', Georgia, serif;
     --mono: 'IBM Plex Mono', ui-monospace, monospace;
@@ -37,7 +37,7 @@
   /* a sheet: the canvas at A-series proportion, paper-toned until the drums have run */
   .sheet { margin: 0; }
   .sheet .paper { position: relative; aspect-ratio: 1000 / 1414; background: #f7f6f2; }
-  .sheet[data-paper="natural"] .paper { background: #f3eee2; }
+  .sheet[data-paper="cream"] .paper { background: #efe4cc; }
   .sheet canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .5s; }
   .sheet.printed canvas { opacity: 1; }
   .sheet .paper::after { content: attr(data-status); position: absolute; left: 12px; bottom: 10px; font: 400 11px var(--mono); color: var(--soft); }
@@ -48,23 +48,26 @@
   figcaption .ctl { grid-column: 2; }
   figcaption .t { font: 500 14px/1.3 var(--sans); }
   figcaption .m { color: var(--soft); }
-  .ctl { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; align-items: baseline; }
   .ctl button, .ctl label { font: 400 12px var(--mono); color: var(--ink); background: none; border: 0; padding: 2px 0; cursor: pointer; }
-  .ctl button:hover, .ctl label:hover { background: var(--green); }
+  .ctl button:hover, .ctl label:hover { box-shadow: inset 0 -2px var(--pink); }
+  .ctl button[aria-pressed="true"] { box-shadow: inset 0 -2px var(--red); }
+  .ctl .ink { display: flex; gap: 10px; }
+  .ctl .ink span { color: var(--soft); }
   .ctl input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; }
   .ctl input[type=text] { font: 400 12px var(--mono); border: 0; border-bottom: 1px solid var(--rule); background: transparent; padding: 2px 0; width: min(100%, 260px); color: var(--ink); }
   .ctl input[type=text]:focus { outline: none; border-bottom-color: var(--red); }
 
   /* opening: the title on the left, sheet I at full height on the right */
   .open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, min(52vw, calc((100svh - 120px) / 1.414 + 1px))); gap: var(--gut); padding: 28px var(--gut) 72px; align-items: start; }
-  .open .words { display: flex; flex-direction: column; gap: 22px; max-width: 520px; }
-  h1 { margin: 0; font: italic 400 clamp(64px, 11vw, 168px)/.86 var(--serif); letter-spacing: -.02em; }
-  h1 small { display: block; font: 500 12px/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 18px; }
+  .open .words { display: flex; flex-direction: column; gap: 22px; max-width: 540px; }
+  h1 { margin: 0; font: italic 400 clamp(64px, 10.5vw, 164px)/.84 var(--serif); letter-spacing: -.02em; }
+  h1 small { display: block; font: 500 12px/1.4 var(--sans); font-style: normal; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 18px; }
   .lede { font: 400 17px/1.5 var(--sans); margin: 0; }
   dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 18px; margin: 0; padding-top: 14px; border-top: 1px solid var(--rule); }
   dt { font: 500 11px/1.6 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
   dd { margin: 0; }
-  .dot { display: inline-block; width: .7em; height: .7em; border-radius: 50%; background: var(--green); vertical-align: -.05em; margin-right: .4em; }
+  .dot { display: inline-block; width: .7em; height: .7em; border-radius: 50%; background: var(--pink); vertical-align: -.05em; margin-right: .4em; }
 
   section { padding: 0 var(--gut) 88px; }
   .head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--gut); align-items: end; padding-top: 18px; border-top: 1px solid var(--red); margin-bottom: 32px; }
@@ -73,6 +76,9 @@
   .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--gut); align-items: start; }
   .three .sheet:nth-child(2) { margin-top: 96px; }
   .three .sheet:nth-child(3) { margin-top: 36px; }
+  .three.late .sheet:nth-child(1) { margin-top: 60px; }
+  .three.late .sheet:nth-child(2) { margin-top: 0; }
+  .three.late .sheet:nth-child(3) { margin-top: 120px; }
   .drums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--gut) * .6); align-items: start; }
   .drums figcaption { grid-template-columns: 3.4em 1fr; }
   .drums figcaption .no { font-size: 20px; }
@@ -88,13 +94,18 @@
 
   @media (max-width: 1000px) {
     .three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three .sheet:nth-child(n) { margin-top: 0; }
     .three .sheet:nth-child(2) { margin-top: 48px; }
-    .three .sheet:nth-child(3) { margin-top: 0; }
     .drums { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 720px) {
     .mast span:last-child { margin-left: 0; }
-    .open { grid-template-columns: 1fr; padding-top: 20px; }
+    .mast span:nth-child(3) { display: none; }
+    .open { grid-template-columns: 1fr; padding-top: 20px; row-gap: 22px; }
+    .open .words { display: contents; }   /* on a phone the sheet comes straight after the title */
+    .open .words > * { order: 2; }
+    .open .words > h1 { order: 0; }
+    .open #hero { order: 1; }
     .head, .colo { grid-template-columns: 1fr; }
     .three { grid-template-columns: 1fr; }
     .three .sheet:nth-child(n) { margin-top: 0; }
@@ -105,68 +116,104 @@
 <body>
 
 <header class="mast caps">
-  <span>Holmsey Print Club</span>
-  <span>Low Water · almanac no. 3</span>
-  <span>Four sheets, one estuary</span>
+  <span>Stavmere Print Club</span>
+  <span>Figure &amp; Ground · atlas no. 4</span>
+  <span>Seven sheets, one town and its river</span>
   <span><a href="../../index.html">hand-pulled ↩</a></span>
 </header>
 
 <main>
   <div class="open">
     <div class="words">
-      <h1><small>An almanac of the estuary</small>Low Water</h1>
-      <p class="lede">Four maps of the Holm estuary at the bottom of the tide, each pulled on a duplicator one drum at a time. Blue for the silt, black for the banks, a fluorescent green dot wherever someone stood and looked. Nothing on these sheets is a fill colour: every colour is an ink that went through a stencil, landed a little off, and mixed with the one under it.</p>
+      <h1><small>An atlas of Stavmere in seven pulls</small>Figure &amp; Ground</h1>
+      <p class="lede">Stavmere drawn the way old town plans were drawn: every block that someone owns is ink, and everything the town shares is paper. That means the streets, the squares, the quays and the river Wenn. None of the plans was traced. Each street grew along a field of directions laid down by the river and the old square. The river moved its bends for two hundred years before it was printed. Then everything went through the duplicator one drum at a time.</p>
       <dl>
-        <dt>Sheets</dt><dd>I–IV, A3, 60 copies of each</dd>
-        <dt>Drums</dt><dd>aqua, black, fluorescent green, green, bright red, yellow, light grey, brown</dd>
-        <dt>Paper</dt><dd>uncoated white 90 g and natural 100 g</dd>
-        <dt>Showing</dt><dd>10–26 October 2026, the Tide Shed, Holmsey</dd>
+        <dt>Sheets</dt><dd>I–VII, A3, 80 copies of each</dd>
+        <dt>Drums</dt><dd>bright red, cornflower, fluorescent pink, teal, purple, green, black</dd>
+        <dt>Paper</dt><dd>uncoated white 90 g, cream 100 g</dd>
+        <dt>Showing</dt><dd>6–22 November 2026, the Weigh House, Stavmere</dd>
       </dl>
-      <p class="mono">Drop a photograph on any sheet and it goes through that sheet's drums: its darks become ink.</p>
+      <p class="mono">Pull sheet I again for a new town, or change its ink. Drop a photograph on it and the town prints the picture: each block takes the tone underneath it.</p>
     </div>
-    <figure class="sheet" data-sheet="estuary" data-seed="3" data-paper="white" id="hero">
-      <div class="paper" data-status="inking the drums…"><canvas role="img" aria-label="Sheet I, Low Water: an estuary seen from above, printed in aqua, black and fluorescent green on white. A white channel runs from the lower left to a bay at the upper right, fed by branching creeks outlined in black. Scattered green dots. Printed type: The last ebb of spring, at Holmsey; (2026) 10 · 08; Ebb; Low Water; the river empties and the mud comes up to meet the light."></canvas></div>
+    <figure class="sheet" data-sheet="blocks" data-mode="solid" data-seed="1" data-paper="white" id="hero">
+      <div class="paper" data-status="inking the drums…"><canvas role="img" aria-label="Sheet I, Stavmere: a town plan printed twice in bright red on white. Every block is solid bright red and the streets are white paper. A white river with bright red bank lines curves through the upper left under two bridges, and a motorway crosses on a long diagonal. There are a round old square with a monument, stippled parks, courtyard blocks and an estate of slabs. Printed words: River Wenn; Stavmere; plan of the town, 1 : 12 500; Stavmere Print Club; sheet I, one ink, two hits."></canvas></div>
       <figcaption>
         <span class="no">I</span>
-        <span class="t">The estuary at the last ebb</span>
-        <span class="m mono">aqua · black · fluorescent green, on white</span>
+        <span class="t">The town, figure and ground</span>
+        <span class="m mono">one ink, two hits, on white</span>
         <span></span>
-        <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+        <span class="ctl"><button type="button" data-again>[another pull]</button><span class="ink" role="group" aria-label="Ink"><span>ink:</span><button type="button" data-ink="bright-red" aria-pressed="true">red</button><button type="button" data-ink="blue" aria-pressed="false">blue</button><button type="button" data-ink="teal" aria-pressed="false">teal</button><button type="button" data-ink="fluorescent-pink" aria-pressed="false">pink</button></span><label>[+ photograph]<input type="file" accept="image/*"></label></span>
       </figcaption>
     </figure>
   </div>
 
-  <section aria-labelledby="h-sheets">
+  <section aria-labelledby="h-town">
     <div class="head">
-      <h2 id="h-sheets">The other three</h2>
-      <p>Each sheet takes a different view of the same water: from above, from the bank, as a chart, and as the weather over it. Each keeps to the inks it was given. Where two inks cross you get a third colour, which is the only way a riso makes one.</p>
+      <h2 id="h-town">The same ground, three more ways</h2>
+      <p>Figure and ground only asks which side of the street a mark is on. The rest is the printer's choice. A wash dries darker at its edges. Footprints show the houses a block is made of. A hatch gives each block its own hand. Each of these sheets is a new town from the same rules.</p>
     </div>
     <div class="three">
-      <figure class="sheet" data-sheet="windows" data-seed="2" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet II: a staircase of four windows printed in green on white. The upper two show a braided riverbed from above as marbled bands, and the lower two show a moor at eye level with one seated figure on the horizon. Thin bright-red rules cross the sheet, a green ellipse runs off the last window, and small sideways notes sit in the margins."></canvas></div>
+      <figure class="sheet" data-sheet="blocks" data-mode="wash" data-seed="3" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet II: a town with a ragged edge, printed in one cornflower-blue drum on white. Each block is its own pale wash, darker at its rim, and a few are deep blue. A white river runs through the middle, and white paper surrounds the town. Printed words: Stavmere, in water; one drum, every block its own wash."></canvas></div>
         <figcaption>
           <span class="no">II</span>
-          <span class="t">The riverbed from above, the moor from the bank</span>
-          <span class="m mono">green · bright red · black, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+          <span class="t">Stavmere, in water</span>
+          <span class="m mono">cornflower, one drum, on white</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
         </figcaption>
       </figure>
-      <figure class="sheet" data-sheet="chart" data-seed="3" data-paper="natural">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet III: a chart of an island chain, the land left as bare cream paper against a sea printed in yellow and light grey, with a white grid knocked through both. Four grey inset windows hold brown line drawings of rock faces and white place names: Varkmere, Ostby, Linthwaite, Stavness. The word HOLMSEY is drawn in huge outlines across the sheet and repeated small in white at the foot."></canvas></div>
+      <figure class="sheet" data-sheet="blocks" data-mode="plan" data-seed="2" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet III: a dense plan of house footprints in fluorescent pink on white, one district of them in bright red. A many-laned motorway crosses the sheet and meets a cross road at a cloverleaf interchange. Pale pink clouds hide parts of the plan, and a bright red block at the top right fades from light to dark. Printed words: Stavmere, north interchange; footprints 1 : 5 000."></canvas></div>
         <figcaption>
           <span class="no">III</span>
-          <span class="t">A chart of the outer islands</span>
-          <span class="m mono">yellow · light grey · brown, on natural</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
+          <span class="t">The north interchange</span>
+          <span class="m mono">fluorescent pink · bright red, on white</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
         </figcaption>
       </figure>
-      <figure class="sheet" data-sheet="rain" data-seed="4" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet IV: one green drum on white. A mass of bold lines of type, stacked into a rounded hill and spread soft by too much ink, over thin green outlines of clouds. Small typed notes at the top: Holmsey, Sheet IV, 17th Oct., Low Water (from the 1926 survey), rain over the flats: a reading in one drum, 19:00 to 21:00."></canvas></div>
+      <figure class="sheet" data-sheet="blocks" data-mode="hatch" data-seed="4" data-paper="cream">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet IV: a street grid in one teal drum on cream paper. Every block is dark teal, ruled with light hatching, crosshatching, stipple or scribble, each block its own. Two wide diagonal avenues of bare cream paper cross it, with dashed centre lines. Printed words: Stavmere, the south grid; every block ruled by itself."></canvas></div>
         <figcaption>
           <span class="no">IV</span>
-          <span class="t">Rain over the flats</span>
-          <span class="m mono">green, one drum, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button><input type="text" data-words placeholder="type the rain, then enter" aria-label="Words for the rain sheet"></span>
+          <span class="t">The south grid, ruled</span>
+          <span class="m mono">teal, one drum, on cream</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-land">
+    <div class="head">
+      <h2 id="h-land">The river, the land, the walk</h2>
+      <p>Out of town the paper opens up. The Wenn is shown with every bed it has left behind. Next comes a land-use plan in the pastel washes planners use, with its proposals as hollow arrows. Last is a poster for the club's spring walk, huge black words over a green valley.</p>
+    </div>
+    <div class="three late">
+      <figure class="sheet" data-sheet="river" data-seed="1" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet V, The Wenn: a meandering river printed in solid purple on white. Fainter purple bands trace its earlier courses, with hairlines along their banks, and darker oxbow lakes lie where bends were cut off. Thin purple creeks branch into it. On one side, a small town of grey-black house footprints, with roads leading out. Printed words: The Wenn; every course the river has taken, below Stavmere, 1790 to now; River Wenn; a key: the river now, its old courses, older fainter, oxbow lakes, Stavmere."></canvas></div>
+        <figcaption>
+          <span class="no">V</span>
+          <span class="t">Every course of the Wenn</span>
+          <span class="m mono">purple · black, on white</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+        </figcaption>
+      </figure>
+      <figure class="sheet" data-sheet="zoning" data-seed="2" data-paper="white" id="zone">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VI, Stavmere in use: a land-use plan in three inks on white. Pale fluorescent pink parcels mark homes and fields, purple halftone marks the works, and a large purple wash, darker at its rim, marks land proposed. Teal hairlines give the streets, a river, a lake and contours. Three hollow teal arrows point out from the town. Printed words: Stavmere in use; land in use and land proposed, 2026; Stavmere, Wenn Lake, Mill District, North Fields, The Commons, Old Quay; a key: homes, fields, works, commons, proposed."></canvas></div>
+        <figcaption>
+          <span class="no">VI</span>
+          <span class="t">Stavmere in use</span>
+          <span class="m mono">fluorescent pink · purple · teal, on white</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+        </figcaption>
+      </figure>
+      <figure class="sheet" data-sheet="poster" data-seed="3" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VII: a poster. A valley map in green fills the sheet: fields in pale tints, dark woods, contour lines, a white winding river, a road, a railway and three villages of small footprints. Huge black lowercase words run across the lower half: stav, mere. Six numbered circles mark stops on the map. Printed words: Stavmere Print Club, a walk in six stops, spring 2026; Stavmere, from the river up; 1 The old quay, 2 Mill weir, 3 Wenn Lake, 4 North fields, 5 The commons, 6 Chalk pit."></canvas></div>
+        <figcaption>
+          <span class="no">VII</span>
+          <span class="t">From the river up</span>
+          <span class="m mono">green · black, on white</span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><input type="text" data-words placeholder="up to three words, then enter" aria-label="Words for the poster"></span>
         </figcaption>
       </figure>
     </div>
@@ -174,24 +221,24 @@
 
   <section aria-labelledby="h-drums">
     <div class="head">
-      <h2 id="h-drums">Sheet I, drum by drum</h2>
-      <p>The first sheet pulled again, one stencil at a time. Every drum starts as a master drawn in black. The press screens it into grain, lands it a fraction of a millimetre off, and lays it over whatever is already on the paper. That is why the dots never sit quite on the banks. Pull sheet I again and these follow it.</p>
+      <h2 id="h-drums">Sheet VI, drum by drum</h2>
+      <p>The land-use sheet again, one stencil at a time. Each drum starts as a master drawn in black. The press screens it into grain or a halftone of dots, lands it a fraction of a millimetre off, and lays it over whatever is already on the paper. Pink under purple gives the violet of the works. Every word sits in a box of bare paper, cut out of all three drums. Pull sheet VI again and these follow it.</p>
     </div>
     <div class="drums">
-      <figure class="sheet" data-sheet="estuary" data-follow="hero" data-drums="0" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet I, aqua drum only: the silt and the knocked-out water."></canvas></div>
-        <figcaption><span class="no">a</span><span class="t">Aqua</span><span class="m mono">the flats, water knocked out</span></figcaption>
+      <figure class="sheet" data-sheet="zoning" data-follow="zone" data-drums="0" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VI, fluorescent pink drum only: homes, fields and three inset panels."></canvas></div>
+        <figcaption><span class="no">a</span><span class="t">Fluorescent pink</span><span class="m mono">homes, fields, panels</span></figcaption>
       </figure>
-      <figure class="sheet" data-sheet="estuary" data-follow="hero" data-drums="1" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet I, black drum only: the banks as hairlines and all the type."></canvas></div>
-        <figcaption><span class="no">b</span><span class="t">Black</span><span class="m mono">banks and type</span></figcaption>
+      <figure class="sheet" data-sheet="zoning" data-follow="zone" data-drums="1" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VI, purple drum only: the works and the proposal, in a halftone screen."></canvas></div>
+        <figcaption><span class="no">b</span><span class="t">Purple, halftone</span><span class="m mono">works and the proposal</span></figcaption>
       </figure>
-      <figure class="sheet" data-sheet="estuary" data-follow="hero" data-drums="2" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet I, fluorescent green drum only: twelve dots."></canvas></div>
-        <figcaption><span class="no">c</span><span class="t">Fluorescent green</span><span class="m mono">where someone stood</span></figcaption>
+      <figure class="sheet" data-sheet="zoning" data-follow="zone" data-drums="2" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VI, teal drum only: streets, river, lake, contours, arrows and all the type."></canvas></div>
+        <figcaption><span class="no">c</span><span class="t">Teal</span><span class="m mono">the plan and the words</span></figcaption>
       </figure>
-      <figure class="sheet" data-sheet="estuary" data-follow="hero" data-drums="0,1,2" data-paper="white">
-        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet I with all three drums, as above."></canvas></div>
+      <figure class="sheet" data-sheet="zoning" data-follow="zone" data-drums="0,1,2" data-paper="white">
+        <div class="paper" data-status="waiting for the press"><canvas role="img" aria-label="Sheet VI with all three drums, as above."></canvas></div>
         <figcaption><span class="no">a+b+c</span><span class="t">All three</span><span class="m mono">in register, nearly</span></figcaption>
       </figure>
     </div>
@@ -200,31 +247,30 @@
   <section aria-labelledby="h-colo">
     <div class="head">
       <h2 id="h-colo">Inks, and the fortnight</h2>
-      <p>The club keeps eight drums. A sheet uses at most three of them.</p>
+      <p>The club keeps seven drums. A sheet uses at most three of them, and sheet I uses one ink twice.</p>
     </div>
     <div class="colo">
       <ul class="inks mono">
-        <li><i style="background:#5ec8e5"></i>Aqua<br>#5ec8e5</li>
-        <li><i style="background:#000"></i>Black<br>#000000</li>
-        <li><i style="background:#44d62c"></i>Fluorescent green<br>#44d62c</li>
-        <li><i style="background:#00a95c"></i>Green<br>#00a95c</li>
         <li><i style="background:#f15060"></i>Bright red<br>#f15060</li>
-        <li><i style="background:#ffe800"></i>Yellow<br>#ffe800</li>
-        <li><i style="background:#88898a"></i>Light grey<br>#88898a</li>
-        <li><i style="background:#925f52"></i>Brown<br>#925f52</li>
+        <li><i style="background:#62a8e5"></i>Cornflower<br>#62a8e5</li>
+        <li><i style="background:#ff48b0"></i>Fluorescent pink<br>#ff48b0</li>
+        <li><i style="background:#00838a"></i>Teal<br>#00838a</li>
+        <li><i style="background:#765ba7"></i>Purple<br>#765ba7</li>
+        <li><i style="background:#00a95c"></i>Green<br>#00a95c</li>
+        <li><i style="background:#000"></i>Black<br>#000000</li>
       </ul>
       <ol class="prog">
-        <li><span class="mono">10 Oct</span><span><b>Opening at the Tide Shed.</b> <span class="dot"></span>19:00, the sheets on the wall and the drums still wet.</span></li>
-        <li><span class="mono">17 Oct</span><span><b>Rain over the flats.</b> A reading by Ines Varga and Tom Hallam, in the dark, 19:00–21:00.</span></li>
-        <li><span class="mono">24 Oct</span><span><b>Pulling day.</b> Bring a photograph of water; it goes through the aqua drum while you wait.</span></li>
-        <li><span class="mono">26 Oct</span><span><b>The last ebb.</b> Low water at 06:12. Coffee at the slipway.</span></li>
+        <li><span class="mono">6 Nov</span><span><b>Opening at the Weigh House.</b> <span class="dot"></span>19:00, the seven sheets on the wall and the drums still wet.</span></li>
+        <li><span class="mono">12 Nov</span><span><b>Whose ground?</b> Ada Rennick on the town plan as a record of who owns what, 19:30.</span></li>
+        <li><span class="mono">15 Nov</span><span><b>Pulling day.</b> Bring a photograph; Stavmere prints it in red, one block at a time, while you wait.</span></li>
+        <li><span class="mono">22 Nov</span><span><b>From the river up.</b> The walk on sheet VII, six stops, led by Tomas Vell. Meet at the old quay, 10:00.</span></li>
       </ol>
     </div>
   </section>
 </main>
 
 <footer class="caps">
-  <span>Holmsey Print Club is fictional, and so are the estuary, the islands and the readers</span>
+  <span>Stavmere Print Club is fictional, and so are the town, the river and the people</span>
   <span><a href="SKILL.md">the brief</a> · <a href="../../index.html">hand-pulled</a></span>
 </footer>
 
@@ -234,8 +280,7 @@
 <script>
 (() => {
   const figs = [...document.querySelectorAll('.sheet')];
-  const st = new Map(figs.map(f => [f, { seed: +(f.dataset.seed || 1), image: null, text: null, w: 0 }]));
-  const hero = document.getElementById('hero');
+  const st = new Map(figs.map(f => [f, { seed: +(f.dataset.seed || 1), image: null, text: null, ink: null, w: 0 }]));
   let queue = Promise.resolve();
 
   // one sheet on the press at a time, top of the page first
@@ -243,17 +288,17 @@
     queue = queue.then(async () => {
       const c = fig.querySelector('canvas'), r = c.getBoundingClientRect();
       if (!r.width) return;
-      const s = fig.dataset.follow ? st.get(hero) : st.get(fig), mine = st.get(fig);
+      const lead = fig.dataset.follow ? document.getElementById(fig.dataset.follow) : fig, s = st.get(lead), mine = st.get(fig);
       const w = Math.min(1400, Math.round(r.width * Math.min(1.5, devicePixelRatio || 1)));
       const drums = fig.dataset.drums ? fig.dataset.drums.split(',').map(Number) : undefined;
       fig.querySelector('.paper').dataset.status = 'inking the drums…';
-      await Atlas[fig.dataset.sheet](c, { width: w, height: Math.round(w * Atlas.SH / Atlas.SW), seed: s.seed, image: s.image, text: mine.text, drums });
+      await Atlas[fig.dataset.sheet](c, { width: w, height: Math.round(w * Atlas.SH / Atlas.SW), seed: s.seed, mode: fig.dataset.mode, ink: s.ink || undefined, image: s.image, text: s.text, drums });
       mine.w = r.width; fig.classList.add('printed');
     }).catch(e => { fig.querySelector('.paper').dataset.status = 'the press jammed: ' + e.message; });
   }
-  const again = fig => { pull(fig); if (fig === hero) figs.filter(f => f.dataset.follow && st.get(f).w).forEach(pull); };
+  const again = fig => { pull(fig); if (fig.id) figs.filter(f => f.dataset.follow === fig.id && st.get(f).w).forEach(pull); };
 
-  const fonts = ['italic 40px "Instrument Serif"', '40px "Instrument Serif"', '500 20px "Instrument Sans"', '600 20px "Instrument Sans"', '700 20px "Instrument Sans"', '12px "IBM Plex Mono"'];
+  const fonts = ['italic 40px "Instrument Serif"', '40px "Instrument Serif"', '400 20px "Instrument Sans"', '500 20px "Instrument Sans"', '12px "IBM Plex Mono"'];
   Promise.all(fonts.map(f => document.fonts.load(f))).catch(() => {}).then(() => {
     const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { io.unobserve(e.target); pull(e.target); } }), { rootMargin: '600px 0px' });
     figs.forEach(f => io.observe(f));
@@ -270,7 +315,13 @@
     img.src = url;
   }
   figs.filter(f => !f.dataset.follow).forEach(fig => {
-    fig.querySelector('[data-again]').addEventListener('click', () => { const s = st.get(fig); s.seed = 1 + Math.floor(Math.random() * 9999); s.image = null; again(fig); });
+    const s = st.get(fig);
+    fig.querySelector('[data-again]').addEventListener('click', () => { s.seed = 1 + Math.floor(Math.random() * 9999); s.image = null; again(fig); });
+    const inks = [...fig.querySelectorAll('[data-ink]')], cv = fig.querySelector('canvas'), label = cv.getAttribute('aria-label');
+    inks.forEach(b => b.addEventListener('click', () => {
+      s.ink = b.dataset.ink; inks.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      cv.setAttribute('aria-label', label.replace(/bright red/g, b.dataset.ink.replace('-', ' '))); again(fig);
+    }));
     const file = fig.querySelector('input[type=file]');
     if (file) {
       file.addEventListener('change', () => { useImage(fig, file.files[0]); file.value = ''; });
@@ -281,8 +332,8 @@
     const words = fig.querySelector('[data-words]');
     if (words) words.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
-      const v = words.value.trim().replace(/\s+/g, ' ');
-      st.get(fig).text = v ? { words: v + ' · ' } : null; pull(fig);
+      const v = words.value.trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0, 3);
+      s.text = v.length ? { lines: v } : null; pull(fig);
     });
   });
 })();
