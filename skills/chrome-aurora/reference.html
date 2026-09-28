@@ -111,6 +111,29 @@
     .board figcaption { grid-template-columns: 1fr; }
     .board .ctl { grid-column: 1; grid-row: auto; }
   }
+
+  /* ---- live: the wall moving, and a small desk app built from the live pieces ---- */
+  .lv-hero { position: relative; height: min(calc(100svh - 44px), 62vw); min-height: 440px; margin: 0; color: var(--ink); cursor: crosshair; }
+  .lv-hero .words { position: absolute; left: var(--gut); bottom: clamp(20px, 5vh, 48px); max-width: min(520px, 84vw); display: flex; flex-direction: column; gap: 14px; text-shadow: 0 0 18px rgba(0, 0, 0, .7); pointer-events: none; }
+  .lv-hero h2 { font-size: clamp(40px, 6vw, 96px); line-height: .9; letter-spacing: -.04em; }
+  .lv-hero .corner { pointer-events: none; }
+  .lv-strip { height: 120px; margin: 0; }
+  .desk { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: var(--gut); align-items: start; }
+  .cues { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .cue { min-height: 170px; padding: 14px; border-radius: 10px; display: flex; flex-direction: column; justify-content: space-between; text-shadow: 0 0 10px rgba(0, 0, 0, .8); }
+  .cue b { font: 400 22px/1.1 var(--sans); letter-spacing: -.02em; }
+  .panel { display: flex; flex-direction: column; gap: 18px; padding: 18px; border: 1px solid var(--rule); border-radius: 12px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+  .row label { font: 300 12px var(--mono); }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .mbtn { font: 400 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: #000; border: 1px solid rgba(235, 231, 223, .25); border-radius: 999px; padding: 12px 22px; cursor: pointer; text-shadow: 0 0 8px rgba(0, 0, 0, .9); }
+  .mbtn:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+  .ma-toggle { width: 52px; height: 26px; }
+  .ma-slider { width: 100%; height: 20px; }
+  .bar { height: 14px; border-radius: 999px; border: 1px solid rgba(235, 231, 223, .2); }
+  .bead { width: 44px; height: 44px; border-radius: 50%; flex: none; }
+  @media (max-width: 900px) { .desk { grid-template-columns: 1fr; } .cues { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 520px) { .cues { grid-template-columns: 1fr; } }
   @media (prefers-reduced-motion: reduce) { .plate canvas { transition: none; } }
 </style>
 </head>
@@ -140,6 +163,39 @@
       <span class="ctl"><button type="button" data-again>[another pour]</button><label>[+ photograph]<input type="file" accept="image/*"></label></span>
     </figcaption>
   </figure>
+
+
+  <section class="lv-hero" id="live-hero" aria-labelledby="h-live">
+    <span class="corner tl">Afterglass · live</span><span class="corner tr">move · click · scroll</span>
+    <div class="words">
+      <h2 id="h-live">The wall, poured and still moving</h2>
+      <p class="lede">The first pour again, live. A lamp follows your hand across the chrome, a click drops a ripple into it, the aurora drifts over its highlights and scrolling tilts the room it reflects. Frame zero is the still.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-desk">
+    <div class="head">
+      <h2 id="h-desk">Houselights, the desk</h2>
+      <p>A small made-up lighting desk for the hall, built only from the live pieces: cue cards that rise out of the black, chrome buttons, switches, a master fader, a fade bar, a syncing bead, and one chrome focus ring for the whole page (press Tab).</p>
+    </div>
+    <div class="desk">
+      <div class="cues">
+        <article class="cue" tabindex="0" data-plate="ribbon" data-look="volt" data-seed="3"><span class="caps">Cue 12</span><b>Blue hour</b><span class="mono">fade 8 s · wash + strip</span></article>
+        <article class="cue" tabindex="0" data-plate="trail" data-look="ember" data-seed="4"><span class="caps">Cue 13</span><b>Ember drag</b><span class="mono">fade 3 s · floor</span></article>
+        <article class="cue" tabindex="0" data-plate="film" data-look="titanium" data-seed="5"><span class="caps">Cue 14</span><b>Titan wall</b><span class="mono">snap · back wall</span></article>
+      </div>
+      <div class="panel">
+        <div class="btns"><button class="mbtn" type="button" id="go">Go cue</button><button class="mbtn" type="button" id="hold">Hold</button><button class="mbtn" type="button">Blackout</button></div>
+        <div class="row"><label for="haze">Haze machine</label><input type="checkbox" id="haze" checked></div>
+        <div class="row"><label for="lock">Strobe lock</label><input type="checkbox" id="lock"></div>
+        <div class="row" style="flex-direction:column;align-items:stretch"><label for="master">Master level</label><input type="range" id="master" min="0" max="100" value="72"></div>
+        <div class="row" style="flex-direction:column;align-items:stretch"><span class="mono" id="fade-l">Fade: idle</span><div class="bar" id="fade" aria-labelledby="fade-l"></div></div>
+        <div class="row"><span class="mono">Syncing the rig</span><span class="bead" id="bead" aria-label="Syncing"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="lv-strip" id="strip" aria-hidden="true"></div>
 
   <section aria-labelledby="h-nights">
     <div class="head">
@@ -346,6 +402,31 @@
     fig.addEventListener('dragleave', () => fig.classList.remove('over'));
     fig.addEventListener('drop', e => { e.preventDefault(); fig.classList.remove('over'); useImage(fig, e.dataTransfer.files[0]); });
   });
+})();
+</script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
+<script>
+(() => {
+  const ui = Mercury.ui;
+  ui.background(document.getElementById('live-hero'), { plate: 'film', look: 'oxide', seed: 7 });
+  document.querySelectorAll('.cue').forEach(c => ui.card(c, { plate: c.dataset.plate, look: c.dataset.look, seed: +c.dataset.seed }));
+  document.querySelectorAll('.mbtn').forEach(b => ui.button(b));
+  ui.toggle(document.getElementById('haze'));
+  ui.toggle(document.getElementById('lock'));
+  ui.slider(document.getElementById('master'));
+  const fade = ui.progress(document.getElementById('fade'), { value: 0.35 });
+  ui.loader(document.getElementById('bead'));
+  ui.focusRing();
+  ui.transition(document.getElementById('strip'));
+  const label = document.getElementById('fade-l');
+  let run = 0;
+  document.getElementById('go').addEventListener('click', () => {
+    const t0 = performance.now(), id = ++run, ms = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 2400;
+    const step = now => { if (id !== run) return; const p = ms ? Math.min(1, (now - t0) / ms) : 1; fade.set(p); label.textContent = p < 1 ? 'Fade: ' + Math.round(p * 100) + '%' : 'Fade: cue 13 is up'; if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+  document.getElementById('hold').addEventListener('click', () => { run++; label.textContent = 'Fade: held'; });
 })();
 </script>
 </body>
