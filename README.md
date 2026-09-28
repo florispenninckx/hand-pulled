@@ -11,7 +11,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 
 | Skill | Looks like | Reference page | Engine |
 |---|---|---|---|
-| [`maximalist-boc`](skills/maximalist-boc/SKILL.md) | a record rolled out in colour: acid green and Klein blue poured into each other, agate bands, marbling, moiré, palette cards, and liquid lettering that melts, drips, glows or echoes | [citric](skills/maximalist-boc/reference.html) | `goo.js`, `pour.js` |
+| [`maximalist-boc`](skills/maximalist-boc/SKILL.md) | a record rolled out in colour: acid green and Klein blue poured into each other, and a wall of liquid chrome, marbling with dark veins, agate, moiré, grain blooms and datamosh drawn from a few named palettes, with liquid lettering that melts, drips, glows or echoes | [citric](skills/maximalist-boc/reference.html) | `goo.js`, `pour.js` |
 | [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | one picture after a machine got hold of it: saturated sort and slit-scan smears on dark, wave warps, sorted drips, a dropped screen, a grid collage, scanner drag, sliced type | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | a blue board made of grain: cyanotype botanicals and sun-printed photographs, light forms out of navy-black, blurred butterflies, marbling, spray and halftone | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
