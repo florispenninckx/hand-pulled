@@ -39,6 +39,7 @@
   .sheet .paper { position: relative; aspect-ratio: 1000 / 1414; background: #f7f6f2; }
   .sheet[data-paper="cream"] .paper { background: #efe4cc; }
   .sheet canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .5s; }
+  .sheet canvas[hidden] { display: none; }
   .sheet.printed canvas { opacity: 1; }
   .sheet .paper::after { content: attr(data-status); position: absolute; left: 12px; bottom: 10px; font: 400 11px var(--mono); color: var(--soft); }
   .sheet.printed .paper::after { content: none; }
@@ -107,6 +108,9 @@
   .btns { display: flex; flex-wrap: wrap; gap: 10px; }
   .pbtn { font: 500 12px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: #f7f6f2; background: transparent; border: 0; padding: 14px 18px; cursor: pointer; }
   .pbtn.ghost { color: var(--ink); }
+  .pbtn i { width: 14px; height: 14px; margin: -3px 8px 0 -2px; }
+  .desk h3 i { width: 30px; height: 30px; margin: -6px 10px 0 0; }
+  .job i { width: 34px; height: 34px; }
   .pbtn:focus-visible { outline: 1px solid #0078bf; outline-offset: 5px; }
   .run { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; }
   .spin { width: 34px; height: 34px; }
@@ -186,7 +190,7 @@
           <span class="no">II</span>
           <span class="t">Stavmere, in water</span>
           <span class="m mono">cornflower, one drum, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button></span>
         </figcaption>
       </figure>
       <figure class="sheet" data-sheet="blocks" data-mode="plan" data-seed="2" data-paper="white">
@@ -195,7 +199,7 @@
           <span class="no">III</span>
           <span class="t">The north interchange</span>
           <span class="m mono">fluorescent pink · bright red, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button></span>
         </figcaption>
       </figure>
       <figure class="sheet" data-sheet="blocks" data-mode="hatch" data-seed="4" data-paper="cream">
@@ -204,7 +208,7 @@
           <span class="no">IV</span>
           <span class="t">The south grid, ruled</span>
           <span class="m mono">teal, one drum, on cream</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button></span>
         </figcaption>
       </figure>
     </div>
@@ -222,7 +226,7 @@
           <span class="no">V</span>
           <span class="t">Every course of the Wenn</span>
           <span class="m mono">purple · black, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button></span>
         </figcaption>
       </figure>
       <figure class="sheet" data-sheet="zoning" data-seed="2" data-paper="white" id="zone">
@@ -231,7 +235,7 @@
           <span class="no">VI</span>
           <span class="t">Stavmere in use</span>
           <span class="m mono">fluorescent pink · purple · teal, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button></span>
         </figcaption>
       </figure>
       <figure class="sheet" data-sheet="poster" data-seed="3" data-paper="white">
@@ -240,7 +244,7 @@
           <span class="no">VII</span>
           <span class="t">From the river up</span>
           <span class="m mono">green · black, on white</span>
-          <span class="ctl"><button type="button" data-again>[another pull]</button><input type="text" data-words placeholder="up to three words, then enter" aria-label="Words for the poster"></span>
+          <span class="ctl"><button type="button" data-again>[another pull]</button><button type="button" data-live aria-pressed="false">[live]</button><input type="text" data-words placeholder="up to three words, then enter" aria-label="Words for the poster"></span>
         </figcaption>
       </figure>
     </div>
@@ -276,21 +280,21 @@
   <section aria-labelledby="h-room">
     <div class="head">
       <h2 id="h-room">The Drum Room</h2>
-      <p>The club's press queue, built from the live pieces. The map behind it is printed in blue on two drums: a grain tint and the contours of the same ground. The drums wander out of register and back, and a fresh hit of ink traces the contours one level at a time. Point at the map for a loupe and click to stamp it. Every control here is a native one, with the print behind it.</p>
+      <p>The club's press queue, built from the live pieces. The map behind it is printed in blue on two drums: a grain tint and the contours of the same ground. The drums wander out of register and back, and a fresh hit of ink traces the contours one level at a time. Point at the map for a loupe and click to stamp it. The mouse carries a registration mark in blue and pink, and the icons are pulled on the same two drums; point at a card or a button and they slip apart. Every control here is a native one, with the print behind it.</p>
     </div>
     <div class="room" id="room">
       <div class="desk">
-        <h3>Tonight's run</h3>
+        <h3><i data-icon="clock"></i>Tonight's run</h3>
         <div class="row"><label for="t-loupe">loupe on the map</label><input type="checkbox" id="t-loupe" checked></div>
         <div class="row"><label for="t-trace">trace the contours</label><input type="checkbox" id="t-trace" checked></div>
         <div class="slide"><span><label for="s-drift">drift of the drums</label><output id="o-drift" for="s-drift">1.0</output></span><input type="range" id="s-drift" min="0" max="3" step="0.1" value="1"></div>
-        <div class="btns"><button type="button" class="pbtn" id="b-run">Pull 80 copies</button><button type="button" class="pbtn ghost" id="b-proof">Proof one</button></div>
+        <div class="btns"><button type="button" class="pbtn" id="b-run">Pull 80 copies</button><button type="button" class="pbtn ghost" id="b-proof"><i data-icon="play"></i>Proof one</button></div>
         <div class="run"><span class="spin" id="spin" aria-label="press idle"></span><span class="bar" id="bar" aria-label="print run"></span><p id="run-note" aria-live="polite">The press is idle.</p></div>
       </div>
       <div class="jobs">
-        <article class="job" tabindex="0" aria-label="Job one: The Wenn, second edition"><b>The Wenn, 2nd ed.</b><span>purple · black · 80 copies</span></article>
-        <article class="job" tabindex="0" aria-label="Job two: north fields walk flyer"><b>North fields walk</b><span>green · black · 200 copies</span></article>
-        <article class="job" tabindex="0" aria-label="Job three: Weigh House invitation"><b>Weigh House invite</b><span>blue · pink · 120 copies</span></article>
+        <article class="job" tabindex="0" aria-label="Job one: The Wenn, second edition"><i data-icon="drop"></i><b>The Wenn, 2nd ed.</b><span>purple · black · 80 copies</span></article>
+        <article class="job" tabindex="0" aria-label="Job two: north fields walk flyer"><i data-icon="sun"></i><b>North fields walk</b><span>green · black · 200 copies</span></article>
+        <article class="job" tabindex="0" aria-label="Job three: Weigh House invitation"><i data-icon="image"></i><b>Weigh House invite</b><span>blue · pink · 120 copies</span></article>
       </div>
     </div>
   </section>
@@ -341,7 +345,7 @@
   // one sheet on the press at a time, top of the page first
   function pull(fig) {
     queue = queue.then(async () => {
-      const c = fig.querySelector('canvas'), r = c.getBoundingClientRect();
+      const c = fig.querySelector('canvas'), r = fig.querySelector('.paper').getBoundingClientRect();
       if (!r.width) return;
       const lead = fig.dataset.follow ? document.getElementById(fig.dataset.follow) : fig, s = st.get(lead), mine = st.get(fig);
       const w = Math.min(1400, Math.round(r.width * Math.min(1.5, devicePixelRatio || 1)));
@@ -351,7 +355,12 @@
       mine.w = r.width; fig.classList.add('printed');
     }).catch(e => { fig.querySelector('.paper').dataset.status = 'the press jammed: ' + e.message; });
   }
-  const again = fig => { pull(fig); if (fig.id) figs.filter(f => f.dataset.follow === fig.id && st.get(f).w).forEach(pull); };
+  // a sheet's live view follows every new pull; the still under it is reprinted too, for when it is switched off
+  const liveOpts = (fig, s) => ({ sheet: fig.dataset.sheet, mode: fig.dataset.mode, seed: s.seed, ink: s.ink || undefined, image: s.image, text: s.text });
+  const again = fig => {
+    pull(fig); if (fig.id) figs.filter(f => f.dataset.follow === fig.id && st.get(f).w).forEach(pull);
+    const s = st.get(fig); if (s.live) s.live.set(liveOpts(fig, s));
+  };
 
   const fonts = ['italic 40px "Instrument Serif"', '40px "Instrument Serif"', '400 20px "Instrument Sans"', '500 20px "Instrument Sans"', '12px "IBM Plex Mono"'];
   Promise.all(fonts.map(f => document.fonts.load(f))).catch(() => {}).then(() => {
@@ -388,7 +397,28 @@
     if (words) words.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
       const v = words.value.trim().toLowerCase().split(/\s+/).filter(Boolean).slice(0, 3);
-      s.text = v.length ? { lines: v } : null; pull(fig);
+      s.text = v.length ? { lines: v } : null; again(fig);
+    });
+    // [live]: the sheet on the GPU press, made once on the first press; after that the button only
+    // swaps which canvas shows and pauses the one that is hidden
+    const lb = fig.querySelector('[data-live]');
+    if (lb) lb.addEventListener('click', () => {
+      const on = lb.getAttribute('aria-pressed') !== 'true';
+      lb.setAttribute('aria-pressed', String(on));
+      if (!on) { if (s.live) s.live.pause(); if (s.lc) s.lc.hidden = true; cv.hidden = false; return; }
+      if (!s.live) {
+        s.lc = document.createElement('canvas');
+        s.lc.setAttribute('role', 'img'); s.lc.setAttribute('aria-label', cv.getAttribute('aria-label'));
+        s.lc.style.visibility = 'hidden'; cv.after(s.lc);     // laid out, so it has a size, but the still shows until frame 0 lands
+        s.live = Riso.live(s.lc, Object.assign(liveOpts(fig, s), { feed: 'in', drift: 1, pointer: 1, radius: 0.14, zoom: 1.8, clickPulse: true }));
+        if (!s.live) { s.lc.remove(); s.lc = null; lb.setAttribute('aria-pressed', 'false'); return; }
+      } else s.live.resume();
+      const swap = () => {
+        if (lb.getAttribute('aria-pressed') !== 'true') return;
+        if (!s.live.state().frames) return requestAnimationFrame(swap);
+        s.lc.style.visibility = ''; s.lc.hidden = false; cv.hidden = true; fig.classList.add('printed');
+      };
+      s.lc.hidden = false; swap();
     });
   });
 
@@ -430,6 +460,8 @@
   ui.transition(document.querySelector('.strip'));
   const map = ui.background(document.getElementById('room'), { seed: 4 });
   document.querySelectorAll('.job').forEach((j, i) => ui.card(j, { seed: 21 + i * 5 }));
+  document.querySelectorAll('#room [data-icon]').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 30 + i, hover: 2.5 }));
+  ui.cursor(document.getElementById('room'));
   const tl = document.getElementById('t-loupe'), tt = document.getElementById('t-trace'), sd = document.getElementById('s-drift'), od = document.getElementById('o-drift');
   ui.toggle(tl); ui.toggle(tt); ui.slider(sd);
   tl.addEventListener('change', () => map && map.set({ pointer: tl.checked ? 1 : 0 }));
