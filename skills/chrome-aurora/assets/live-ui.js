@@ -11,9 +11,11 @@
  *   ui.background(section);   ui.button(btn);   ui.card(card, { plate: 'ribbon', look: 'volt' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
  *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
+ *   ui.cursor(area);   ui.icon(span, 'lightbulb');   Mercury.iconMask(svg)
  *
  * Every function returns the live controller (or a small object holding it) so a page can
- * set() it further. Original code, MIT.
+ * set() it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
+ * https://phosphoricons.com — inlined below, never fetched. The rest is original code, MIT.
  */
 (function (root) {
   'use strict';
@@ -22,6 +24,26 @@
   const live = M.live;
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
+
+  // Phosphor Icons, light weight (MIT). 256 viewBox, filled outlines.
+  const P = d => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="${d}"/></svg>`;
+  const ICONS = {
+    lightbulb: P('M174,232a6,6,0,0,1-6,6H88a6,6,0,0,1,0-12h80A6,6,0,0,1,174,232Zm40-128a85.56,85.56,0,0,1-32.88,67.64A18.23,18.23,0,0,0,174,186v6a14,14,0,0,1-14,14H96a14,14,0,0,1-14-14v-6a18,18,0,0,0-7-14.23h0a85.59,85.59,0,0,1-33-67.24C41.74,57.91,79.39,19.12,125.93,18A86,86,0,0,1,214,104Zm-12,0a74,74,0,0,0-75.79-74C86.17,31,53.78,64.34,54,104.42a73.67,73.67,0,0,0,28.4,57.87A29.92,29.92,0,0,1,94,186v6a2,2,0,0,0,2,2h64a2,2,0,0,0,2-2v-6a30.18,30.18,0,0,1,11.7-23.78A73.59,73.59,0,0,0,202,104Zm-20.08-9A55.58,55.58,0,0,0,137,50.08a6,6,0,1,0-2,11.84C152.38,64.84,167.13,79.6,170.08,97a6,6,0,0,0,5.91,5,6.87,6.87,0,0,0,1-.08A6,6,0,0,0,181.92,95Z'),
+    'lamp-pendant': P('M174,76.05V72a14,14,0,0,0-14-14H134V16a6,6,0,0,0-12,0V58H96A14,14,0,0,0,82,72v4A109.76,109.76,0,0,0,18,176a6,6,0,0,0,6,6H90v2a38,38,0,0,0,76,0v-2h66a6,6,0,0,0,6-6A109.76,109.76,0,0,0,174,76.05ZM154,184a26,26,0,0,1-52,0v-2h52ZM30.18,170A97.76,97.76,0,0,1,90.31,85.51,6,6,0,0,0,94,80V72a2,2,0,0,1,2-2h64a2,2,0,0,1,2,2v8a6,6,0,0,0,3.69,5.54A97.76,97.76,0,0,1,225.82,170Z'),
+    play: P('M231.36,116.19,87.28,28.06a14,14,0,0,0-14.18-.27A13.69,13.69,0,0,0,66,39.87V216.13a13.69,13.69,0,0,0,7.1,12.08,14,14,0,0,0,14.18-.27l144.08-88.13a13.82,13.82,0,0,0,0-23.62Zm-6.26,13.38L81,217.7a2,2,0,0,1-2.06,0,1.78,1.78,0,0,1-1-1.61V39.87a1.78,1.78,0,0,1,1-1.61A2.06,2.06,0,0,1,80,38a2,2,0,0,1,1,.31L225.1,126.43a1.82,1.82,0,0,1,0,3.14Z'),
+    pause: P('M200,34H160a14,14,0,0,0-14,14V208a14,14,0,0,0,14,14h40a14,14,0,0,0,14-14V48A14,14,0,0,0,200,34Zm2,174a2,2,0,0,1-2,2H160a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2h40a2,2,0,0,1,2,2ZM96,34H56A14,14,0,0,0,42,48V208a14,14,0,0,0,14,14H96a14,14,0,0,0,14-14V48A14,14,0,0,0,96,34Zm2,174a2,2,0,0,1-2,2H56a2,2,0,0,1-2-2V48a2,2,0,0,1,2-2H96a2,2,0,0,1,2,2Z'),
+    power: P('M122,128V48a6,6,0,0,1,12,0v80a6,6,0,0,1-12,0Zm57.28-77A6,6,0,0,0,172.72,61C196.41,76.47,210,100.88,210,128a82,82,0,0,1-164,0c0-27.12,13.59-51.53,37.28-67A6,6,0,0,0,76.72,51C49.57,68.68,34,96.75,34,128a94,94,0,0,0,188,0C222,96.75,206.43,68.68,179.28,51Z'),
+    sun: P('M122,40V16a6,6,0,0,1,12,0V40a6,6,0,0,1-12,0Zm68,88a62,62,0,1,1-62-62A62.07,62.07,0,0,1,190,128Zm-12,0a50,50,0,1,0-50,50A50.06,50.06,0,0,0,178,128ZM59.76,68.24a6,6,0,1,0,8.48-8.48l-16-16a6,6,0,0,0-8.48,8.48Zm0,119.52-16,16a6,6,0,1,0,8.48,8.48l16-16a6,6,0,1,0-8.48-8.48ZM192,70a6,6,0,0,0,4.24-1.76l16-16a6,6,0,0,0-8.48-8.48l-16,16A6,6,0,0,0,192,70Zm4.24,117.76a6,6,0,0,0-8.48,8.48l16,16a6,6,0,0,0,8.48-8.48ZM46,128a6,6,0,0,0-6-6H16a6,6,0,0,0,0,12H40A6,6,0,0,0,46,128Zm82,82a6,6,0,0,0-6,6v24a6,6,0,0,0,12,0V216A6,6,0,0,0,128,210Zm112-88H216a6,6,0,0,0,0,12h24a6,6,0,0,0,0-12Z'),
+    moon: P('M232.13,143.64a6,6,0,0,0-6-1.49A90.07,90.07,0,0,1,113.86,29.85a6,6,0,0,0-7.49-7.48A102.88,102.88,0,0,0,54.48,58.68,102,102,0,0,0,197.32,201.52a102.88,102.88,0,0,0,36.31-51.89A6,6,0,0,0,232.13,143.64Zm-42,48.29a90,90,0,0,1-126-126A90.9,90.9,0,0,1,99.65,37.66,102.06,102.06,0,0,0,218.34,156.35,90.9,90.9,0,0,1,190.1,191.93Z'),
+    'cloud-fog': P('M120,206H72a6,6,0,0,1,0-12h48a6,6,0,0,1,0,12Zm64-12H160a6,6,0,0,0,0,12h24a6,6,0,0,0,0-12Zm-24,32H104a6,6,0,0,0,0,12h56a6,6,0,0,0,0-12Zm70-126a74.09,74.09,0,0,1-74,74H76A50,50,0,1,1,86.2,75,74.08,74.08,0,0,1,230,100Zm-12,0A62.06,62.06,0,0,0,94,96.35a6,6,0,0,1-12-.7,75.84,75.84,0,0,1,1.07-9A38,38,0,1,0,76,162h80A62.07,62.07,0,0,0,218,100Z'),
+    lock: P('M208,82H174V56a46,46,0,0,0-92,0V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82ZM94,56a34,34,0,0,1,68,0V82H94ZM210,208a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Zm-72-56a10,10,0,1,1-10-10A10,10,0,0,1,138,152Z'),
+    'lock-open': P('M208,82H94V56a34,34,0,0,1,34-34c16.3,0,31,11.69,34.12,27.19a6,6,0,0,0,11.76-2.38C169.55,25.48,150.26,10,128,10A46.06,46.06,0,0,0,82,56V82H48A14,14,0,0,0,34,96V208a14,14,0,0,0,14,14H208a14,14,0,0,0,14-14V96A14,14,0,0,0,208,82Zm2,126a2,2,0,0,1-2,2H48a2,2,0,0,1-2-2V96a2,2,0,0,1,2-2H208a2,2,0,0,1,2,2Zm-72-56a10,10,0,1,1-10-10A10,10,0,0,1,138,152Z'),
+    'sliders-horizontal': P('M40,86H74.6a30,30,0,0,0,58.8,0H216a6,6,0,0,0,0-12H133.4a30,30,0,0,0-58.8,0H40a6,6,0,0,0,0,12Zm64-24A18,18,0,1,1,86,80,18,18,0,0,1,104,62ZM216,170H197.4a30,30,0,0,0-58.8,0H40a6,6,0,0,0,0,12h98.6a30,30,0,0,0,58.8,0H216a6,6,0,0,0,0-12Zm-48,24a18,18,0,1,1,18-18A18,18,0,0,1,168,194Z'),
+    timer: P('M128,42a94,94,0,1,0,94,94A94.11,94.11,0,0,0,128,42Zm0,176a82,82,0,1,1,82-82A82.1,82.1,0,0,1,128,218ZM172.24,91.76a6,6,0,0,1,0,8.48l-40,40a6,6,0,1,1-8.48-8.48l40-40A6,6,0,0,1,172.24,91.76ZM98,16a6,6,0,0,1,6-6h48a6,6,0,0,1,0,12H104A6,6,0,0,1,98,16Z'),
+    'fast-forward': P('M247.59,116.35,159.41,60.18a14,14,0,0,0-14.22-.46A13.83,13.83,0,0,0,138,71.84v41L55.41,60.18a14,14,0,0,0-14.22-.46A13.83,13.83,0,0,0,34,71.84V184.16a13.83,13.83,0,0,0,7.19,12.12,14,14,0,0,0,14.22-.46L138,143.21v40.95a13.83,13.83,0,0,0,7.19,12.12,14,14,0,0,0,14.22-.46l88.18-56.17a13.79,13.79,0,0,0,0-23.3ZM137.15,129.53,49,185.69a1.9,1.9,0,0,1-2,.06,1.73,1.73,0,0,1-1-1.59V71.84a1.73,1.73,0,0,1,1-1.59,2,2,0,0,1,1-.26,1.87,1.87,0,0,1,1,.32l88.19,56.16a1.8,1.8,0,0,1,0,3.06Zm104,0L153,185.69a1.9,1.9,0,0,1-2,.06,1.73,1.73,0,0,1-1-1.59V71.84a1.73,1.73,0,0,1,1-1.59,2,2,0,0,1,1-.26,1.87,1.87,0,0,1,1,.32l88.19,56.16a1.8,1.8,0,0,1,0,3.06Z'),
+    sparkle: P('M196.89,130.94,144.4,111.6,125.06,59.11a13.92,13.92,0,0,0-26.12,0L79.6,111.6,27.11,130.94a13.92,13.92,0,0,0,0,26.12L79.6,176.4l19.34,52.49a13.92,13.92,0,0,0,26.12,0L144.4,176.4l52.49-19.34a13.92,13.92,0,0,0,0-26.12Zm-4.15,14.86-55.08,20.3a6,6,0,0,0-3.56,3.56l-20.3,55.08a1.92,1.92,0,0,1-3.6,0L89.9,169.66a6,6,0,0,0-3.56-3.56L31.26,145.8a1.92,1.92,0,0,1,0-3.6l55.08-20.3a6,6,0,0,0,3.56-3.56l20.3-55.08a1.92,1.92,0,0,1,3.6,0l20.3,55.08a6,6,0,0,0,3.56,3.56l55.08,20.3a1.92,1.92,0,0,1,0,3.6ZM146,40a6,6,0,0,1,6-6h18V16a6,6,0,0,1,12,0V34h18a6,6,0,0,1,0,12H182V64a6,6,0,0,1-12,0V46H152A6,6,0,0,1,146,40ZM246,88a6,6,0,0,1-6,6H230v10a6,6,0,0,1-12,0V94H208a6,6,0,0,1,0-12h10V72a6,6,0,0,1,12,0V82h10A6,6,0,0,1,246,88Z'),
+    flashlight: P('M184,18H72A14,14,0,0,0,58,32V77.33a14,14,0,0,0,2.8,8.4l20.8,27.73a2,2,0,0,1,.4,1.21V224a14,14,0,0,0,14,14h64a14,14,0,0,0,14-14V114.67a2,2,0,0,1,.4-1.2l20.8-27.74a14,14,0,0,0,2.8-8.4V32A14,14,0,0,0,184,18ZM72,30H184a2,2,0,0,1,2,2V58H70V32A2,2,0,0,1,72,30ZM185.6,78.53l-20.8,27.74a14,14,0,0,0-2.8,8.4V224a2,2,0,0,1-2,2H96a2,2,0,0,1-2-2V114.67a14,14,0,0,0-2.8-8.4L70.4,78.54a2,2,0,0,1-.4-1.21V70H186v7.33A2,2,0,0,1,185.6,78.53ZM134,120v32a6,6,0,0,1-12,0V120a6,6,0,0,1,12,0Z'),
+  };
 
   let styled = false;
   function style() {
@@ -38,7 +60,10 @@
 .ma-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;border-radius:8px;
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.ma-ring>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}`;
+.ma-ring>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ma-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;mix-blend-mode:screen;display:none;border-radius:50%}
+.ma-icon{display:inline-block;position:relative;vertical-align:middle;flex:none}
+.ma-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:screen}`;
     document.head.appendChild(s);
   }
   // a canvas behind `host`'s content, filling it
@@ -188,5 +213,80 @@
     return live(backdrop(el), Object.assign({ plate: 'aurora', look: 'ember', seed: 3, scroll: true, drift: 0.8, pointer: 0.5, tilt: 1.4, hand: el }, opts));
   }
 
-  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition };
+  /**
+   * iconMask(svg, { pad, weight, size }) — an icon's SVG (one or more <path d>, any viewBox) cast
+   * as a white-on-black canvas: fed to a plate as its `image`, the white becomes a pool of metal
+   * in the icon's shape. `weight` strokes the outline too (viewBox units): light icons are
+   * hairlines, and a pool needs a little body before it can catch a lamp.
+   */
+  function iconMask(svg, opts) {
+    const o = Object.assign({ pad: 0.1, weight: 8, size: 256 }, opts);
+    const vb = ((svg.match(/viewBox="([^"]+)"/) || [0, '0 0 256 256'])[1]).split(/[\s,]+/).map(Number);
+    const c = document.createElement('canvas'); c.width = c.height = o.size;
+    const x = c.getContext('2d'), s = o.size * (1 - 2 * o.pad) / Math.max(vb[2], vb[3]);
+    x.fillStyle = '#000'; x.fillRect(0, 0, o.size, o.size);
+    x.translate((o.size - vb[2] * s) / 2 - vb[0] * s, (o.size - vb[3] * s) / 2 - vb[1] * s); x.scale(s, s);
+    x.fillStyle = x.strokeStyle = '#fff'; x.lineWidth = o.weight; x.lineJoin = 'round';
+    for (const m of svg.matchAll(/\sd="([^"]+)"/g)) { const p = new Path2D(m[1]); x.fill(p); if (o.weight) x.stroke(p); }
+    return c;
+  }
+
+  /**
+   * An icon poured in chrome: the SVG's silhouette becomes the height of a film plate, so it is
+   * a pool of metal in the icon's shape, oil in its folds, screen-blended onto the dark. `name`
+   * is a key of ICONS or an SVG string. The element sets the size; its button raises the lamp.
+   */
+  function icon(el, name, opts) {
+    const svg = ICONS[name] || name;
+    const o = Object.assign({ plate: 'film', look: 'oxide', seed: 3, grain: 0.02, rest: 0.85, hover: 1.15, weight: 10, pad: 0.1 }, opts);
+    style();
+    el.classList.add('ma-icon'); el.setAttribute('aria-hidden', 'true');
+    const c = document.createElement('canvas'); el.appendChild(c);
+    const host = el.closest('button,a,label,[tabindex]') || el;
+    const ctl = live(c, { plate: o.plate, look: o.look, seed: o.seed, grain: o.grain, image: iconMask(svg, { pad: o.pad, weight: o.weight }), zoom: 0, level: o.rest, drift: 0.4, pointer: 1, radius: 1.2, tilt: 0, clickPulse: false, own: false, hand: host });
+    if (!ctl) return null;
+    host.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') ctl.set({ level: o.hover }); });
+    host.addEventListener('pointerleave', () => ctl.set({ level: o.rest }));
+    return ctl;
+  }
+
+  /**
+   * A small lamp that trails the mouse: a bead of chrome, screen-blended, its highlight swinging
+   * against the motion, a press rippling it. The system cursor stays. Mouse only: hidden for touch
+   * and pen, and with reduced motion. opts: size (px), lag (s).
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ size: 26, lag: 0.09, plate: 'glass', look: 'eye', seed: 9, grain: 0.02 }, opts);
+    area = area || document.documentElement;
+    style();
+    const c = document.createElement('canvas');
+    c.className = 'ma-cursor'; c.setAttribute('aria-hidden', 'true');
+    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
+    document.body.appendChild(c);
+    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, vx = 0, vy = 0, on = false, last = 0;
+    const show = v => { c.style.display = v ? 'block' : 'none'; };
+    area.addEventListener('pointermove', e => {
+      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
+      tx = e.clientX; ty = e.clientY;
+      if (!on) { x = tx; y = ty; on = true; show(true); }
+      if (!ctl) ctl = live(c, { plate: o.plate, look: o.look, seed: o.seed, grain: o.grain, zoom: 90, drift: 0.6, pointer: 1, radius: 0.8, lag: 0.05, tilt: 0, clickPulse: false, own: false });
+    }, { passive: true });
+    area.addEventListener('pointerleave', () => { on = false; show(false); });
+    area.addEventListener('pointerdown', e => { if (on && e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 1); });
+    tick(now => {
+      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+      if (!on) return;
+      const k = 1 - Math.exp(-dt / o.lag), px = x, py = y;
+      x += (tx - x) * k; y += (ty - y) * k;
+      vx += ((x - px) / dt - vx) * 0.2; vy += ((y - py) / dt - vy) * 0.2;
+      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
+      // the lamp hangs up and to the left, and swings back against the motion
+      if (ctl) { const sw = o.size * 0.3, sp = Math.hypot(vx, vy) + 1e-6, a = Math.min(1, sp / 900);
+        ctl.point(o.size * 0.36 - vx / sp * sw * a, o.size * 0.3 - vy / sp * sw * a); }
+    });
+    return { get ctl() { return ctl; }, canvas: c };
+  }
+
+  M.iconMask = iconMask;
+  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS };
 })(typeof window !== 'undefined' ? window : globalThis);

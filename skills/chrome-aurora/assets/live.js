@@ -27,26 +27,63 @@
 (function (root) {
   'use strict';
   const M = root.Mercury;
-  if (!M) throw new Error('live.js: load mercury.js first');
+  if (!M || !M.gpuParts) throw new Error('live.js: load mercury.js first');
+  const G = M.gpuParts;
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false, addEventListener() {} };
   const PLATES = ['film', 'trail', 'ribbon', 'glass', 'aurora'];
-  const MAX_AREA = 4.2e6;   // captured plates are capped here (device px); the CSS size stays
+  const MAX_AREA = 5.3e6;   // views are capped here (device px, a 1440 × 900 CSS view at DPR 2 fits); the CSS size stays
 
   // motion options: they never re-run the still engine
   const MOTION = {
     drift: 1, speed: 1, hues: ['#35f0c8', '#7b5cff', '#ff4fa0'],
     pointer: 0.9, radius: 0.55, lag: 0.12, hand: null, clickPulse: true,
     tilt: 1, level: 1, fill: null, rise: false, riseMs: 1400, scroll: false,
-    ease: 0.16, resolution: 1, own: null, zoom: 280,
+    ease: 0.16, resolution: 1, own: null, zoom: 280, flow: 1, grainRate: 24, bands: 0,
   };
+  const FLOW = 0.05;           // rad/s the lattice's fastest gradients turn at flow 1
+  const FIELD_BUDGET = 3.2e5;  // film-equivalent pass-1 pixels redrawn per frame (~1.3 ms); bigger fields flow in bands
   const hex = c => { const n = parseInt(c.slice(1), 16); return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]; };
 
-  // ---------------------------------------------------------------- shader
+  // ---------------------------------------------------------------- shaders
   const VS = `#version 300 es
 in vec2 a; void main() { gl_Position = vec4(a, 0., 1.); }`;
-  const FS = `#version 300 es
+
+  // pass 1: the plate itself. This is mercury.js's own GLSL (PRELUDE + FRAG[plate]), compiled as
+  // GLSL 3.00 with three of its hooks filled in: GRAD turns every lattice gradient by the flow clock
+  // times its own spin (so the height field flows in place, and every warp built on it flows with
+  // it), SLIDE lets the oil slide in the film's fold, AUX hands back the plate's height or normal
+  // pass as a second target. With uFlow = 0 each hook is the identity, so the plate is the still.
+  const plateFS = name => `#version 300 es
+#define LIVE 1
+#define texture2D texture
 precision highp float;
+layout(location = 0) out vec4 outc;
+layout(location = 1) out vec4 outa;
+vec4 gAux = vec4(0.);
+uniform float uFlow, uSlide;
+uniform vec3 uWin;            // pass-1 texel -> plate px: origin xy, step
+vec4 lat(vec2 i);
+vec2 spin(vec2 i) {
+  vec4 l = lat(i); vec2 g = l.xy * 2. - 1.;
+  float a = uFlow * (l.w * 2. - 1.), c = cos(a), s = sin(a);
+  return vec2(c * g.x - s * g.y, s * g.x + c * g.y);
+}
+#define GRAD(i) spin(i)
+#define AUX(v) gAux = v;
+#define SLIDE + uSlide * (sin(uFlow * .8 + a.z * 5.) - sin(a.z * 5.))
+${G.PRELUDE}
+${G.FRAG[name]}
+void main() {
+  vec2 fc = uWin.xy + gl_FragCoord.xy * uWin.z;
+  outc = vec4(clamp(shade((fc - .5 * uRes) / uMin), 0., 1.), 1.);
+  outa = gAux;
+}`;
+
+  // pass 2, per device pixel: the plate scaled up as the still's drawImage does, its grain (the
+  // still's grain() line by line, same integer hash), then the motion laid on top
+  const FS = `#version 300 es
+precision highp float; precision highp int;
 uniform sampler2D uBase, uNrm;
 uniform vec2 uRes;
 uniform float uKind, uClock, uEnv, uTilt, uLevel;
@@ -55,7 +92,13 @@ uniform vec4 uPul[4];         // x, y, ring radius (px), amp
 uniform int uNP;
 uniform vec3 uHue[3];
 uniform vec4 uFill;           // from, to (0..1 across), soft, on
+uniform vec4 uGrain;          // amount (8-bit levels), seed, coarse cell (px), tick
 out vec4 outc;
+float hash(int x, int y, int s) {
+  uint h = uint(x) * 374761393u + uint(y) * 668265263u + uint(s) * 2147483647u;
+  h = (h ^ (h >> 13u)) * 1274126177u;
+  return float(h ^ (h >> 16u)) / 4294967296.;
+}
 vec3 normalAt(vec2 uv, out float cover) {
   if (uKind > .5) {
     vec3 t = texture(uNrm, uv).rgb;
@@ -63,7 +106,7 @@ vec3 normalAt(vec2 uv, out float cover) {
     return cover > 0. ? normalize(t * 2. - 1.) : vec3(0., 0., 1.);
   }
   cover = 1.;
-  vec2 e = 1.5 / vec2(textureSize(uNrm, 0));
+  vec2 e = 3. / uRes;
   float hx = texture(uNrm, uv + vec2(e.x, 0.)).r - texture(uNrm, uv - vec2(e.x, 0.)).r;
   float hy = texture(uNrm, uv + vec2(0., e.y)).r - texture(uNrm, uv - vec2(0., e.y)).r;
   return normalize(vec3(-hx * 6., -hy * 6., 1.));
@@ -86,7 +129,16 @@ void main() {
   nr = normalize(nr);
   // the room tilts with the scroll and the ripples bend it: re-sample the plate along the normal
   vec2 off = ((nr.xy - n.xy) * .05 + nr.xy * uTilt * .035) * S / uRes;
-  vec3 col = texture(uBase, uv + off).rgb * uLevel;
+  vec3 b = floor(texture(uBase, uv + off).rgb * 255. + .5);
+  // grain, as the still lays it: strongest in the midtones, a coarser clump, a little colour
+  if (uGrain.x > 0.) {
+    int x = int(px.x), y = int(px.y), s = int(uGrain.y), f = s + 4 * int(uGrain.w), gs = int(uGrain.z);
+    float l = dot(b, vec3(.299, .587, .114)) / 255.;
+    float g = (hash(x, y, f) + hash(x, y, f + 1) - 1. + .6 * (hash(x / gs, y / gs, s + 2) - .5)) * uGrain.x * (.3 + 2.4 * l * (1. - l) + .25 * (1. - l));
+    float c = (hash(x, y, f + 3) - .5) * uGrain.x * .25;
+    b = clamp(floor(b + vec3(g + c, g, g - c) + .5), 0., 255.);
+  }
+  vec3 col = b / 255. * uLevel;
   float lum = dot(col, vec3(.3, .5, .2));
   // sheen: a lamp held over the pointer, mirrored by the surface
   if (uLight.z > 0.) {
@@ -117,9 +169,11 @@ void main() {
 }`;
 
   // ---------------------------------------------------------------- renderers
-  function compile(gl) {
+  const PLATE_U = ['uRes', 'uMin', 'uLat', 'uImg', 'uImgOn', 'uK0', 'uK1', 'uK2', 'uK3', 'uCol', 'uPos', 'uW', 'uLayer', 'uFlow', 'uSlide', 'uWin'];
+  const COMP_U = ['uBase', 'uNrm', 'uRes', 'uKind', 'uClock', 'uEnv', 'uTilt', 'uLevel', 'uLight', 'uPul', 'uNP', 'uHue', 'uFill', 'uGrain'];
+  function compile(gl, fs, names) {
     const p = gl.createProgram();
-    for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, FS]]) {
+    for (const [type, src] of [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, fs]]) {
       const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS) && !gl.isContextLost()) { console.warn('mercury live shader:', gl.getShaderInfoLog(s)); return null; }
       gl.attachShader(p, s);
@@ -128,16 +182,17 @@ void main() {
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { if (!gl.isContextLost()) console.warn('mercury live link:', gl.getProgramInfoLog(p)); return null; }
     const u = {};
-    for (const k of ['uBase', 'uNrm', 'uRes', 'uKind', 'uClock', 'uEnv', 'uTilt', 'uLevel', 'uLight', 'uPul', 'uNP', 'uHue', 'uFill']) u[k] = gl.getUniformLocation(p, k);
+    for (const k of names) u[k] = gl.getUniformLocation(p, k);
     return { p, u };
   }
   function makeRenderer(canvas) {
     let gl = null;
     try { gl = canvas.getContext('webgl2', { alpha: false, antialias: false, depth: false, stencil: false, preserveDrawingBuffer: false, powerPreference: 'high-performance' }); } catch (e) { gl = null; }
     if (!gl) return null;
-    const R = { gl, canvas, lost: false };
+    const R = { gl, canvas, lost: false, plates: {} };
     const setup = () => {
-      R.prog = compile(gl);
+      R.plates = {};
+      R.prog = compile(gl, FS, COMP_U);
       const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
       gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
@@ -148,6 +203,11 @@ void main() {
     const back = () => { R.lost = false; setup(); for (const v of views) if (v.R === R) { v.src = null; queueBuild(v); } };
     canvas.addEventListener('webglcontextlost', lost); canvas.addEventListener('webglcontextrestored', back);
     return R;
+  }
+  // the plate program for `name` on renderer R, compiled once
+  function plateProg(R, name) {
+    if (R.plates[name] === undefined) R.plates[name] = compile(R.gl, plateFS(name), PLATE_U);
+    return R.plates[name];
   }
   let shared;
   function sharedRenderer() {
@@ -162,21 +222,22 @@ void main() {
     if (!shared) shared = makeRenderer(document.createElement('canvas'));
     return shared;
   }
-  function texture(gl, src) {
+  function texture(gl, w, h, data, filter) {
     const t = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, t);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
     gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, gl.NONE);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, src);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    if (data && data.width !== undefined && !(data instanceof Uint8Array)) gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    else gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, data || null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     return t;
   }
 
-  // ---------------------------------------------------------------- capture
+  // ---------------------------------------------------------------- the plate on the GPU
   function stillOpts(o) { const s = {}; for (const k in o) if (!(k in MOTION) && k !== 'plate') s[k] = o[k]; return s; }
   const plateOf = o => PLATES.includes(o.plate) ? o.plate : 'film';
-  // the still, drawn by mercury.js into `cv` at w × h
+  // the still, drawn by mercury.js into `cv` at w × h (the CPU fallback and parity's reference)
   function runStill(cv, o, w, h, extra) { return M[plateOf(o)](cv, Object.assign(stillOpts(o), { width: w, height: h }, extra)); }
   // small or long canvases see a window onto a bigger plate (at least `zoom` px on its short side,
   // aspect at most 2:1), so a 36 px button shows one smooth fold rather than a whole pour shrunk
@@ -186,33 +247,98 @@ void main() {
     ch = Math.max(ch, Math.round(cw / 2)); cw = Math.max(cw, Math.round(ch / 2));
     return [cw, ch];
   }
-  // the still at w × h: the plate itself, or the middle of a bigger one; `div` 2 gives the half-size pass
-  function capture(o, w, h, extra, div) {
-    const [cw, ch] = frameOf(o, w, h), dw = Math.max(8, Math.ceil(w / div)), dh = Math.max(8, Math.ceil(h / div));
-    if (cw === w && ch === h) return runStill(document.createElement('canvas'), o, dw, dh, extra);
-    const big = runStill(document.createElement('canvas'), o, Math.max(8, Math.ceil(cw / div)), Math.max(8, Math.ceil(ch / div)), extra);
-    const out = document.createElement('canvas'); out.width = dw; out.height = dh;
-    const x = out.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
-    x.drawImage(big, (cw - w) / 2 / div, (ch - h) / 2 / div, w / div, h / div, 0, 0, dw, dh);
+  // the still at w × h for the CPU path: the plate itself, or the middle of a bigger one
+  function capture(o, w, h) {
+    const [cw, ch] = frameOf(o, w, h);
+    if (cw === w && ch === h) return runStill(document.createElement('canvas'), o, w, h);
+    const big = runStill(document.createElement('canvas'), o, cw, ch);
+    const out = document.createElement('canvas'); out.width = w; out.height = h;
+    out.getContext('2d').drawImage(big, (cw - w) / 2, (ch - h) / 2, w, h, 0, 0, w, h);
     return out;
   }
+  // a plate costs this much per pass-1 pixel, relative to film (noise lookups, the thin film)
+  // pass-1 cost per pixel against the film's, measured at 2880x1800 (film 4.2, ribbon 4, trail 3.3, glass 2.7, aurora 1.9 ms/MP)
+  const COST = { film: 1, trail: 0.8, ribbon: 0.95, glass: 0.65, aurora: 0.45 };
   function build(v) {
     if (!v.w || !v.h) return;
     const o = v.o, name = plateOf(o);
+    v.cpuStill = null;
     if (!v.R) { v.src = { cpu: true }; v.dirty = true; return; }
-    const base = capture(o, v.w, v.h, null, 1);
-    const nrm = capture(o, v.w, v.h, { layer: name === 'film' ? 'normal' : 'height' }, 2);
-    const gl = v.R.gl;
-    if (v.src && v.src.base) { gl.deleteTexture(v.src.base); gl.deleteTexture(v.src.nrm); }
-    v.src = { base: texture(gl, base), nrm: texture(gl, nrm), kind: name === 'film' ? 1 : 0, w: v.w, h: v.h };
+    const gl = v.R.gl, prog = plateProg(v.R, name);
+    if (!prog) { v.R = null; v.ctx = v.canvas.getContext('2d'); v.src = { cpu: true }; v.dirty = true; return; }
+    const [cw, ch] = frameOf(o, v.w, v.h), win = cw !== v.w || ch !== v.h;
+    const { seed, P, lat, pic } = G.prepare(name, stillOpts(o), cw, ch);
+    const S = G.SCALE[name];
+    const bw = Math.max(8, Math.round(cw * S)), bh = Math.max(8, Math.round(ch * S));
+    const tw = win ? Math.max(8, Math.round(v.w * S)) : bw, th = win ? Math.max(8, Math.round(v.h * S)) : bh;
+    const k = win ? (bw / cw) * (v.w / tw) : 1;
+    // the lattice as the still uploads it, plus a spin per node in the alpha the still leaves at 255
+    const bytes = lat.bytes.slice(), r = M.mulberry32(seed * 131 + 71);
+    for (let i = 3; i < bytes.length; i += 4) bytes[i] = Math.floor(r() * 256);
+    freeSrc(v);
+    const tex = {
+      lat: texture(gl, G.N, G.N, bytes, gl.NEAREST),
+      img: pic ? texture(gl, 0, 0, pic.canvas, gl.LINEAR) : texture(gl, 1, 1, new Uint8Array([128, 128, 128, 255]), gl.LINEAR),
+      base: texture(gl, tw, th, null, gl.LINEAR), nrm: texture(gl, tw, th, null, gl.LINEAR),
+    };
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex.base, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, tex.nrm, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    const okFb = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    if (!okFb) { v.src = null; for (const t of Object.values(tex)) gl.deleteTexture(t); gl.deleteFramebuffer(fb); v.R = null; v.ctx = v.canvas.getContext('2d'); v.src = { cpu: true }; v.dirty = true; return; }
+    const bands = o.bands || Math.max(1, Math.min(24, Math.ceil(tw * th * COST[name] / FIELD_BUDGET)));
+    v.src = {
+      base: tex.base, nrm: tex.nrm, tex, fb, prog, name, P, w: v.w, h: v.h, tw, th, kind: name === 'film' ? 1 : 0,
+      res: [bw, bh], win: win ? [(bw - v.w * (bw / cw)) / 2, (bh - v.h * (bh / ch)) / 2, k] : [0, 0, 1],
+      imgOn: pic ? P.imgMix : 0, grain: (P.grain || 0) * 255, seed: seed * 7 + 3, gs: Math.max(1, Math.round(Math.min(cw, ch) / 800)),
+      slide: name === 'film' ? 0.22 : 0, bands, band: 0, field: -1,
+    };
     v.dirty = true;
+  }
+  function freeSrc(v) {
+    const s = v.src;
+    if (!s || !s.tex || !v.R) return;
+    const gl = v.R.gl;
+    for (const t of Object.values(s.tex)) gl.deleteTexture(t);
+    gl.deleteFramebuffer(s.fb);
   }
 
   // ---------------------------------------------------------------- drawing
+  // pass 1: the plate at flow time t into its framebuffer, all of it or one band of rows
+  function drawField(v, t, band) {
+    const R = v.R, s = v.src, gl = R.gl, u = s.prog.u, P = s.P;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, s.fb);
+    gl.viewport(0, 0, s.tw, s.th);
+    if (band != null && s.bands > 1) {
+      const y0 = Math.floor(s.th * band / s.bands), y1 = Math.floor(s.th * (band + 1) / s.bands);
+      gl.enable(gl.SCISSOR_TEST); gl.scissor(0, y0, s.tw, y1 - y0);
+    }
+    gl.useProgram(s.prog.p);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, s.tex.lat);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, s.tex.img);
+    gl.uniform1i(u.uLat, 0); gl.uniform1i(u.uImg, 1);
+    gl.uniform2f(u.uRes, s.res[0], s.res[1]); gl.uniform1f(u.uMin, Math.min(s.res[0], s.res[1]));
+    gl.uniform1f(u.uImgOn, s.imgOn); gl.uniform1f(u.uLayer, 0);
+    gl.uniform4fv(u.uK0, P.k[0]); gl.uniform4fv(u.uK1, P.k[1]); gl.uniform4fv(u.uK2, P.k[2]); gl.uniform4fv(u.uK3, P.k[3]);
+    gl.uniform3fv(u.uCol, P.col.flat()); gl.uniform1fv(u.uPos, P.pos);
+    gl.uniform3fv(u.uW, G.WEIGHTS.flat());
+    gl.uniform1f(u.uFlow, t); gl.uniform1f(u.uSlide, s.slide);
+    gl.uniform3f(u.uWin, s.win[0], s.win[1], s.win[2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
   function drawGPU(v) {
     const R = v.R, s = v.src;
     if (!R || R.lost || !s || !s.base) return false;
     const gl = R.gl, u = R.prog.u, st = v.st, o = v.o;
+    // the field: whole when it is new or has to go back to the still, one band a frame while it flows
+    const t = st.flow;
+    if (s.field < 0 || (t === 0 && s.field !== 0)) { drawField(v, t); s.field = t; }
+    else if (t !== s.field) { drawField(v, t, s.band); s.band = (s.band + 1) % s.bands; s.field = t; }
     if (R.canvas.width !== s.w || R.canvas.height !== s.h) { R.canvas.width = s.w; R.canvas.height = s.h; }
     gl.viewport(0, 0, s.w, s.h);
     gl.useProgram(R.prog.p);
@@ -233,6 +359,7 @@ void main() {
     gl.uniform3fv(u.uHue, (o.hues || MOTION.hues).slice(0, 3).map(hex).flat());
     const f = st.fill;
     gl.uniform4f(u.uFill, f ? f[0] : 0, f ? f[1] : 1, f ? (f[2] == null ? 0.01 : f[2]) : 0, f ? 1 : 0);
+    gl.uniform4f(u.uGrain, s.grain, s.seed, s.gs, st.gk);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     return true;
   }
@@ -245,17 +372,18 @@ void main() {
   }
   // no WebGL2: the still plate; level and fill applied as flat darkening
   function drawCPU(v) {
-    const c = v.canvas, st = v.st, src = capture(v.o, v.w, v.h, null, 1);
+    const c = v.canvas, st = v.st;
+    if (!v.cpuStill) v.cpuStill = capture(v.o, v.w, v.h);
     const x = v.ctx || c.getContext('2d');
     if (c.width !== v.w || c.height !== v.h) { c.width = v.w; c.height = v.h; }
-    x.globalCompositeOperation = 'copy'; x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-over';
+    x.globalCompositeOperation = 'copy'; x.drawImage(v.cpuStill, 0, 0); x.globalCompositeOperation = 'source-over';
     if (st.level < 1) { x.fillStyle = `rgba(0,0,0,${1 - st.level})`; x.fillRect(0, 0, v.w, v.h); }
     const f = st.fill;
     if (f) { x.fillStyle = 'rgba(3,3,4,.84)'; x.fillRect(0, 0, f[0] * v.w, v.h); x.fillRect(f[1] * v.w, 0, v.w - f[1] * v.w, v.h); }
   }
 
   // ---------------------------------------------------------------- views and the one loop
-  const views = new Set();
+  const views = new Set(), T0 = performance.now();
   let raf = 0, last = 0, lastCost = 0;
   function wake() { if (!raf && !document.hidden) raf = requestAnimationFrame(frame); }
   function frame(now) {
@@ -287,7 +415,7 @@ void main() {
   function live(canvas, opts) {
     const o = Object.assign({ plate: 'film' }, MOTION, opts);
     const v = { canvas, o, R: null, ctx: null, src: null, dirty: true, paused: false, visible: false, ratio: 0, frames: 0, dpr: 1, w: 0, h: 0, cssW: 1, cssH: 1 };
-    v.st = { clock: 0, env: 0, tilt: 0, tilt0: null, level: o.rise ? 0 : o.level, riseStart: 0, fill: o.fill ? o.fill.slice() : null, light: { x: 0, y: 0, tx: 0, ty: 0, amp: 0, on: false, seen: false }, pulses: [] };
+    v.st = { clock: 0, flow: 0, gk: 0, env: 0, tilt: 0, tilt0: null, level: o.rise ? 0 : o.level, riseStart: 0, fill: o.fill ? o.fill.slice() : null, light: { x: 0, y: 0, tx: 0, ty: 0, amp: 0, on: false, seen: false }, pulses: [] };
     const r0 = canvas.getBoundingClientRect();
     const area = r0.width * r0.height * Math.pow(Math.min(2, root.devicePixelRatio || 1), 2);
     if (live.gpu !== false) {
@@ -324,6 +452,9 @@ void main() {
       const k = rm ? 1 : 1 - Math.exp(-dt / Math.max(0.001, o.ease));
       if (!rm && o.drift > 0) { st.clock += dt * o.speed; st.env = 1 - Math.exp(-st.clock / 3); moving = true; }
       else if (rm) { st.clock = 0; st.env = 0; }
+      // the metal's own clock: the height field flows while it runs; grain re-rolls 24 times a second
+      if (!rm && o.flow > 0) { st.flow += dt * o.flow * o.speed * FLOW; moving = true; } else if (rm) st.flow = 0;
+      st.gk = !rm && o.grainRate > 0 && (o.flow > 0 || o.drift > 0) ? Math.floor((performance.now() - T0) / 1000 * o.grainRate) % 997 + 1 : 0;
       const lt = levelTarget(now);
       if (!rm && Math.abs(st.level - lt) > 1e-3) { st.level = o.rise && st.riseStart ? lt : lerp(st.level, lt, k); moving = true; } else st.level = lt;
       if (o.scroll && !rm) moving = true;
@@ -449,32 +580,52 @@ void main() {
       destroy() {
         views.delete(v); io.disconnect(); ro.disconnect(); clearTimeout(rzT);
         for (const [t, f] of [['pointermove', onMove], ['pointerdown', onDown], ['pointerleave', onLeave], ['pointerup', onLeave], ['pointercancel', onLeave]]) hand.removeEventListener(t, f);
-        if (v.R && v.src && v.src.base) { v.R.gl.deleteTexture(v.src.base); v.R.gl.deleteTexture(v.src.nrm); }
+        freeSrc(v);
         if (v.R && v.R.canvas === canvas) { const x = v.R.gl.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); }
         const i = registry.views.indexOf(api); if (i >= 0) registry.views.splice(i, 1);
       },
       state() { return { mode: v.R ? 'gpu' : 'still', path: v.R ? (v.R.canvas === canvas ? 'own' : v.R.offscreen ? 'bitmap' : 'copy') : 'cpu', frames: v.frames, visible: v.visible, expose: +v.st.level.toFixed(3), clock: +v.st.clock.toFixed(2), size: [v.w, v.h], ready: !!v.src, reduced: still() }; },
       /** time n frames with every term on (lamp, two ripples, aurora, tilt): `sync` waits for the GPU after
        *  every frame (1-pixel readback) and reports the median; `pipelined` issues n frames and waits once */
+      // jump to t seconds of motion (clock and flow), the whole field redrawn: stills of the motion, tests
+      seek(t) {
+        const st = v.st;
+        st.clock = t; st.flow = t * v.o.flow * v.o.speed * FLOW;
+        if (v.src && v.src.base) v.src.field = -1;
+        v.dirty = true;
+        if (v.R && v.src && v.src.base && drawGPU(v)) { present(v); v.frames++; }
+        return api;
+      },
       bench(n) {
         if (!v.R || !v.src || !v.src.base) return null;
         n = n || 60;
         const gl = v.R.gl, px = new Uint8Array(4), ts = [], st = v.st;
-        const keep = { clock: st.clock, env: st.env, tilt: st.tilt, light: Object.assign({}, st.light), pulses: st.pulses };
+        const keep = { clock: st.clock, flow: st.flow, gk: st.gk, env: st.env, tilt: st.tilt, light: Object.assign({}, st.light), pulses: st.pulses };
         const S = Math.min(v.w, v.h);
         Object.assign(st, { env: 1, tilt: 0.4, pulses: [{ x: v.w * 0.3, y: v.h * 0.5, ring: S * 0.3, amp: 0.6 }, { x: v.w * 0.7, y: v.h * 0.4, ring: S * 0.2, amp: 0.5 }] });
         Object.assign(st.light, { x: v.w / 2, y: v.h / 2, amp: 1 });
-        const step = () => { st.clock += 1 / 60; drawGPU(v); };
+        const step = () => { st.clock += 1 / 60; st.flow += FLOW / 60; st.gk = (st.gk + 1) % 997; drawGPU(v); };
         step(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
         for (let i = 0; i < n; i++) { const t0 = performance.now(); step(); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); ts.push(performance.now() - t0); }
         const t0 = performance.now();
         for (let i = 0; i < n; i++) step();
         gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
         const pipelined = (performance.now() - t0) / n;
-        Object.assign(st, { clock: keep.clock, env: keep.env, tilt: keep.tilt, pulses: keep.pulses }); Object.assign(st.light, keep.light);
+        // the whole field in one go, as a view pays for it on its first frame
+        let field = Infinity;
+        for (let i = 0; i < 6; i++) {
+          const tf = performance.now();
+          drawField(v, st.flow + i * 0.01);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, v.src.fb);
+          gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+          gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+          field = Math.min(field, performance.now() - tf);
+        }
+        Object.assign(st, { clock: keep.clock, flow: keep.flow, gk: keep.gk, env: keep.env, tilt: keep.tilt, pulses: keep.pulses }); Object.assign(st.light, keep.light);
+        v.src.field = -1;
         drawGPU(v); present(v);
         ts.sort((a, b) => a - b);
-        return { sync: +ts[ts.length >> 1].toFixed(2), pipelined: +pipelined.toFixed(2), size: [v.w, v.h], path: api.state().path };
+        return { sync: +ts[ts.length >> 1].toFixed(2), pipelined: +pipelined.toFixed(2), field: +field.toFixed(2), bands: v.src.bands, size: [v.w, v.h], fieldSize: [v.src.tw, v.src.th], path: api.state().path };
       },
       _v: v,
     };
@@ -509,7 +660,7 @@ void main() {
     const R = makeRenderer(b);
     if (!R) return { plate: o.plate, gpu: false };
     const v = { canvas: b, o: Object.assign({}, MOTION, o), R, w, h };
-    v.st = { clock: 0, env: 0, tilt: 0, level: 1, fill: null, light: { x: 0, y: 0, amp: 0 }, pulses: [] };
+    v.st = { clock: 0, flow: 0, gk: 0, env: 0, tilt: 0, level: 1, fill: null, light: { x: 0, y: 0, amp: 0 }, pulses: [] };
     build(v);
     drawGPU(v);
     const gpu = new Uint8Array(w * h * 4);
@@ -550,8 +701,11 @@ void main() {
   const registry = root.handPulledLive = root.handPulledLive || { views: [], parity: {} };
   registry.parity['chrome-aurora'] = () => [
     live.parity({ plate: 'film', look: 'oxide', seed: 7 }),
+    live.parity({ plate: 'film', look: 'titanium', seed: 5 }),
+    live.parity({ plate: 'glass', look: 'pool', seed: 2 }),
     live.parity({ plate: 'glass', look: 'eye', seed: 3 }),
     live.parity({ plate: 'ribbon', look: 'volt', seed: 5 }),
+    live.parity({ plate: 'trail', look: 'ember', seed: 4 }),
     live.parity({ plate: 'aurora', look: 'iris', seed: 2, width: 320, height: 400 }),
   ].map(r => Object.assign(r, { pass: live.pass(r) }));
   M.live = live;

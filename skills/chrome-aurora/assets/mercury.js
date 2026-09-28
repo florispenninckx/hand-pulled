@@ -139,12 +139,22 @@ uniform vec3 uW[16];
 uniform float uLayer;
 const float LAT = ${N}.;
 vec4 lat(vec2 i) { return texture2D(uLat, (mod(i, LAT) + .5) / LAT); }
+// live.js hooks: GRAD turns the lattice's gradients as the metal flows, AUX hands back a pass; the still leaves both alone
+#ifndef GRAD
+#define GRAD(i) (lat(i).xy * 2. - 1.)
+#endif
+#ifndef AUX
+#define AUX(v)
+#endif
+#ifndef SLIDE
+#define SLIDE
+#endif
 float noise(vec2 p) {
   vec2 i = floor(p), f = p - i, u = f * f * f * (f * (f * 6. - 15.) + 10.);
-  float a = dot(lat(i).xy * 2. - 1., f);
-  float b = dot(lat(i + vec2(1., 0.)).xy * 2. - 1., f - vec2(1., 0.));
-  float c = dot(lat(i + vec2(0., 1.)).xy * 2. - 1., f - vec2(0., 1.));
-  float d = dot(lat(i + vec2(1., 1.)).xy * 2. - 1., f - vec2(1., 1.));
+  float a = dot(GRAD(i), f);
+  float b = dot(GRAD(i + vec2(1., 0.)), f - vec2(1., 0.));
+  float c = dot(GRAD(i + vec2(0., 1.)), f - vec2(0., 1.));
+  float d = dot(GRAD(i + vec2(1., 1.)), f - vec2(1., 1.));
   return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
 }
 float fbm(vec2 p) {
@@ -170,11 +180,13 @@ vec3 thinfilm(float opd, float F) {
   return c * sqrt(1. + F);
 }
 vec3 shade(vec2 p);
+#ifndef LIVE
 void main() {
   vec2 fc = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec3 c = shade((fc - .5 * uRes) / uMin);
   gl_FragColor = vec4(clamp(c, 0., 1.), 1.);
 }
+#endif
 `;
 
   const FRAG = {
@@ -227,13 +239,14 @@ vec3 shade(vec2 p) {
   }
   // oil gathers in the crease, thickest at its floor, and shows its orders as parallel bands
   float cost = sqrt(1. - (1. - n.z * n.z) / (uK3.y * uK3.y));
-  vec3 fl = thinfilm(2. * uK3.y * uK1.z * (1. + 1.8 * a.z + .8 * (1. - n.z)) * cost, uK3.z);
+  vec3 fl = thinfilm(2. * uK3.y * uK1.z * (1. + 1.8 * a.z + .8 * (1. - n.z) SLIDE) * cost, uK3.z);
   fl = max(mix(vec3(dot(fl, vec3(.3, .5, .2))), fl, 2.2), 0.);
   float oil = uK1.y * smoothstep(.08, .7, a.z);
   vec3 body = mix(col, fl * (.35 + .75 * min(dot(col, vec3(.3, .5, .2)) + .4, 1.)), oil);
   float fw = length(vec2(bx.y - a.y, by.y - a.y)) / e * 1.5 / uMin;
   float cover = smoothstep(0., fw + 1e-4, a.y);
   vec3 col2 = mix(uCol[0], body, cover);
+  AUX(vec4(mix(vec3(0.), n * .5 + .5, cover), 1.))
   if (uLayer > .5 && uLayer < 1.5) return vec3(cover * (.15 + 4. * a.x));
   if (uLayer > 1.5 && uLayer < 2.5) return mix(vec3(0.), n * .5 + .5, cover);
   if (uLayer > 2.5 && uLayer < 3.5) return mix(uCol[0], studio(vec3(2. * n.z * n.xy, 2. * n.z * n.z - 1.)), cover);
@@ -276,6 +289,7 @@ vec3 shade(vec2 p) {
     col = mix(col, xsec(s), a);
     band = max(band, a);
   }
+  AUX(vec4(band))
   if (uLayer > .5) return vec3(band);
   return col;
 }
@@ -300,6 +314,7 @@ vec3 shade(vec2 p) {
   float spec = pow(max(dot(n, normalize(l + vec3(0., 0., 1.))), 0.), uK1.z);
   col *= .82 + .3 * dot(n, l);
   col += uK1.x * spec * smoothstep(.3, .7, t) * mix(vec3(1.), col, .35);
+  AUX(vec4(t))
   if (uLayer > .5) return vec3(t);
   return col;
 }
@@ -336,6 +351,7 @@ vec3 shade(vec2 p) {
     vec3 L = room(vec3(2. * n.z * n.xy, 2. * n.z * n.z - 1.), p.y);
     col[c] = c == 0 ? L.r : (c == 1 ? L.g : L.b);
   }
+  AUX(vec4(.5 + h))
   if (uLayer > .5) return vec3(.5 + h);
   return col;
 }
@@ -372,6 +388,7 @@ vec3 shade(vec2 p) {
   float ca = uK1.w;
   vec3 v = vec3(form(p * (1. - ca)), form(p), form(p * (1. + ca)));
   vec3 col = vec3(ramp(v.r).r, ramp(v.g).g, ramp(v.b).b);
+  AUX(vec4(v.g))
   if (uLayer > .5) return vec3(v.g);
   return col;
 }
@@ -523,6 +540,16 @@ vec3 shade(vec2 p) {
   }
 
   const LAYERS = { final: 0, height: 1, normal: 2, light: 3, film: 4 };
+  // everything a plate needs before it is shaded: live.js calls this too, so the GPU pours the same plate
+  function prepare(name, o, W, H) {
+    const seed = o.seed == null ? 1 : o.seed | 0;
+    const P = params(name, seed, o.look);
+    P.layer = LAYERS[o.layer] || 0;
+    if (o.grain != null) P.grain = o.grain;
+    const lat = lattice(seed), pic = picture(o.image, W, H);
+    tune(name, P, lat, pic, W, H);
+    return { seed, P, lat, pic };
+  }
   const SCALE = { film: 1, trail: 1, ribbon: 0.6, glass: 0.6, aurora: 0.5 };
   let last = null;
 
@@ -530,12 +557,7 @@ vec3 shade(vec2 p) {
     const o = opts || {};
     const W = Math.max(8, Math.round(o.width || canvas.width)), H = Math.max(8, Math.round(o.height || canvas.height));
     canvas.width = W; canvas.height = H;
-    const seed = o.seed == null ? 1 : o.seed | 0;
-    const P = params(name, seed, o.look);
-    P.layer = LAYERS[o.layer] || 0;
-    if (o.grain != null) P.grain = o.grain;
-    const lat = lattice(seed), pic = picture(o.image, W, H);
-    tune(name, P, lat, pic, W, H);
+    const { seed, P, lat, pic } = prepare(name, o, W, H);
     const ctx = canvas.getContext('2d');
     const G = o.gl === false ? false : gpu();
     const s = Math.min(1, o.resolution || SCALE[name]);
@@ -805,5 +827,7 @@ vec3 shade(vec2 p) {
     webgl: () => !!gpu(),
     get last() { return last; },
     LOOKS, mulberry32,
+    // for live.js: the plates' own GLSL and inputs, so the live shader is this shader, not a copy
+    gpuParts: { PRELUDE, FRAG, N, WEIGHTS, SCALE, prepare, hash },
   };
 })(typeof window !== 'undefined' ? window : globalThis);
