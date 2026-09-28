@@ -17,7 +17,9 @@ The files next to this SKILL.md:
 
 - `assets/pixelsort.js`: `window.PixelSort`, the low-level tools. It has `sort` (interval pixel sorting by threshold, random, edges, waves or border, at any angle, with a mask), `channelShift`, `slices`, and `crush`, which is real JPEG generation loss through the browser's encoder.
 - `assets/glitch.js`: `window.Glitch`, seven seeded plates built on it (`smear`, `wave`, `drip`, `shatter`, `collage`, `scan`, `type`), `dusk` (the stand-in photograph, a coast at dusk drawn in code), and the helpers `macroblock`, `slitRow`, `slitCol`, `scanlines` and `vivid`. Load `pixelsort.js` first. There are no other dependencies.
-- `reference.html`: "Stale Vector", a fictional weekend of broken files. The smear is the hero, and below it are a lede with one phrase marked in pink and a three-column board of six plates captioned like file names. A smear strip divides the page, and the programme is printed as a listing. **Read it before designing.**
+- `assets/live.js`: `Glitch.live`, the plates moving on the GPU (WebGL2), for real interfaces. See "Live" below.
+- `assets/live-ui.js`: `Glitch.ui`, interface pieces (button, toggle, slider, progress, loader, card, focus ring, section transition, live background) broken the same way.
+- `reference.html`: "Stale Vector", a fictional weekend of broken files. The smear is the hero, and below it are a lede with one phrase marked in pink and a three-column board of six plates captioned like file names. A smear strip divides the page, and the programme is printed as a listing. The hero is live, and at the end "Slitdeck", a small fictional desk, uses every live UI piece. **Read it before designing.**
 
 ## The seven plates
 
@@ -94,6 +96,133 @@ picture is calm, and never on a glow. Do not add a third face.
 - A thin smear strip can divide sections. The picture is the ornament, so add no other.
 - Controls are words in brackets, `[another]`, `[+ photograph]` and the mode names, teal on hover and inverted when pressed. They are not buttons with shadows.
 - Use fictional names, or the user's own. Never use a real label's, artist's or festival's name, logo or artwork.
+
+## Live
+
+`assets/live.js` makes any plate move, for real interfaces. It is capture-first: the still
+engine renders the plate once on the CPU, exactly as a still page would, the result is
+uploaded as a texture, and each frame reads that texture back through this medium's own
+machines in one WebGL2 fragment shader. `assets/live-ui.js` builds interface pieces on it.
+Both are classic scripts with no dependencies; load them after `pixelsort.js` and `glitch.js`.
+
+```html
+<section class="hero"><canvas></canvas><h1>stale<br>vector</h1></section>
+<script src="pixelsort.js"></script><script src="glitch.js"></script>
+<script src="live.js"></script><script src="live-ui.js"></script>
+<script>
+  const hero = document.querySelector('.hero');
+  const ctl = Glitch.live(hero.querySelector('canvas'), {
+    mode: 'smear', seed: 6, scene: 6,                              // still options: the plate
+    sweep: 1, mosh: 1, tear: 0.8, develop: 'in', clickPulse: true, hand: hero,   // motion options
+  });
+  ctl.set({ sweep: 0.4, lo: 0.5 });   ctl.pulse(x, y, 1);   ctl.load({ mode: 'wave', variant: 'water', seed: 3 });
+  ctl.pause();   ctl.resume();   ctl.destroy();
+</script>
+<style>
+  .hero { position: relative; height: 100svh; }
+  .hero canvas { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+  .hero h1 { position: relative; z-index: 1; }
+</style>
+```
+
+The canvas is sized from its CSS box (DPR capped at 2); do not set `width`/`height` yourself.
+
+**Still options.** `mode` names the plate: `smear`, `wave`, `drip`, `shatter`, `collage`,
+`scan`, `type`, or `sorted` (a strip of the stand-in with its rows sorted, what the UI pieces
+use; options `scene`, `seed`, `lo`, `hi`, `angle`, `pixel`, `image`, `shape`), or a function
+`(ctx, w, h) => {}` that draws your own still. The plate's own mode (`ripple`, `water`,
+`dusk`, `mint`, `night`, `day`, `ink`, `paper`) is **`variant`**, because `mode` is taken.
+Everything else (`seed`, `scene`, `image`, `text`, `pixel`) is the still function's. Changing a
+still option re-renders the plate (20–300 ms, one per task).
+
+**Motion options** never re-render the plate:
+
+| option | default | what it does |
+|---|---|---|
+| `sweep`, `speed` | 1, 1 | the sort sweep: each band of rows gets a slit, and from it the row is read out spread thin, so streaks grow and retract; only pixels whose lightness falls in the band take the streak |
+| `lo`, `hi` | 0.25, 0.95 | the sort threshold band; lower `lo` and more of the picture streaks |
+| `mosh` | 1 | datamosh: scroll velocity moves macroblocks (8 work px) along stale vectors, a few go flat; zero when the page stops |
+| `tear`, `radius`, `lag` | 0.8, 0.18, 0.12 | the pointer tears the rows under it sideways in bands, R and B a step apart, harder the faster it moves; `hand` is the element that listens (default: the parent) |
+| `clickPulse` | false | pointerdown fires `pulse()`: a burst, a band of rows sliding apart and blocks going flat, gone in under a second |
+| `develop` | 1 | rows loaded, 0–1: past the loaded edge the last row read drags down; `'in'` arrives in nine steps the first time it is seen (`developMs` 1400); `'scroll'` follows the element through the viewport (`scrollRange`) |
+| `dim`, `ground` | 0, `#0b0b0e` | mix toward the ground colour (a control at rest) |
+| `reveal`, `thumb` | null, null | `[from, to]` in 0–1 of the width: only this window shows, the rest is ground; `thumb` is one stuck white column at x |
+| `alive` | true | the clock runs (the sweep needs it); false holds the picture until something is set |
+| `ease` | 0.16 | how fast `set()` targets are reached |
+| `own`, `maxField` | auto, 6e6 | `own: true` forces a dedicated WebGL context; the still is capped at `maxField` device px |
+
+The controller: `set(opts)`, `load(opts)` (drops every still option: a new plate),
+`pulse(x, y, strength)` in CSS px, `point(x, y)` / `point(null)` to tear from code, `pause()`,
+`resume()`, `destroy()`, `state()` → `{ mode: 'gpu'|'still', path, frames, visible, expose,
+clock, size, ready, reduced }`, and `bench(n)` → `{ sync, pipelined, size, path }` in ms a frame.
+Every controller is pushed to `window.handPulledLive.views`.
+
+**What is live.** All seven plates and `sorted` are captured and move the same way. No stage
+is ported to GLSL: the sort, slit, wave and codec passes stay on the CPU, and the motion is
+the shader re-reading the finished plate. Every offset is a whole work pixel, so pixels stay
+square. The sweep, mosh, tear and burst are all zero at clock 0, and the sweep fades in over
+2.5 s, so frame 0 is the still.
+
+**Parity.** `Glitch.live.parity(opts)` renders the still on a 2D canvas and frame 0 on the
+GPU and compares luminance mean, SD, grain (mean |ΔL| between neighbours), mean |pixel
+difference| in 8-bit levels and the share of pixels within 2 levels. At 480×320 (sorted
+320×96) in headless Chrome, `smear`, `wave` (ripple), `drip` and `sorted` all give
+dMean 0, dSdRel 0, dGrainRel 0, MAD 0.000 levels, 100% within 2 levels: the texture is the
+still. `live.TOLERANCE` is `{ dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5 }`.
+
+**Budget.** ≤ 4 ms a frame at 1440×900 CSS. The shader is a handful of texel fetches a
+pixel. Not yet measured in real Chrome: run `handPulledLive.views[0].bench(60)` on the
+reference page over http in a visible tab. Headless (SwiftShader, DPR 1) gives 1.1 ms sync
+at 1440×900, which says nothing about a GPU. The CPU cost is the one-off still render.
+
+**Rules.**
+- `prefers-reduced-motion`: every canvas shows its still frame, clock 0, no sweep, mosh,
+  tear or burst; `set()` jumps to its target; draws only when something changed.
+- Offscreen canvases pause (IntersectionObserver); a hidden tab stops the loop. DPR ≤ 2.
+- No WebGL2 (or a lost context): the CPU still, with `dim`, `reveal` and `thumb` applied.
+- Big canvases (≥ 0.9 MP) get their own context; small ones share one offscreen context and
+  receive frames as ImageBitmaps, so a page can carry dozens of pieces.
+- Create each view once. Never create views inside a toggle or a click handler; swap
+  `hidden` instead, and use `load()` to change the plate.
+
+### Interface pieces (`Glitch.ui`)
+
+| piece | call | behaviour |
+|---|---|---|
+| live background | `ui.background(section, opts)` | any plate behind the section: sweep, scroll mosh, pointer tear, click burst |
+| button | `ui.button(btn, { rest, seed })` | a dim strip of sorted rows; hover and focus light it and set it streaking; press, Enter and Space burst |
+| card | `ui.card(el, opts)` | a plate (`mode`, `variant`) that arrives like a slow file when first seen, then keeps sorting |
+| toggle | `ui.toggle(checkbox)` | off: dim, stuck column left; on: lit, sorting, column right, a burst on change; `role=switch` |
+| slider | `ui.slider(range)` | the strip shown up to the value, ground after it, a stuck column at the thumb |
+| progress | `ui.progress(el)` → `{ ctl, set(p) }` | a file arriving: shown up to p, streaking; bursts at 100%; `role=progressbar` with `aria-valuenow` |
+| loader | `ui.loader(el)` → `{ ctl, stop() }` | a strip sorting fast with a tear running along it; `role=status`; holds still under reduced motion |
+| focus ring | `ui.focusRing(opts)` | a frame of sorted rows around `:focus-visible`, on a transparent overlay; keep a CSS outline too |
+| section transition | `ui.transition(strip)` | a strip of the picture loading row by row as it scrolls into view |
+
+Every piece keeps the native element and its semantics; the canvas sits behind it with
+`aria-hidden`. Labels stay calm: put a button's label in a `<span>` with the page colour
+behind it (`.lbtn span { background: var(--page) }`), knocked out of the strip, and flip it
+on `:hover`/`:focus-visible`. Size tracks in CSS (`.pg-toggle { width: 64px; height: 22px }`,
+`.pg-slider { width: 100%; height: 18px }`). A minimal desk:
+
+```html
+<button class="lbtn" id="go"><span>burst</span></button>
+<label><input type="checkbox" id="sort" checked> sort</label>
+<input type="range" id="lo" min="0" max="90" value="25">
+<div class="bar" id="bar"></div>
+<script>
+  const ui = Glitch.ui, screen = ui.card(document.querySelector('#screen'), { mode: 'smear', seed: 3, scene: 6 });
+  ui.button(go); ui.toggle(sort); ui.slider(lo); const bar = ui.progress(document.querySelector('#bar'));
+  ui.focusRing();
+  go.onclick = () => screen.pulse(200, 120, 1);
+  sort.onchange = () => screen.set({ sweep: sort.checked ? 1 : 0 });
+  lo.oninput = () => screen.set({ lo: lo.value / 100 });
+  bar.set(0.4);
+</script>
+```
+
+Keep one machine per surface here too: the page's big picture sorts and moshes, controls
+sort only when touched, and type and text blocks never move.
 
 ## Tells that it was generated — avoid all of them
 
