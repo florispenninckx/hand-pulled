@@ -220,6 +220,6 @@ code or image was copied. Reviewed for ideas, with thanks:
 - Inigo Quilez's article on domain warping: fractal noise warped by fractal noise.
 - Airy's thin-film reflectance and the meniscus are textbook optics and physics.
 
-General inspiration came from a private Pinterest board of liquid chrome, oil-slick,
-wet-glass and aurora images, used as reference only. None of its images are used or
-included.
+The visual reference was Floris Penninckx's "Chrome Aurora" Pinterest board of liquid
+chrome, oil-slick, wet-glass and aurora images, used as reference only. None of its
+images are used or included.

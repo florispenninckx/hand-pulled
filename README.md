@@ -1,9 +1,10 @@
 # hand-pulled
 
-Five graphic-design skills for Claude. Each builds its style from the process that
+Seven graphic-design skills for Claude. Each builds its style from the process that
 makes it, and not from a filter over a finished layout: letters drawn stroke by stroke,
 files broken by a codec, maps pulled through ink drums, sheets exposed in the sun,
-photographs shot through a soft lens. Each skill ships an original engine with no
+photographs shot through a soft lens, a lamp caught in liquid metal, colour seen through
+fluted glass. Each skill ships an original engine with no
 dependencies and a live reference page that Claude reads before it designs.
 
 Site: <https://florispenninckx.github.io/hand-pulled/>
@@ -15,6 +16,8 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | a blue board made of grain: cyanotype botanicals and sun-printed photographs, light forms out of navy-black, blurred butterflies, marbling, spray and halftone | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
 | [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign in warm, saturated colour: the inside of a flower held too close, grain-gradient fields, ribbons of colour on cream, silk, a meadow past a slow shutter | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
+| [`chrome-aurora`](skills/chrome-aurora/SKILL.md) | liquid light on black: a pool of mercury between a warm and a cool lamp, oil film in its fold, dragged paint trails, glossy swirls, strip lights on wet glass, aurora out of focus | [Afterglass](skills/chrome-aurora/reference.html) | `mercury.js` |
+| [`abstract-texture`](skills/abstract-texture/SKILL.md) | posters where the surface is the picture: soft colour behind reeded glass, satin and marbled swirls, aurora curtains in grain, dragged and torn rows, flowers smeared by a slow shutter | [Kiln Hours](skills/abstract-texture/reference.html) | `surface.js` |
 
 Every artist, label, place and brand on the reference pages is invented.
 
@@ -43,9 +46,11 @@ the work done.
 ## How the engines work
 
 - Each engine is one classic script that sets a global (`Hand`, `PixelSort`, `Glitch`,
-  `Riso`, `Carto`, `Atlas`, `Cyanotype`, `Botanica`, `Haze`). There is no build step,
-  no npm package, no WebGL and no network call. The pages open straight from disk.
-- Everything is drawn on a 2D canvas. The only external resource is Google Fonts.
+  `Riso`, `Carto`, `Atlas`, `Cyanotype`, `Botanica`, `Haze`, `Mercury`, `Surface`). There
+  is no build step, no npm package and no network call. The pages open straight from disk.
+- `Mercury` (chrome aurora) shades its surfaces in WebGL with its own shaders, and falls
+  back to a 2D canvas when WebGL is missing. Everything else is drawn on a 2D canvas. The
+  only external resource is Google Fonts.
 - Every engine is seeded, so the same seed gives the same plate. A plate can be named by
   its settings and pulled again.
 - Each reference page takes your own photograph and puts it through the same process as
@@ -79,10 +84,11 @@ the full account.
 | [Krzysztofz01/pixel-sorter](https://github.com/Krzysztofz01/pixel-sorter) | GPL-3.0 | ideas only. None of its code is used, so this repository stays MIT |
 | [NovusGFX/retro-design-system](https://github.com/NovusGFX/retro-design-system) | MIT | the idea of a theme as a swappable world of tokens |
 | [wilwaldon/Claude-Code-Frontend-Design-Toolkit](https://github.com/wilwaldon/Claude-Code-Frontend-Design-Toolkit) | no licence file | the case against default-looking AI frontends |
-| [ruucm/shadergradient](https://github.com/ruucm/shadergradient) | no licence file | how far one shaded surface can carry a page (ethereal haze) |
-| [paper-design/liquid-logo](https://github.com/paper-design/liquid-logo) | custom (not SPDX) | the same question, for a logo |
-| [pmndrs/postprocessing](https://github.com/pmndrs/postprocessing) | Zlib | grain and dithering practice |
-| [dashersw/liquid-glass-js](https://github.com/dashersw/liquid-glass-js) | MIT | a direction the haze style decided against: its haze is optical, not glass |
+| [ruucm/shadergradient](https://github.com/ruucm/shadergradient) | no licence file | how far one shaded, grained surface can carry a page (ethereal haze, chrome aurora). No licence, so nothing was copied |
+| [paper-design/liquid-logo](https://github.com/paper-design/liquid-logo) | PolyForm Shield 1.0.0 | reflection bands on a liquid surface and refracting each colour channel separately (chrome aurora). Ideas only |
+| [pmndrs/postprocessing](https://github.com/pmndrs/postprocessing) | Zlib | grain and dithering practice; chromatic aberration as a per-channel offset, with grain as the last pass (chrome aurora) |
+| [dashersw/liquid-glass-js](https://github.com/dashersw/liquid-glass-js) | MIT | a direction the haze style decided against, since its haze is optical, not glass; in chrome aurora, a lookup displaced by a height field's slope, for the glass plate |
+| [pmndrs/react-three-fiber](https://github.com/pmndrs/react-three-fiber) | MIT | rendering on demand, only when the inputs change (chrome aurora) |
 
 The Riso ink colours follow the ink table published with p5.riso. The town plans follow
 published methods: tensor-field streets (Chen et al., SIGGRAPH 2008) traced as evenly
@@ -98,29 +104,34 @@ The indigo engines solve marbling backward after Lu, Jaffer, Jin, Zhao and Mao, 
 Marbling" (2012). They use Steven Worley's cellular noise for the marble lace and pool light,
 Ken Perlin's improved noise, the voxel-landscape column scan for the lit relief, and the
 printer's halftone screen.
+The chrome engine weights its thin film by Wyman, Sloan and Shirley, "Simple Analytic
+Approximations to the CIE XYZ Color Matching Functions" (JCGT, 2013). It and the texture
+engine fold their liquids with Inigo Quilez's domain warping, noise warped by noise. The
+texture engine's streaks are an exponential moving average along a row, its reeds are
+cylinder lenses, and its halftone and dither are print practice.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
-WebGPU or C++. The skills here are 2D canvas without WebGL, so none of them fed into
-the code:
+WebGPU or C++. Only chrome aurora uses WebGL, with its own shaders and no library, so
+none of them fed into the code:
 [InteractiveComputerGraphics/SPlisHSPlasH](https://github.com/InteractiveComputerGraphics/SPlisHSPlasH) (MIT),
 [piellardj/water-webgpu](https://github.com/piellardj/water-webgpu) (MIT),
 [jeantimex/precomputed_atmospheric_scattering](https://github.com/jeantimex/precomputed_atmospheric_scattering) (MIT),
 [Ameobea/three-good-godrays](https://github.com/Ameobea/three-good-godrays) (custom),
 [Erkaman/glsl-godrays](https://github.com/Erkaman/glsl-godrays) (custom),
 [ektogamat/fake-glow-material-threejs](https://github.com/ektogamat/fake-glow-material-threejs) (MIT),
-[PavelDoGreat/WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT),
-[pmndrs/react-three-fiber](https://github.com/pmndrs/react-three-fiber) (MIT).
+[PavelDoGreat/WebGL-Fluid-Simulation](https://github.com/PavelDoGreat/WebGL-Fluid-Simulation) (MIT).
 
 **Not found.** These were on the list but return 404 on GitHub at these addresses
 (checked 28 September 2026): idevelop/cyanotype, mxgmn/Cyanotype, whatamesh/whatamesh,
 kevinsqi/react-mesh-gradient, JimmyBeldone/react-native-grainy-gradient, l-ir/webgl-grain,
 jordienr/mesh-gradient, lokesh-coder/react-animated-css-mesh-gradient.
 
-**Visual reference.** The "10 niche design styles" Pinterest board by A Song Studio set
-the target look for each style. For `riso-cartography`, Floris Penninckx's own "Riso
-Cartography" board set the target for the town plans, rivers and zoning sheets. Both
-were used as reference only. None of their images, or
-any other third-party image, are in this repository. The plates in `plates/` are
+**Visual reference.** Six styles are aimed at Floris Penninckx's own Pinterest boards,
+one each: "Riso Cartography", "Pixel Glitch", "Ethereal Haze", "Indigo Grain", "Chrome
+Aurora" and "Abstract texture". The first versions of the older styles, and
+`maximalist-pop` still, followed the "10 niche design styles" board by A Song Studio.
+All of them were used as reference only. None of their images, or any other third-party
+image, are in this repository. The plates in `plates/` are
 screenshots of this repository's own reference pages.
 
 ## Licence
