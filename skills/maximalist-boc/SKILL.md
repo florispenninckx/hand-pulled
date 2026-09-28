@@ -177,18 +177,34 @@ still (`Pour.plate`). Load the two live files after `pour.js`:
 <script src="assets/live-ui.js"></script>  <!-- Pour.ui -->
 ```
 
-**How it works (capture-first).** `live.js` asks the still engine to paint the sheet once on
-the CPU without its grain (a `capture` hook in `pour.js` also hands over the field under the
-paint), uploads both as textures, and each frame a WebGL2 shader moves where every pixel reads
-the paint from, then adds the still's film grain back with the same integer hash, on top and
-unmoved. Palettes and structure are therefore exactly the still's: any mode, ramp or pass that
-`Pour.paint` accepts works live. Every live term is zero at time 0, so frame 0 is the still.
+**How it works: two paths.** Most modes are **native**: the shader computes the paint itself
+every frame, so the sheet evolves rather than being moved around. `pour.js` still solves the
+sheet once on the CPU (its `capture` hook hands over the field's percentile norms, the noise
+table and the ramp), and the GPU then runs the still's own code line by line: pass 1 renders the
+warped, combed field on the still's coarse grid into a float texture (the same value noise, the
+permutation table baked with its gradients into one 256×256 texture, the same constants and
+offsets), and pass 2 runs `paint()` per pixel with the ramp as a 1024×1 texture taken from the
+still's own. The paint's time `τ` slides the inner warp layers (bloom's petals and spin's rings
+turn too, a flat field turns its angle and moves its centre), so veins part and rejoin, bands
+drift, petals open. Every other mode is **captured**: the sheet is painted once on the CPU
+without grain, uploaded, and each frame the shader moves where every pixel reads it from. In
+both paths the still's film grain is added back with the same integer hash, and every live term
+is zero at time 0, so frame 0 is the still.
+
+| Path | Modes |
+|---|---|
+| native (the paint evolves) | `swirl`, `bloom`, `spin`, `field` (flat, radial, wobble), `bands`, `moire`, `marble`, `chrome` (every ramp, `cycle`), `caustic`, `bleed` |
+| captured (the painted sheet flows) | `splash`, `halftone`, `dash`, `collage`, and any native mode given `mask`, `threads`, `alt`, `shift`, `wave`, `mosh`, `scatter` or more than 8 octaves |
+
+Native needs `EXT_color_buffer_float` (every desktop WebGL2 has it); without it, or with
+`native: false`, a native mode is captured instead. `ctl.state().paint` says which path a view took.
 
 **The motion is the pour's own:**
 
 | Term | What it looks like | Options (defaults) |
 |---|---|---|
-| flow | the paint slides along its own level lines, settles across them and swells slowly, like a sheet that has not dried | `drift` (1), `speed` (1), `wet` (1: 0 is dry and still, 1.6 is runny) |
+| evolve | native modes: the paint itself changes, slowly, at a rate set per mode (0.03 noise units a second for moire and bleed up to 0.06 for spin) times `wet` | `evolve` (1: 0 freezes the paint, 2 is twice as fast), `speed`, `wet` |
+| flow | captured modes: the paint slides along its own level lines, settles across them and swells slowly, like a sheet that has not dried | `drift` (1), `speed` (1), `wet` (1: 0 is dry and still, 1.6 is runny) |
 | comb | the pointer is a comb dragged through the paint: it pulls the paint along its way, in teeth | `pointer` (0; 1 in `ui.background`), `reach` (0.16 of the short side), `tooth` (14 px), `lag` (0.12 s), `hand` (the element that hears the pointer; default the canvas's parent) |
 | drop | a click drops paint in: a ring pushes out, spreads and settles (up to 4 at once) | `clickPulse` (false), `ctl.pulse(x, y, strength)` |
 | pour-in | the sheet is poured down from the top with a drippy front, onto `ground` | `develop`: a number 0–1, `'in'` (once, when a quarter is in view) or `'scroll'`; `developMs` (1800), `scrollRange`, `ground` ('night') |
@@ -198,7 +214,8 @@ unmoved. Palettes and structure are therefore exactly the still's: any mode, ram
 Other motion options: `ease` (0.18 s, how `set()` eases `wet`, `reveal`, `develop`), `ring`
 (`{ pad, band, radius }` px: draw only a band round the edge, transparent inside; the focus
 ring uses it), `own` (own WebGL context; default for canvases ≥ 0.9 MP), `resolution` (1),
-`maxField` (1.2e6: the captured sheet is painted at most this many pixels and scaled up).
+`maxField` (1.2e6: the sheet is solved at most this many pixels and scaled up), `native` (true:
+false forces the captured path).
 Still options (`mode`, `ramp`, `seed`, `scale`, `warp`, `vein`, `mosh`...) repaint the sheet.
 Bloom's own `radius` is a still option, which is why the comb's size is called `reach`.
 
@@ -207,7 +224,7 @@ Bloom's own `radius` is a still option, which is why the comb's size is called `
 - `ctl.set(opts)` merges options (motion next frame, still options repaint); `ctl.load(opts)` a new sheet (all still options replaced);
 - `ctl.pulse(x, y, s)` a drop at CSS px of the canvas; `ctl.point(x, y)` / `ctl.point(null)` drags or lifts the comb yourself;
 - `ctl.pause()`, `ctl.resume()`, `ctl.destroy()`;
-- `ctl.state()` → `{ mode: 'gpu'|'still', path, frames, visible, expose, clock, size, ready, reduced }`;
+- `ctl.state()` → `{ mode: 'gpu'|'still', paint: 'native'|'captured', path, frames, visible, expose, clock, size, ready, reduced }`;
 - `ctl.bench(n)` → `{ sync, pipelined, size, path }` ms per frame with every term on;
 - `Pour.live.parity(opts)`, `Pour.live.TOLERANCE`, `Pour.live.pass(r)`; `window.handPulledLive` holds every controller and the parity cases for `tools/check.sh`.
 
@@ -224,8 +241,16 @@ Bloom's own `radius` is a still option, which is why the comb's size is called `
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | `role="status"`; a small sheet stirred fast with a drop every beat |
 | focus ring | `ui.focusRing(opts)` | one per page: a band of live paint round whatever has `:focus-visible`; keep a CSS outline too |
 | section transition | `ui.transition(strip, opts)` | a strip between sections poured down as it scrolls up the viewport |
+| cursor | `ui.cursor(area, opts)` | a wet ring of paint trailing the mouse inside `area` (`size` 40, `band` 5, `lag` 0.09 s), swelling over anything clickable, a drop on press; the system cursor stays; mouse only, hidden on touch, pen and reduced motion |
+| icon | `ui.icon(span, name, opts)` | a small live sheet cut to an icon with a CSS mask: pours in on first view, wakes while its button, link or label is hovered or focused (`rest` wet 0.25, `hover` 1.4, `weight` 6 viewBox units of extra outline); size it with CSS (default 1.25em); without WebGL2 the plain shape in `currentColor` |
 
-Buttons put their label on busy paint: wrap it in a `<span>` with a dark backing (see `.pill span`
+`ui.ICONS` holds Phosphor Light icons (MIT, inlined, never fetched): `drop`, `drop-half`,
+`paint-bucket`, `paint-brush`, `hourglass-medium`, `waves`, `sparkle`, `play`, `pause`,
+`sliders`, `shuffle`. Pass any other SVG string with `<path d>` outlines instead of a name; never
+hand-type a path (copy it from the icon's file). `ui.iconMask(svg, { weight })` returns the
+`url("data:…")` mask value the icon uses, for your own masks.
+
+Buttons put their label on busy paint: wrap it in a `<span>` with a dark backing (see `.pill > span`
 in `reference.html`), and flip its colour on `:hover` and `:focus-visible`.
 
 **Minimal example:**
@@ -253,16 +278,18 @@ no motion). Offscreen views pause (IntersectionObserver) and the loop stops on a
 paused view still draws its first frame.
 
 **Parity and performance.** `live.parity()` paints the still on the CPU and frame 0 on the GPU at
-480×320 and compares them. Five cases (the cover's swirl, marble, moiré, oil-slick chrome, and
-dash with `mosh` and `scan`): mean luminance, SD and grain all identical, mean difference 0.000
-levels, 100 % of pixels within 2 levels: bit-exact, because frame 0 reads the captured sheet
-at its pixel centres and the grain hash is the still's own. Tolerance (from LIVE_PATTERN):
-dMean 0.004, dSdRel 0.02, dGrainRel 0.03, madLevels 1.5. The shader is one pass of texture
-reads with a handful of field taps, a four-tap comb and four drops; the cost that matters is
-the one-off CPU paint of the sheet (up to `maxField`, built one per task).
-Frame time in real Chrome has not been measured yet (headless Chrome runs SwiftShader, so its
-numbers mean nothing): measure with `ctl.bench(60)` in a visible Chrome tab against the budget
-of 4 ms per frame at 1440×900 CSS, DPR 2.
+480×320 and compares them; the check runs 13 cases. Native frame 0 is recomputed on the GPU in
+floats, so it is close rather than bit-exact: mean difference 0.13–0.36 levels, 99–100 % of pixels
+within 2 levels, dMean 0.000, dSdRel ≤ 0.0005, dGrainRel ≤ 0.0045 (swirl, bloom, spin, bands,
+moire, marble, oil-slick chrome, caustic, bleed, radial field, wobbled field). The captured cases
+(splash; dash with `mosh` and `scan`) are bit-exact. Tolerance (from LIVE_PATTERN): dMean 0.004,
+dSdRel 0.02, dGrainRel 0.03, madLevels 1.5.
+
+Frame time, `ctl.bench(60)` at 2880×1800 device px (1440×900 CSS, DPR 2) in Chrome on Apple
+silicon over http: native modes 2.0–2.3 ms synchronous, 1.2–1.5 ms pipelined (pass 1, the field,
+is most of it, and is skipped while `τ` stands still); a flat field and the captured modes
+3.0–3.2 ms synchronous, under 0.2 ms pipelined. The budget is 4 ms. A native sheet also no
+longer shows the stair-steps a captured marble could tear into at its vein saddles when very wet.
 
 ## What makes it authentic
 
