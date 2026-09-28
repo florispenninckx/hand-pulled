@@ -1,0 +1,4 @@
+/* The chrome-aurora faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Specula: A wide techno face with an inline: a channel of light cut along every stroke. At SHEN 0 it is a hairline glint; as SHEN rises the channel widens and slides toward the light until each stroke is a polished rim around a bright core. Axis 'SHEN' 0–1000, default 300. */
+@font-face { font-family: 'Specula'; src: url('specula.woff2') format('woff2'); font-display: swap; }

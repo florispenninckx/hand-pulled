@@ -1,0 +1,31 @@
+{
+ "name": "Specula",
+ "file": "specula",
+ "skill": "chrome-aurora",
+ "about": "A wide techno face with an inline: a channel of light cut along every stroke. At SHEN 0 it is a hairline glint; as SHEN rises the channel widens and slides toward the light until each stroke is a polished rim around a bright core.",
+ "base": {
+  "family": "Orbitron",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/orbitron/Orbitron[wght].ttf",
+  "sha256": "f42db2dd16e642258e35782916eceb1dcdbea06fb958d77ad71dc5963587e8fd",
+  "location": {"wght": 900}
+ },
+ "axis": {
+  "tag": "SHEN",
+  "name": "Sheen",
+  "default": 300,
+  "masters": [0, 300, 1000],
+  "instances": {"Glint": 0, "Regular": 300, "Polished": 1000}
+ },
+ "trace": 1000,
+ "warp": {"sx": 1.22},
+ "track": 30,
+ "ops": [
+  {"op": "round", "r": 10, "mode": "convex"},
+  {"op": "inline", "w": {"0": 7, "300": 20, "1000": 56}, "inset": {"0": 20, "1000": 13}, "trim": 0.75,
+   "shift": {"0": 0, "1000": 7}, "angle": 120},
+  {"op": "clean", "min": 200, "holes": 30}
+ ],
+ "fit": {"mode": "spline", "tol": 3, "seg": 70, "bend": 4, "corner": 45, "smooth": 3, "nsmooth": 8, "reach": 120}
+}
