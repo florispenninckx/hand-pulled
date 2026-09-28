@@ -918,8 +918,8 @@
       }
     }
     img = PS().sort(img, { mode: 'threshold', key: 'lightness', lo: 0.45, hi: 0.95, angle: 90, randomness: 0.45, seed: o.seed });
-    vivid(img, o.mode === 'ink' ? 1.05 : 1.1);
-    ctx.putImageData(grain(img, 26, o.seed * 5), 0, 0);
+    vivid(img, o.mode === 'ink' ? 1.05 : o.mode === 'violet' ? 1 : 1.1);
+    ctx.putImageData(grain(img, 30, o.seed * 5), 0, 0);
     return blit(canvas, c);
   }
 
@@ -967,7 +967,7 @@
     }
     img = PS().sort(img, { mode: 'threshold', key: 'lightness', lo: foil ? 0.5 : 0.55, hi: 0.97, randomness: 0.5, seed: o.seed });
     scanlines(img, 0.06);
-    ctx.putImageData(grain(img, 30, o.seed * 7), 0, 0);
+    ctx.putImageData(grain(img, foil ? 30 : 44, o.seed * 7), 0, 0);
     return blit(canvas, c);
   }
 
@@ -1033,8 +1033,8 @@
       const t = cur; cur = nxt; nxt = t;
     }
     const out = new ImageData(cur === d ? d : new Uint8ClampedArray(cur), w, h);
-    vivid(out, M === 'patch' ? 1.1 : 1.25);
-    ctx.putImageData(grain(out, 28, o.seed * 11), 0, 0);
+    vivid(out, M === 'melt' ? 1.1 : 1.05);
+    ctx.putImageData(grain(out, M === 'patch' ? 22 : 44, o.seed * 11), 0, 0);
     return blit(canvas, c);
   }
 
@@ -1106,7 +1106,7 @@
       }
       for (let i = 0; i < d.length; i += 4) { d[i] = 38 + d[i] * 0.85; d[i + 1] = 38 + d[i + 1] * 0.85; d[i + 2] = 38 + d[i + 2] * 0.85; }   // the blind lets light through
     }
-    ctx.putImageData(grain(img, 28, o.seed * 13), 0, 0);
+    ctx.putImageData(grain(img, M === 'plaid' ? 28 : 42, o.seed * 13), 0, 0);
     return blit(canvas, c);
   }
 
