@@ -11,7 +11,7 @@ Site: <https://florispenninckx.github.io/hand-pulled/>
 | Skill | Looks like | Reference page | Engine |
 |---|---|---|---|
 | [`maximalist-pop`](skills/maximalist-pop/SKILL.md) | an indie record cover: hand-drawn bubble and curl lettering, one-line writing, stamps, printed paper | [Sweet William](skills/maximalist-pop/reference.html) | `hand.js` |
-| [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | a picture after something happened to the file: macroblocks and sorted drips, 1-bit tears, scanner drag, mojibake, tiles that did not load | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
+| [`pixelsort-glitch`](skills/pixelsort-glitch/SKILL.md) | one picture after a machine got hold of it: saturated sort and slit-scan smears on dark, wave warps, sorted drips, a dropped screen, a grid collage, scanner drag, sliced type | [Stale Vector](skills/pixelsort-glitch/reference.html) | `pixelsort.js`, `glitch.js` |
 | [`riso-cartography`](skills/riso-cartography/SKILL.md) | risograph-printed town plans and river maps in one to three spot inks: figure and ground, knockouts, overprint and misregistration | [Figure & Ground](skills/riso-cartography/reference.html) | `riso.js`, `cartography.js`, `atlas.js` |
 | [`indigo-grain`](skills/indigo-grain/SKILL.md) | cyanotype sun prints: Prussian blue, botanicals, soft contact edges, grain | [Indigo Grain](skills/indigo-grain/reference.html) | `cyanotype.js`, `botanica.js` |
 | [`ethereal-haze`](skills/ethereal-haze/SKILL.md) | a small perfume house's campaign: flowers shot too close, motion blur, lens haze | [Faye](skills/ethereal-haze/reference.html) | `haze.js` |
@@ -75,7 +75,7 @@ the full account.
 |---|---|---|
 | [Robpayot/risograph-grain-shader](https://github.com/Robpayot/risograph-grain-shader) | MIT | the grain-screen idea behind `riso.js` |
 | [jywarren/risoAtHome](https://github.com/jywarren/risoAtHome) | no licence file | the idea of per-ink separation. There is no licence, so nothing was copied |
-| [Akascape/Pixelort](https://github.com/Akascape/Pixelort) | MIT | the interval-sorting model (after Kim Asendorf's ASDFPixelSort) |
+| [Akascape/Pixelort](https://github.com/Akascape/Pixelort) | MIT | the interval-sorting model (after Kim Asendorf's ASDFPixelSort, also used by satyarth/pixelsort) |
 | [Krzysztofz01/pixel-sorter](https://github.com/Krzysztofz01/pixel-sorter) | GPL-3.0 | ideas only. None of its code is used, so this repository stays MIT |
 | [NovusGFX/retro-design-system](https://github.com/NovusGFX/retro-design-system) | MIT | the idea of a theme as a swappable world of tokens |
 | [wilwaldon/Claude-Code-Frontend-Design-Toolkit](https://github.com/wilwaldon/Claude-Code-Frontend-Design-Toolkit) | no licence file | the case against default-looking AI frontends |
@@ -91,6 +91,8 @@ spaced streamlines (Jobard and Lefer, 1997), and river migration after Howard an
 meander history to Fisk's Mississippi maps (1944). Marching squares, fractal noise, chamfer
 distances, connected-component labelling and the cyanotype chemistry are textbook. Anna Atkins's *Photographs of British Algae* (1843) is the historical reference
 for the sun print.
+The slit-scan, the wave pushes, codec macroblocks, a flatbed scanner's split colour lines
+and a cracked LCD in `glitch.js` are general practice.
 
 **Looked at, not used.** These are 3D, fluid and light-scattering engines for WebGL,
 WebGPU or C++. The skills here are 2D canvas without WebGL, so none of them fed into

@@ -6,80 +6,83 @@
 <title>Stale Vector</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+  :root { --page: #0b0b0e; --ink: #ecebe6; --dim: #8c8b93; --rule: #26262c; --teal: #3fd0c9; --pink: #ff4f8b; --orange: #ff9a5a; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: #fdfdfb; }
-  body { font: 400 13px/1.55 'IBM Plex Mono', ui-monospace, monospace; color: #1b1b1b; overflow-x: hidden; }
+  html, body { margin: 0; background: var(--page); }
+  body { font: 400 13px/1.55 'IBM Plex Mono', ui-monospace, monospace; color: var(--ink); overflow-x: hidden; }
   button, label { font: inherit; color: inherit; }
 
-  .plate { position: relative; overflow: hidden; }
+  .plate { position: relative; overflow: hidden; background: #15151a; }
   .plate canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; image-rendering: pixelated; }
   /* a plate loads the way a slow file does: in bands, top to bottom */
   @media (prefers-reduced-motion: no-preference) {
     .plate canvas { clip-path: inset(0 0 100% 0); }
     .plate.seen canvas { clip-path: inset(0 0 0 0); transition: clip-path 1.1s steps(9, end); }
   }
-  .plate.drag::after { content: ''; position: absolute; inset: 0; border: 3px solid #5fe3c3; z-index: 3; pointer-events: none; }
+  .plate.drag::after { content: ''; position: absolute; inset: 0; border: 3px solid var(--teal); z-index: 3; pointer-events: none; }
 
-  .ctrl { display: flex; gap: 4px 16px; flex-wrap: wrap; }
+  .ctrl { display: flex; gap: 2px 14px; flex-wrap: wrap; }
   .ctrl button, .ctrl label { background: none; border: 0; padding: 0; cursor: pointer; }
   .ctrl button::before, .ctrl label::before { content: '['; opacity: .45; }
   .ctrl button::after, .ctrl label::after { content: ']'; opacity: .45; }
-  .ctrl button:hover, .ctrl label:hover, .ctrl [aria-pressed="true"] { background: #e3e64b; }
+  .ctrl button:hover, .ctrl label:hover { background: var(--teal); color: var(--page); }
+  .ctrl [aria-pressed="true"] { background: var(--ink); color: var(--page); }
   input[type=file] { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-  :focus-visible { outline: 2px solid #5fe3c3; outline-offset: 2px; }
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
 
-  /* I. the hero: the melt, full-bleed, the name set like a heading pasted into a broken file */
-  .hero { height: 100vh; height: 100svh; min-height: 520px; background: #cdeeed; color: #27353a; }
-  .hero h1 { position: absolute; z-index: 2; top: 14px; right: 16px; margin: 0; text-align: right; font: 800 clamp(40px, 8.4vw, 132px)/.86 'Archivo', sans-serif; letter-spacing: -.035em; text-transform: uppercase; }
-  .hero .meta { position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 14px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; font-size: 12px; }
-  .hero .meta > span { background: #fdfdfb; padding: 0 4px; }
+  /* I. the hero: the smear, full-bleed, the name set heavy and plain over its dark top */
+  .hero { height: 100vh; height: 100svh; min-height: 520px; }
+  .hero h1 { position: absolute; z-index: 2; top: 10px; left: 14px; margin: 0; font: 800 clamp(56px, 12.5vw, 200px)/.8 'Archivo', sans-serif; letter-spacing: -.045em; color: #f4f1ea; }
+  .hero .meta { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 24px; padding: 8px 16px; background: var(--page); font-size: 12px; }
 
-  .intro { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 24px 48px; padding: clamp(48px, 9vw, 112px) 16px; max-width: 1180px; margin: 0 auto; }
+  .intro { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 24px 56px; padding: clamp(48px, 8vw, 104px) 16px; max-width: 1240px; margin: 0 auto; }
   .intro p.lede { margin: 0; font: 700 clamp(22px, 2.6vw, 36px)/1.14 'Archivo', sans-serif; letter-spacing: -.015em; }
-  .intro p.lede mark { background: #e3e64b; color: #4a2a6a; }
+  .intro p.lede mark { background: var(--pink); color: var(--page); padding: 0 .08em; }
   .intro dl { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; align-content: start; }
-  .intro dt { color: #3c9656; }
+  .intro dt { color: var(--teal); }
   .intro dd { margin: 0; }
 
-  /* the board: four plates, two up, each captioned like a file listing */
-  .board { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 16px; padding: 0 16px; max-width: 1180px; margin: 0 auto; }
+  /* the board: three columns of plates in mixed shapes, like a pinboard; each captioned like a file */
+  .board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; align-items: start; padding: 0 14px; max-width: 1440px; margin: 0 auto; }
+  .col { display: grid; gap: 30px; min-width: 0; }
   figure { margin: 0; min-width: 0; }
-  figure .plate { aspect-ratio: 4 / 5; background: #efede6; }
-  figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; padding-top: 8px; font-size: 12px; }
+  figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 16px; padding-top: 8px; font-size: 12px; }
   figcaption b { font-weight: 500; }
-  figcaption .what { width: 100%; color: #6b6b6b; }
+  figcaption .what { width: 100%; color: var(--dim); }
 
-  .bar { height: 10px; background: #5fe3c3; width: 42%; margin: clamp(64px, 10vw, 120px) 0 0; }
+  .strip { height: clamp(56px, 8vw, 96px); margin: clamp(64px, 9vw, 112px) 0 0; }
 
-  /* the programme, printed like a listing: line numbers, times in green, notes in the margin in red */
-  .listing { padding: 28px 16px clamp(48px, 8vw, 96px); max-width: 1180px; margin: 0 auto; }
-  .listing h2 { margin: 0 0 18px; font: 800 clamp(28px, 4vw, 56px)/.9 'Archivo', sans-serif; letter-spacing: -.03em; text-transform: uppercase; }
+  /* the programme, printed like a listing: line numbers, times in teal, notes in pink */
+  .listing { padding: 28px 16px clamp(48px, 8vw, 96px); max-width: 1240px; margin: 0 auto; }
+  .listing h2 { margin: 0 0 18px; font: 800 clamp(32px, 5vw, 72px)/.85 'Archivo', sans-serif; letter-spacing: -.04em; }
   .listing ol { margin: 0; padding: 0; list-style: none; counter-reset: ln; }
-  .listing li { counter-increment: ln; display: grid; grid-template-columns: 3.2ch 11ch minmax(0, 1fr) auto; gap: 0 12px; padding: 3px 0; border-top: 1px solid #ebe9e2; }
-  .listing li::before { content: counter(ln, decimal-leading-zero); color: #9a9a9a; }
-  .listing .t { color: #3c9656; }
-  .listing .n { color: #c4473d; font-size: 12px; }
-  .listing li.day { border-top: 1px solid #1b1b1b; margin-top: 12px; }
+  .listing li { counter-increment: ln; display: grid; grid-template-columns: 3.2ch 11ch minmax(0, 1fr) auto; gap: 0 12px; padding: 3px 0; border-top: 1px solid var(--rule); }
+  .listing li::before { content: counter(ln, decimal-leading-zero); color: #5d5c63; }
+  .listing .t { color: var(--teal); }
+  .listing .n { color: var(--pink); font-size: 12px; }
+  .listing li.day { border-top: 1px solid var(--ink); margin-top: 12px; }
   .listing li.day .a { font-weight: 700; }
-  @media (max-width: 640px) {
+
+  @media (max-width: 700px) {
     .intro { grid-template-columns: 1fr; }
-    .board { grid-template-columns: 1fr; }
+    .board { grid-template-columns: 1fr; padding: 0 16px; }
+    .col { gap: 30px; margin-bottom: 30px; }
     .listing li { grid-template-columns: 3.2ch minmax(0, 1fr); }
-    .listing li .t { grid-column: 2; }
-    .listing li .a, .listing li .n { grid-column: 2; }
+    .listing li .t, .listing li .a, .listing li .n { grid-column: 2; }
   }
 
-  footer { padding: 0 16px 48px; max-width: 1180px; margin: 0 auto; font-size: 12px; color: #6b6b6b; }
+  footer { padding: 0 16px 48px; max-width: 1240px; margin: 0 auto; font-size: 12px; color: var(--dim); }
   footer a { color: inherit; text-underline-offset: 3px; }
+  footer code { color: var(--ink); }
 </style>
 </head>
 <body>
 <main>
-  <section class="plate hero" data-kind="melt" data-seed="3">
-    <canvas aria-label="A picture on mint breaking into macroblocks, its pixels drifting up as dust and its columns dripping down in teal, slate and white."></canvas>
-    <h1>Stale<br>Vector</h1>
+  <section class="plate hero" data-kind="smear" data-seed="6">
+    <canvas aria-label="A coast at dusk read through a slit band by band: stepped horizontal streaks of navy, teal, pink and orange over a dark sea."></canvas>
+    <h1>stale<br>vector</h1>
     <div class="meta">
       <span>a weekend of broken files · 14–16.11.2026 · Hal 4, Werkplaats Noord</span>
       <span class="ctrl"><button type="button" data-again>another</button><label for="f1">+ photograph</label><input type="file" id="f1" accept="image/*"></span>
@@ -87,73 +90,92 @@
   </section>
 
   <section class="intro" aria-label="About">
-    <p class="lede">Three nights of music and images made by <mark>breaking files on purpose</mark>: pictures that lost their motion vectors, scans pulled mid-pass, JPEGs opened as text.</p>
+    <p class="lede">Three nights of music and pictures made by <mark>breaking files on purpose</mark>: frames read through a slit, screens dropped on the floor, sheets pulled through the scanner mid-pass.</p>
     <dl>
       <dt>where</dt><dd>Hal 4, Werkplaats Noord (fictional)</dd>
       <dt>when</dt><dd>Fri–Sun, doors 20:00</dd>
       <dt>entry</dt><dd>€18 a night, €40 the weekend</dd>
-      <dt>bring</dt><dd>a file you do not need back</dd>
+      <dt>bring</dt><dd>a picture you do not need back</dd>
     </dl>
   </section>
 
-  <section class="board" aria-label="Four plates">
-    <figure>
-      <div class="plate" data-kind="tear" data-seed="2"><canvas aria-label="A one-bit picture of an eye whose black scanlines overrun into long bars on white, with stippled rows."></canvas></div>
-      <figcaption>
-        <b>II — tear.pbm</b>
-        <span class="ctrl"><button type="button" data-again>another</button><label for="f2">+ photograph</label><input type="file" id="f2" accept="image/*"></span>
-        <span class="what">1 bit; a black run keeps going after the picture stops asking for it</span>
-      </figcaption>
-    </figure>
-    <figure>
-      <div class="plate" data-kind="printout" data-seed="4"><canvas aria-label="A code listing printed on cream paper in grey, green and red, with a band where the sheet moved in the scanner, stretched and tinted pink and blue."></canvas></div>
-      <figcaption>
-        <b>III — printout.tif</b>
-        <span class="ctrl"><button type="button" data-again>another</button><label for="f3">+ text file</label><input type="file" id="f3" accept="text/*,.js,.py,.css,.html,.md,.json,.txt"></span>
-        <span class="what">this page's own source, printed and pulled through the scanner too early</span>
-      </figcaption>
-    </figure>
-    <figure>
-      <div class="plate" data-kind="mojibake" data-seed="1"><canvas aria-label="A file opened as text: stretched rows of a picture in rust and blue bands, garbled characters under yellow highlighter, a mint bar, stray punctuation and a small green terminal."></canvas></div>
-      <figcaption>
-        <b>IV — mojibake.txt</b>
-        <span class="ctrl"><button type="button" data-again>another</button><label for="f4">+ any file</label><input type="file" id="f4"></span>
-        <span class="what">a JPEG's scan data read as MacRoman; drop any file to read its bytes instead</span>
-      </figcaption>
-    </figure>
-    <figure>
-      <div class="plate" data-kind="mosaic" data-seed="5" data-mode="lavender"><canvas aria-label="A black-and-white close-up of an eye shown through a grid of tiles, some replaced by flat lavender blocks."></canvas></div>
-      <figcaption>
-        <b>V — mosaic.png</b>
-        <span class="ctrl">
-          <button type="button" data-mode="lavender" aria-pressed="true">lavender</button><button type="button" data-mode="cut" aria-pressed="false">cut</button><button type="button" data-mode="blocks" aria-pressed="false">blocks</button>
-          <button type="button" data-again>another</button><label for="f5">+ photograph</label><input type="file" id="f5" accept="image/*">
-        </span>
-        <span class="what">tiles that arrived, and tiles that did not</span>
-      </figcaption>
-    </figure>
+  <section class="board" aria-label="Six plates">
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="wave" data-seed="2" data-mode="ripple" style="aspect-ratio: 2 / 3"><canvas aria-label="The coast with a stepped edge meandering down it: to its left the rows are dragged into flat streaks, to its right the picture ripples into contour lines."></canvas></div>
+        <figcaption>
+          <b>II — wave.mov</b>
+          <span class="ctrl"><button type="button" data-mode="ripple" aria-pressed="true">ripple</button><button type="button" data-mode="water" aria-pressed="false">water</button><button type="button" data-again>another</button><label for="f2">+ photograph</label><input type="file" id="f2" accept="image/*"></span>
+          <span class="what">rows pushed a few pixels back and forth, and dragged flat from a moving edge</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="type" data-seed="4" data-mode="ink" style="aspect-ratio: 4 / 5"><canvas aria-label="A one-colour blue print on cream: the words stale vector broken files set large, rules, numbers and a dot grid, with columns of the sheet dragged down in streaks and a solid band of ink with small print knocked out."></canvas></div>
+        <figcaption>
+          <b>III — type.pdf</b>
+          <span class="ctrl"><button type="button" data-mode="ink" aria-pressed="true">ink</button><button type="button" data-mode="paper" aria-pressed="false">paper</button><button type="button" data-again>another</button><label for="f3">+ photograph</label><input type="file" id="f3" accept="image/*"></span>
+          <span class="what">set, printed, then the scanner stuck on a line</span>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="collage" data-seed="1" data-mode="night" style="aspect-ratio: 9 / 16"><canvas aria-label="Rectangles cut from the picture on black: grey streaks, a white mesh, hot pink sorted rows, hard black-and-white pieces and long thin runs leaking sideways."></canvas></div>
+        <figcaption>
+          <b>IV — collage.psd</b>
+          <span class="ctrl"><button type="button" data-mode="night" aria-pressed="true">night</button><button type="button" data-mode="day" aria-pressed="false">day</button><button type="button" data-again>another</button><label for="f4">+ photograph</label><input type="file" id="f4" accept="image/*"></span>
+          <span class="what">the picture cut up on a grid, each piece broken one way</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="shatter" data-seed="1" style="aspect-ratio: 1 / 1"><canvas aria-label="The coast on a cracked LCD: pale and cold, striped with coloured dead columns, split into shifted wedges, with black stains spreading along the cracks."></canvas></div>
+        <figcaption>
+          <b>V — shatter.png</b>
+          <span class="ctrl"><button type="button" data-again>another</button><label for="f5">+ photograph</label><input type="file" id="f5" accept="image/*"></span>
+          <span class="what">the screen it was on, dropped</span>
+        </figcaption>
+      </figure>
+    </div>
+    <div class="col">
+      <figure>
+        <div class="plate" data-kind="drip" data-seed="5" data-mode="dusk" style="aspect-ratio: 3 / 4"><canvas aria-label="The coast breaking into macroblocks across the horizon, its columns stretched down into coral and navy drips, with streaks rising into the sky."></canvas></div>
+        <figcaption>
+          <b>VI — drip.mp4</b>
+          <span class="ctrl"><button type="button" data-mode="dusk" aria-pressed="true">dusk</button><button type="button" data-mode="mint" aria-pressed="false">mint</button><button type="button" data-again>another</button><label for="f6">+ photograph</label><input type="file" id="f6" accept="image/*"></span>
+          <span class="what">a codec out of bits: blocks hang, and the columns under them run</span>
+        </figcaption>
+      </figure>
+      <figure>
+        <div class="plate" data-kind="scan" data-seed="2" style="aspect-ratio: 2 / 3"><canvas aria-label="A black-and-white photocopy of the coast pulled across a scanner: edges snaking sideways, rows smeared flat, and rainbow fringes wherever the sheet moved."></canvas></div>
+        <figcaption>
+          <b>VII — scan.tif</b>
+          <span class="ctrl"><button type="button" data-again>another</button><label for="f7">+ photograph</label><input type="file" id="f7" accept="image/*"></span>
+          <span class="what">a photocopy, pulled while the head was still moving</span>
+        </figcaption>
+      </figure>
+    </div>
   </section>
 
-  <div class="bar" aria-hidden="true"></div>
+  <div class="plate strip" data-kind="smear" data-seed="8" aria-hidden="true"><canvas></canvas></div>
   <section class="listing" aria-label="Programme">
-    <h2>Programme</h2>
+    <h2>programme</h2>
     <ol>
-      <li class="day"><span class="t">FRI 14.11</span><span class="a">macroblock night</span><span class="n"></span></li>
-      <li><span class="t">20:30</span><span class="a">Pell Harrow — keyframes only</span><span class="n">live a/v</span></li>
+      <li class="day"><span class="t">FRI 14.11</span><span class="a">slit night</span><span class="n"></span></li>
+      <li><span class="t">20:30</span><span class="a">Pell Harrow — one line, read forever</span><span class="n">live a/v</span></li>
       <li><span class="t">21:40</span><span class="a">Choir of Dropped Frames</span><span class="n">12 voices, 1 fps</span></li>
       <li><span class="t">23:00</span><span class="a">Mira Oduya — stale vector (première)</span><span class="n">bring earplugs</span></li>
       <li class="day"><span class="t">SAT 15.11</span><span class="a">scanner night</span><span class="n"></span></li>
       <li><span class="t">14:00</span><span class="a">workshop: pull the sheet while it scans</span><span class="n">A4, bring your own</span></li>
       <li><span class="t">21:00</span><span class="a">Tobi Anand &amp; the Flatbeds</span><span class="n"></span></li>
-      <li><span class="t">22:30</span><span class="a">Rook / Mirror — one-bit set</span><span class="n">strobe</span></li>
-      <li class="day"><span class="t">SUN 16.11</span><span class="a">wrong encoding</span><span class="n"></span></li>
-      <li><span class="t">16:00</span><span class="a">reading: a JPEG, aloud, in MacRoman</span><span class="n">~40 min</span></li>
-      <li><span class="t">19:00</span><span class="a">Ines Koort — lavender tiles</span><span class="n">closing</span></li>
+      <li><span class="t">22:30</span><span class="a">Rook / Mirror — sorted set</span><span class="n">strobe</span></li>
+      <li class="day"><span class="t">SUN 16.11</span><span class="a">dropped screens</span><span class="n"></span></li>
+      <li><span class="t">16:00</span><span class="a">talk: what a cracked panel still shows</span><span class="n">~40 min</span></li>
+      <li><span class="t">19:00</span><span class="a">Ines Koort — mint drip</span><span class="n">closing</span></li>
     </ol>
   </section>
 </main>
 <footer>
-  Stale Vector, its venue and its artists are fictional. No plate is a photograph or a found glitch: each is drawn by <code>glitch.js</code> and broken the way a codec, a scanner or a text editor breaks a file. Press <i>another</i> for a new one, or drop your own file on a plate.
+  Stale Vector, its venue and its artists are fictional. No plate is a photograph or a found glitch: the coast is drawn by <code>glitch.js</code>, then broken the way a slit, a codec, a dropped screen, a scanner or a layout breaks a picture. Press <i>another</i> for a new one, or drop your own photograph on a plate.
   <br><a href="../../index.html">all styles</a>
 </footer>
 <script src="assets/pixelsort.js"></script>
@@ -162,35 +184,34 @@
 (function () {
   const $ = (s, r) => (r || document).querySelector(s);
   const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = Math.min(2, window.devicePixelRatio || 1), SCENE = 6;   // one picture for the whole page
   const plates = $$('.plate').map(el => {
     const box = el.closest('figure') || el;
-    return { el, box, canvas: $('canvas', el), kind: el.dataset.kind, seed: +el.dataset.seed, mode: el.dataset.mode, image: null, text: null, bytes: null };
+    return { el, box, canvas: $('canvas', el), kind: el.dataset.kind, seed: +el.dataset.seed, scene: SCENE, mode: el.dataset.mode, image: null };
   });
 
   function render(p) {
     const r = p.el.getBoundingClientRect(), cw = Math.round(r.width), ch = Math.round(r.height);
     if (!cw || !ch) return;
-    Glitch[p.kind](p.canvas, { width: Math.round(cw * dpr), height: Math.round(ch * dpr), cssWidth: cw, seed: p.seed, mode: p.mode, image: p.image, text: p.text, bytes: p.bytes });
+    Glitch[p.kind](p.canvas, { width: Math.round(cw * dpr), height: Math.round(ch * dpr), cssWidth: cw, seed: p.seed, scene: p.scene, mode: p.mode, image: p.image });
   }
-  // one plate per frame, top first, after the fonts the plates draw with have loaded
+  // one plate per frame, top first, after the fonts the type plate draws with have loaded
   function renderAll() { plates.forEach((p, i) => setTimeout(() => requestAnimationFrame(() => render(p)), i * 30)); }
 
   async function take(p, file) {
-    if (!file) return;
-    if (p.kind === 'printout') { p.text = (await file.text()).slice(0, 40000); return render(p); }
-    if (p.kind === 'mojibake' && !/^image\//.test(file.type)) { p.bytes = new Uint8Array(await file.arrayBuffer()); p.image = null; return render(p); }
-    if (!/^image\//.test(file.type)) return;
+    if (!file || !/^image\//.test(file.type)) return;
     const img = new Image(); img.src = URL.createObjectURL(file);
     try { await img.decode(); } catch (e) { return; }
-    p.image = img; p.bytes = null; render(p);
+    p.image = img; render(p);
   }
   plates.forEach(p => {
-    $('[data-again]', p.box).addEventListener('click', () => { p.image = p.text = p.bytes = null; p.seed = 1 + Math.floor(Math.random() * 9999); render(p); });
+    const again = $('[data-again]', p.box), input = $('input[type=file]', p.box);
+    if (again) again.addEventListener('click', () => { p.image = null; p.seed = 1 + Math.floor(Math.random() * 9999); p.scene = 1 + Math.floor(Math.random() * 9999); render(p); });
     $$('button[data-mode]', p.box).forEach(b => b.addEventListener('click', () => {
       p.mode = b.dataset.mode; $$('button[data-mode]', p.box).forEach(x => x.setAttribute('aria-pressed', String(x === b))); render(p);
     }));
-    $('input[type=file]', p.box).addEventListener('change', e => take(p, e.target.files[0]));
+    if (!input) return;
+    input.addEventListener('change', e => take(p, e.target.files[0]));
     p.el.addEventListener('dragover', e => { e.preventDefault(); p.el.classList.add('drag'); });
     p.el.addEventListener('dragleave', () => p.el.classList.remove('drag'));
     p.el.addEventListener('drop', e => { e.preventDefault(); p.el.classList.remove('drag'); take(p, e.dataTransfer.files[0]); });
@@ -199,7 +220,7 @@
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); } }), { threshold: 0.08 });
   plates.forEach(p => io.observe(p.el));
 
-  Promise.all(['400 12px "IBM Plex Mono"', '500 12px "IBM Plex Mono"', '700 30px Archivo'].map(f => document.fonts.load(f).catch(() => null))).then(renderAll);
+  Promise.all(['400 12px Archivo', '800 30px Archivo', '500 12px "IBM Plex Mono"'].map(f => document.fonts.load(f).catch(() => null))).then(renderAll);
   let lastW = innerWidth, t;
   addEventListener('resize', () => {   // phones fire resize on scroll as the toolbar moves; only a width change re-renders
     if (innerWidth === lastW) return;
