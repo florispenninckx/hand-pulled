@@ -36,6 +36,8 @@ Adding a face: copy a recipe in tools/recipes/ and change it.
                             functions below.
   glyphs                    per-glyph overrides of op params: {"s": {"0": {"drop": 1}}}
   trace, fit, max_error     the master that is traced, the curve fit, and the fit check
+  glyph_limit               a glyph worse than this (units) is frozen at the traced master
+  swap                      [[hex, hex]] code points whose glyphs the base draws swapped
   variable                  false for a static face (one master)
 Build it with --chars and --proof until the proof reads, then build it in full and read the
 mean and max error it prints.
@@ -871,6 +873,12 @@ def make_glyph(args):
     fields = {p: process(polys, p, recipe, g, seed, gname) for p in positions}
     step = fit.get('step', 2.0 * px / 2)
     C = trace(fields[trace_pos], g, step, fit.get('min_area', 60))
+    if not C:                   # the process erased this glyph at the traced master (a hairline sign
+        for alt in sorted(positions, key=lambda q: abs(q - trace_pos))[1:]:   # under a big blur):
+            C = trace(fields[alt], g, step, fit.get('min_area', 60))          # trace the nearest one
+            if C:                                                             # that still has ink
+                trace_pos = alt
+                break
     Wt = warp_matrix(recipe, trace_pos)
     Wt_inv = np.linalg.inv(Wt)
     # project in a chain outward from the traced position, each master from its neighbour
@@ -1036,6 +1044,10 @@ def glyph_order(recipe, font, chars):
             continue
         uni[ord(ch)] = g
         add(g)
+    for a, b in recipe.get('swap', []):              # a base that draws a pair the wrong way round
+        a, b = int(a, 16), int(b, 16)
+        if a in uni and b in uni:
+            uni[a], uni[b] = uni[b], uni[a]
     return order, uni
 
 
@@ -1158,6 +1170,14 @@ def build(name, chars=None, jobs=None, proof=False):
     work = [(recipe, gname, positions, trace_pos) for gname in order[1:]]
     with ProcessPoolExecutor(max_workers=jobs or os.cpu_count()) as ex:
         glyphs = {r['name']: r for r in ex.map(make_glyph, work, chunksize=2)}
+    # A glyph whose projection broke (a hairline that tore) is frozen at its traced shape, so one
+    # stray glyph cannot push the whole family to statics; it keeps each master's advance.
+    for g in order[1:]:
+        ms = glyphs[g]['masters']
+        if ms[trace_pos].get('contours') and any(m['dev'] > recipe.get('glyph_limit', 40) for m in ms.values()):
+            print(f"  {g}: projection failed (worst {max(m['dev'] for m in ms.values()):.0f} units), frozen at {trace_pos}")
+            for p in positions:
+                ms[p] = {**ms[trace_pos], 'adv': ms[p]['adv'], 'dev': 0.0}
     vm = vertical_metrics(recipe, font, scale, glyphs, positions)
     devs = {p: [glyphs[g]['masters'][p]['dev'] for g in order[1:]] for p in positions}
     worst = {p: max(((glyphs[g]['masters'][p]['dev'], g) for g in order[1:]), default=(0, '')) for p in positions}

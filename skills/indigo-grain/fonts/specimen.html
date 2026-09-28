@@ -3,162 +3,90 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sunprint specimen</title>
-<meta name="description" content="Sunprint and Sunprint Halo, the indigo-grain faces: letters exposed like a photogram, with a live EXPO axis.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500&family=Space+Mono:wght@400;700&display=swap">
+<title>indigo-grain type specimen</title>
+<meta name="description" content="The indigo-grain display faces (Seep, Sunprint, Sunprint Halo), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
-  @property --e { syntax: '<number>'; inherits: true; initial-value: 300; }
-  :root {
-    --prussian: #1c2a6b;
-    --ultra: #1e3590;
-    --deep: #111a4a;
-    --paper: #f3f3ef;
-    --wash: #cfd8f2;
-    --gut: clamp(16px, 4vw, 56px);
-    --mono: 'Space Mono', ui-monospace, monospace;
-    --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    background: var(--ultra);
-    color: var(--paper);
-    font: 400 16px/1.5 var(--sans);
-    overflow-x: hidden;
-  }
-  /* cyanotype paper: a fine tooth of unexposed fibre over the blue */
-  body::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: .22; mix-blend-mode: screen;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .8 0 0 0 0 .85 0 0 0 0 1 0 0 0 1.6 -.55'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  main { position: relative; z-index: 1; padding: var(--gut); max-width: 1400px; margin: 0 auto; }
-
-  /* one exposed line: the core in paper white over its halation */
-  .print {
-    position: relative; isolation: isolate; display: inline-block; margin: 0;
-    font-family: 'Sunprint', var(--sans); font-weight: 400;
-    font-variation-settings: 'EXPO' var(--e);
-    color: var(--paper); line-height: 1.04; letter-spacing: 0;
-  }
-  .print::before {
-    content: attr(data-text); position: absolute; inset: 0; z-index: -1;
-    font-family: 'Sunprint Halo', var(--sans); font-variation-settings: normal;
-    color: var(--wash);
-    opacity: calc(0.08 + var(--e) / 1000 * 0.5);
-    filter: blur(calc(0.004em + var(--e) / 1000 * 0.03em));
-    white-space: inherit;
-  }
-  .live { animation: expose 9s ease-in-out infinite alternate; }
-  @keyframes expose { 0%, 8% { --e: 0; } 92%, 100% { --e: 1000; } }
-  @media (prefers-reduced-motion: reduce) { .live { animation: none; } }
-
-  header.plate { min-height: min(86vh, 820px); display: grid; align-content: space-between; gap: 32px; padding-bottom: 24px; border-bottom: 1px solid rgba(243,243,239,.3); }
-  .kicker { font: 400 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; display: flex; flex-wrap: wrap; gap: 8px 24px; }
-  .hero { font-size: clamp(48px, 13.5vw, 200px); }
-  .hero-sub { font-size: clamp(22px, 5.2vw, 72px); margin-top: 8px; }
-  .dial { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; font: 400 12px/1 var(--mono); max-width: 640px; }
-  .dial input { width: 100%; min-width: 0; accent-color: var(--paper); }
-  .dial output { min-width: 5ch; text-align: right; }
-
-  section { padding: clamp(40px, 7vw, 96px) 0; border-bottom: 1px solid rgba(243,243,239,.3); }
-  h2 { font: 700 12px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; margin: 0 0 28px; }
-  .note { max-width: 62ch; color: var(--wash); margin: 0 0 32px; }
-  .alpha { font-size: clamp(30px, 6.4vw, 92px); overflow-wrap: anywhere; }
-  .alpha + .alpha { margin-top: 12px; }
-
-  /* darkroom test strip: one word stepped through the exposures */
-  .strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border: 1px solid rgba(243,243,239,.35); }
-  .step { container-type: inline-size; padding: 22px 14px 14px; border-right: 1px solid rgba(243,243,239,.2); display: grid; gap: 14px; background: linear-gradient(rgba(17,26,74,var(--shade)), rgba(17,26,74,var(--shade))); }
-  .step:last-child { border-right: 0; }
-  .step .print { font-size: 34cqi; }
-  .step span { font: 400 11px/1.3 var(--mono); color: var(--wash); }
-
-  .use { display: grid; gap: 32px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); }
-  .card { background: var(--deep); padding: clamp(20px, 3vw, 36px); display: grid; gap: 18px; align-content: start; }
-  .card .print { font-size: clamp(34px, 5vw, 64px); color: var(--paper); }
-  .card p { margin: 0; color: var(--wash); max-width: 46ch; }
-  .card .meta { font: 400 11px/1.4 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--paper); }
-
-  pre { font: 400 12.5px/1.6 var(--mono); background: var(--deep); padding: 20px; overflow-x: auto; margin: 0; color: var(--wash); white-space: pre; }
-  footer { padding: 40px 0 8px; font: 400 12px/1.6 var(--mono); color: var(--wash); }
-  footer a { color: var(--paper); }
+  @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
+  :root { --bg:#1e3590; --fg:#f3f3ef; --dim:#cfd8f2; --ink:#f3f3ef; --ink2:#cfd8f2; --panel:#111a4a;
+          --gut:clamp(16px,4vw,56px); --mono:ui-monospace,'SF Mono',Menlo,monospace; --sans:system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; }
+  body { background:var(--bg); color:var(--fg); font:400 16px/1.5 var(--sans); overflow-x:hidden; }
+  main { padding:var(--gut); max-width:1400px; margin:0 auto; }
+  header { padding-bottom:28px; border-bottom:1px solid var(--dim); }
+  .kicker,.meta,.dial,.strip span,h2 span { font:400 12px/1.4 var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .kicker { display:flex; flex-wrap:wrap; gap:8px 24px; }
+  h1 { font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:18px 0 0; }
+  .face { padding:clamp(36px,6vw,80px) 0; border-bottom:1px solid var(--dim); }
+  h2 { font:700 13px/1.4 var(--mono); letter-spacing:.08em; text-transform:uppercase; margin:0 0 14px; display:flex; flex-wrap:wrap; gap:6px 18px; }
+  .note { max-width:64ch; color:var(--dim); margin:0 0 24px; }
+  .sample { font-size:clamp(56px,15vw,220px); line-height:1; margin:0 0 20px; color:var(--ink); overflow-wrap:anywhere; }
+  .live { animation:sweep 8s ease-in-out infinite alternate; }
+  @keyframes sweep { 0%,8% { --v:0; } 92%,100% { --v:1000; } }
+  @media (prefers-reduced-motion: reduce) { .live { animation:none; } }
+  .dial { display:grid; grid-template-columns:auto 1fr auto; gap:16px; align-items:center; max-width:640px; margin-bottom:32px; }
+  .dial input { width:100%; min-width:0; accent-color:var(--ink); }
+  .dial output { min-width:5ch; text-align:right; }
+  .alpha { font-size:clamp(26px,5.4vw,72px); line-height:1.15; margin:0 0 32px; overflow-wrap:anywhere; }
+  .strip { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); border:1px solid var(--dim); }
+  .strip div { container-type:inline-size; padding:18px 12px 12px; border-right:1px solid var(--dim); background:var(--panel); display:grid; gap:10px; overflow:hidden; }
+  .strip div:last-child { border-right:0; }
+  .strip p { font-size:26cqi; line-height:1; margin:0; white-space:nowrap; }
+  .stack { position:relative; isolation:isolate; font-family:var(--f); font-size:clamp(40px,9vw,140px); line-height:1.02; margin:0; color:var(--ink); }
+  .stack::before { content:attr(data-text); position:absolute; inset:0; z-index:-1; font-family:var(--b); color:var(--ink2); mix-blend-mode:multiply; transform:translate(.02em,.015em); }
+  pre { font:400 12.5px/1.6 var(--mono); background:var(--panel); padding:20px; overflow-x:auto; margin:0; white-space:pre; }
+  footer { padding:40px 0 8px; font:400 12px/1.6 var(--mono); color:var(--dim); }
+  footer a { color:var(--fg); }
 </style>
 </head>
 <body>
 <main>
-  <header class="plate live" id="live">
+  <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>indigo-grain</span><span>SIL OFL 1.1</span></div>
-    <div>
-      <p class="print hero" data-text="Sunprint">Sunprint</p><br>
-      <p class="print hero-sub" data-text="letters exposed to the light">letters exposed to the light</p>
-    </div>
-    <label class="dial"><span>EXPO</span><input id="expo" type="range" min="0" max="1000" value="300" aria-label="Exposure, from contact print to long exposure"><output id="expo-out">live</output></label>
+    <h1>Seep, Sunprint, Sunprint Halo: display faces, titles only</h1>
   </header>
-
-  <section>
-    <h2>The face</h2>
-    <p class="note">Sunprint is laid on cyanotype paper and exposed. At EXPO 0 it is a crisp contact print; as the exposure runs, light creeps under the edges, the strokes swell and pool, and the edge wanders like paper fibre. Sunprint Halo is the light that got under the letters: set it behind the core, and its glow and grain follow the same advances at every exposure.</p>
-    <p class="print alpha" data-text="ABCDEFGHIJKLMNOPQRSTUVWXYZ">ABCDEFGHIJKLMNOPQRSTUVWXYZ</p><br>
-    <p class="print alpha" data-text="abcdefghijklmnopqrstuvwxyz">abcdefghijklmnopqrstuvwxyz</p><br>
-    <p class="print alpha" data-text="0123456789 &amp;?! «éàöç» —">0123456789 &amp;?! «éàöç» —</p>
+  <section class="face">
+    <h2>Seep <span>MELT 0–1000 · variable · 51 KB</span></h2>
+    <p class="note">The wide melting title cut: an extended geometric softened like a wet cyanotype, whose ink seeps down out of every bottom edge. At MELT 0 it is soft and whole; as MELT rises the letters sag into long, tapering runs.</p>
+    <p class="sample live" id="s0" style="font-family:'Seep';--v:400;font-variation-settings:'MELT' var(--v)">Tide</p>
+    <label class="dial"><span>MELT</span><input type="range" min="0" max="1000" value="400" data-for="s0" aria-label="Melt"><output>live</output></label>
+    <p class="alpha" style="font-family:'Seep';font-variation-settings:'MELT' 400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Seep';font-variation-settings:'MELT' 0">Tide</p><span>MELT 0</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 250">Tide</p><span>MELT 250</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 500">Tide</p><span>MELT 500</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 750">Tide</p><span>MELT 750</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 1000">Tide</p><span>MELT 1000</span></div></div>
+    <p class="meta">Named instances: Wet 0, Regular 400, Run 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Sunprint <span>EXPO 0–1000 · variable · 82 KB</span></h2>
+    <p class="note">A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print through a long exposure where the light creeps under the edges, to a blown-out print where the strokes swell into pools and the counters drown.</p>
+    <p class="sample" id="s1" style="font-family:'Sunprint';--v:300;font-variation-settings:'EXPO' var(--v)">Tide</p>
+    <label class="dial"><span>EXPO</span><input type="range" min="0" max="1000" value="300" data-for="s1" aria-label="Exposure"><output>300</output></label>
+    <p class="alpha" style="font-family:'Sunprint';font-variation-settings:'EXPO' 300">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 0">Tide</p><span>EXPO 0</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 250">Tide</p><span>EXPO 250</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 500">Tide</p><span>EXPO 500</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 750">Tide</p><span>EXPO 750</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 1000">Tide</p><span>EXPO 1000</span></div></div>
+    <p class="meta">Named instances: Contact 0, Regular 300, Long 650, Blown 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Sunprint Halo <span>static · 400: 48 KB</span></h2>
+    <p class="note">The halation of Sunprint: the light that crept under the letters, a soft swollen ghost with a stippled, grainy edge. Set it behind Sunprint in the same size and tracking; the advances match.</p>
+    <p class="sample" style="font-family:'Sunprint Halo';font-weight:400">Tide</p>
+    <p class="alpha" style="font-family:'Sunprint Halo';font-weight:400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Sunprint Halo';font-weight:400">Tide</p><span>weight 400</span></div></div>
   </section>
 
-  <section>
-    <h2>Test strip</h2>
-    <p class="note">One word, stepped through the exposures the way a printer tests a negative. The named instances are Contact (0), Regular (300) and Long (1000).</p>
-    <div class="strip" id="strip"></div>
-  </section>
-
-  <section>
-    <h2>In use</h2>
-    <div class="use">
-      <div class="card">
-        <span class="meta">Plate 07 · 20 × 25 cm · four minutes</span>
-        <p class="print" style="--e: 620" data-text="Fern, blue hour">Fern, blue hour</p>
-        <p>Exposed on a south window sill, washed in cold water and left to deepen overnight. The fronds lifted at the tips, so the light crept in.</p>
-      </div>
-      <div class="card">
-        <span class="meta">Open studio · Saturday · 10:00–16:00</span>
-        <p class="print" style="--e: 150" data-text="Bring an object">Bring an object</p>
-        <p>We print whatever you bring: a leaf, a key, a lace collar, a letter. Twelve sheets, one afternoon of sun.</p>
-      </div>
-    </div>
-  </section>
-
-  <section>
+  <section class="face">
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
-.print { position: relative; font-family: 'Sunprint';
-         font-variation-settings: 'EXPO' 300; color: #f3f3ef; }
-/* the halation: same text, same size and tracking, behind the core */
-.print::before { content: attr(data-text); position: absolute; inset: 0; z-index: -1;
-         font-family: 'Sunprint Halo'; color: #cfd8f2; opacity: .3; filter: blur(.01em); }</pre>
+.x{font-family:'Seep'; font-variation-settings:'MELT' 400;}
+.x{font-family:'Sunprint'; font-variation-settings:'EXPO' 300;}
+.x{font-family:'Sunprint Halo'; font-weight:400;}</pre>
   </section>
-
-  <footer>Sunprint and Sunprint Halo are made by tools/foundry.py from Unbounded (SIL OFL 1.1) and carry their own names; see <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Krona One, Unbounded (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
-  (function () {
-    var strip = document.getElementById('strip');
-    [0, 150, 300, 500, 700, 850, 1000].forEach(function (e, i) {
-      var d = document.createElement('div');
-      d.className = 'step';
-      d.style.setProperty('--shade', (i * 0.07).toFixed(2));
-      d.innerHTML = '<p class="print" data-text="Fern">Fern</p><span>EXPO ' + e + ' · ' + (1 + i * 1.5) + ' min</span>';
-      d.firstChild.style.setProperty('--e', e);
-      strip.appendChild(d);
-    });
-    var live = document.getElementById('live'), range = document.getElementById('expo'), out = document.getElementById('expo-out');
-    range.addEventListener('input', function () {
-      live.classList.remove('live');
-      live.style.setProperty('--e', range.value);
-      out.textContent = range.value;
-    });
-  })();
+  document.querySelectorAll('.dial input').forEach(function (inp) {
+    var el = document.getElementById(inp.dataset.for), out = inp.nextElementSibling;
+    inp.addEventListener('input', function () { el.classList.remove('live'); el.style.setProperty('--v', inp.value); out.textContent = inp.value; });
+  });
 </script>
 </body>
 </html>
