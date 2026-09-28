@@ -7,6 +7,7 @@
 <meta name="description" content="Reference page for the maximalist-boc skill: a fictional record and its print wall, poured in acid green and Klein blue. Liquid chrome, marbling with dark veins, agate, moiré, grain blooms, datamosh, caustics and flat fields, with melted display type. Fictional artist, label and venues.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wdth,wght@75..100,400..700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -97,6 +98,38 @@
   .ink button[aria-pressed="true"] { outline: 2px solid var(--night); outline-offset: 2px; }
   @media (max-width: 820px) { .bench { grid-template-columns: 1fr; } }
 
+  /* LIVE. the cover's paint, still wet: a live sheet, combed by the pointer, a drop on click */
+  .wet { min-height: 88svh; display: grid; place-items: center; padding: 64px var(--gut); color: var(--paper); cursor: crosshair; }
+  .wet h2 { position: relative; width: min(80vw, 980px); color: var(--citric); --goo-echo: var(--klein); }
+  .wet h2 svg { display: block; width: 100%; }
+  .wet .corner { position: absolute; font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .wet .tl { left: var(--gut); top: 20px; } .wet .br { right: var(--gut); bottom: 20px; text-align: right; }
+  .seam { height: 120px; }
+
+  /* the pour desk: a small made-up print-room app built from live-ui.js */
+  .desk { background: var(--paper); color: var(--night); padding: clamp(36px, 5vw, 72px) var(--gut); }
+  .desk h2 { font-family: 'Soak'; font-variation-settings: 'BLED' 620; font-size: clamp(44px, 8vw, 112px); line-height: .9; letter-spacing: -.01em; }
+  .desk .sub { font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; margin: 12px 0 28px; }
+  .desk-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(18px, 3vw, 40px); align-items: start; }
+  .sheet-live { aspect-ratio: 4 / 3; border-radius: 6px; overflow: hidden; background: var(--night); position: relative; }
+  .sheet-live .tag-no { position: absolute; left: 12px; bottom: 10px; font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; font-size: 11px; letter-spacing: .06em; color: var(--paper); text-shadow: 0 0 6px rgba(0,0,0,.6); }
+  .desk-panel { display: grid; gap: 22px; }
+  .desk-panel .row { display: grid; gap: 8px; }
+  .desk-panel .lbl { font-family: 'Flatbed'; font-variation-settings: 'FLAT' 800; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pill { font: 600 14px/1 var(--sans); color: var(--paper); padding: 13px 18px; border-radius: 999px; border: 1.5px solid var(--night); background: var(--night); text-shadow: 0 1px 3px rgba(0,0,0,.7); overflow: hidden; }
+  .pill span { display: inline-block; background: rgba(9,12,8,.74); padding: 3px 8px; margin: -3px -8px; border-radius: 999px; }
+  .pill[aria-pressed="true"] { box-shadow: 0 0 0 3px var(--paper), 0 0 0 4.5px var(--night); }
+  .pill:hover, .pill:focus-visible { color: var(--citric); }
+  .pill:focus-visible { outline: 2px solid var(--night); outline-offset: 3px; }
+  .go { font-family: 'Gouge'; font-variation-settings: 'CARV' 600; font-size: 26px; padding: 16px 26px; }
+  .switch-row { display: flex; align-items: center; gap: 12px; font: 500 15px/1.2 var(--sans); }
+  .bar { height: 16px; border-radius: 999px; overflow: hidden; background: var(--night); }
+  .run { display: flex; align-items: center; gap: 12px; min-height: 44px; }
+  .spin { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: var(--night); }
+  .spin[hidden] { display: none; }
+  @media (max-width: 820px) { .desk-grid { grid-template-columns: 1fr; } }
+
   footer { display: flex; flex-wrap: wrap; gap: 6px 22px; justify-content: space-between; padding: 18px var(--gut) 26px; background: var(--night); color: var(--citric); }
 </style>
 </head>
@@ -114,6 +147,12 @@
   <p class="corner bl facts">out the fourteenth of november</p>
   <div class="corner br facts"><span class="ctl"><button type="button" id="cover-again">[another pour]</button></span></div>
 </header>
+
+<section class="wet" id="wet" aria-labelledby="wet-h">
+  <p class="corner tl">the cover, still wet</p>
+  <h2 id="wet-h" data-text="still wet">still wet</h2>
+  <p class="corner br">drag through it · click to drop paint</p>
+</section>
 
 <section class="fields" aria-label="release date">
   <div class="field acid" id="f-acid"><h2 data-text="out on">out on</h2><p class="facts">vinyl, tape and download</p></div>
@@ -152,6 +191,29 @@
 </section>
 </div>
 
+<div class="seam" id="seam" aria-hidden="true"></div>
+
+<section class="desk" aria-labelledby="desk-h">
+  <h2 id="desk-h">pour desk</h2>
+  <p class="sub">slowpour print room · run sheet 07</p>
+  <div class="desk-grid">
+    <div class="sheet-live" id="sheet-live"><span class="tag-no" id="tag-no">SP07 · MARBLE · 01</span></div>
+    <div class="desk-panel">
+      <div class="row"><span class="lbl" id="kind-l">sheet</span>
+        <div class="pills" role="group" aria-labelledby="kind-l">
+          <button class="pill" type="button" data-kind="marble" aria-pressed="true"><span>marble</span></button>
+          <button class="pill" type="button" data-kind="bands" aria-pressed="false"><span>agate</span></button>
+          <button class="pill" type="button" data-kind="chrome" aria-pressed="false"><span>chrome</span></button>
+          <button class="pill" type="button" data-kind="moire" aria-pressed="false"><span>lines</span></button>
+        </div></div>
+      <div class="row"><label class="lbl" for="wetness">wetness</label><input id="wetness" type="range" min="0" max="100" value="60"></div>
+      <div class="row"><span class="switch-row"><input id="keep" type="checkbox" checked><label for="keep">keep the sheet wet</label></span></div>
+      <div class="row"><span class="lbl" id="run-l">run</span><div class="bar" id="bar" aria-labelledby="run-l"></div></div>
+      <div class="run"><button class="pill go" type="button" id="pour-run"><span>pour a run</span></button><div class="spin" id="spin" hidden aria-label="pouring"></div></div>
+    </div>
+  </div>
+</section>
+
 <footer class="facts">
   <span>Every artist, label, venue and print here is invented.</span>
   <span>goo.js + pour.js · <a href="SKILL.md">the brief</a> · <a href="../../index.html">hand-pulled</a></span>
@@ -159,6 +221,8 @@
 
 <script src="assets/goo.js"></script>
 <script src="assets/pour.js"></script>
+<script src="assets/live.js"></script>
+<script src="assets/live-ui.js"></script>
 <script>
 (function () {
   'use strict';
@@ -314,6 +378,45 @@
     save(URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(c)], { type: 'image/svg+xml' })), slug() + '.svg');
   });
   pourIn($('#bench-h'), { finish: 'blob', seed: 12 });
+
+  /* LIVE. the hero, the seam and the pour desk (live.js + live-ui.js) */
+  const ui = Pour.ui;
+  ui.focusRing();
+  ui.background($('#wet'), { mode: 'marble', ramp: 'klein cornflower acid citric', vein: 2.2, seed: 4, scale: 0.9, grain: 0.36 });
+  pourIn($('#wet-h'), { finish: 'echo', seed: 5 });
+  ui.transition($('#seam'), { ground: 'soot' });
+  const inks = { marble: 'acidnight', bands: 'agate', chrome: 'slick', moire: 'plum' };
+  let kind = 'marble', run = 1;
+  const sheet = ui.card($('#sheet-live'), { mode: 'marble', ramp: inks.marble, seed: 1, pointer: 1, clickPulse: true, wet: 0.6 });
+  const label = () => { $('#tag-no').textContent = `SP07 · ${kind === 'bands' ? 'AGATE' : kind === 'moire' ? 'LINES' : kind.toUpperCase()} · ${String(run).padStart(2, '0')}`; };
+  const pills = [...document.querySelectorAll('.pill[data-kind]')];
+  pills.forEach(b => {
+    ui.button(b, { mode: b.dataset.kind, ramp: inks[b.dataset.kind], seed: 3 });
+    b.addEventListener('click', () => {
+      kind = b.dataset.kind; pills.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      sheet && sheet.load({ mode: kind, ramp: inks[kind], seed: run }); label();
+    });
+  });
+  ui.button($('#pour-run'), { mode: 'chrome', ramp: 'mercury', seed: 6, scale: 0.5 });
+  const wetness = $('#wetness'), keep = $('#keep');
+  ui.slider(wetness);
+  ui.toggle(keep);
+  const wetNow = () => sheet && sheet.set({ wet: keep.checked ? wetness.value / 100 * 1.6 : 0 });
+  wetness.addEventListener('input', wetNow); keep.addEventListener('change', wetNow);
+  const bar = ui.progress($('#bar'), { value: 0 });
+  const spin = $('#spin'), spinner = ui.loader(spin);
+  $('#pour-run').addEventListener('click', () => {
+    spin.hidden = false; bar.set(0);
+    const t0 = performance.now(), dur = reduced ? 400 : 2200;
+    const step = () => {
+      const p = Math.min(1, (performance.now() - t0) / dur); bar.set(p);
+      if (p < 1) return requestAnimationFrame(step);
+      spin.hidden = true; run++; label();
+      sheet && sheet.load({ mode: kind, ramp: inks[kind], seed: run }).set({ develop: 'in' });
+    };
+    requestAnimationFrame(step);
+  });
+  void spinner; label();
   sync(); reword();
 })();
 </script>

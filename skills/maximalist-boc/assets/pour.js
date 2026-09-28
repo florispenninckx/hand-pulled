@@ -248,6 +248,7 @@
 
     const flat = o.mode === 'field' && (NC === 1 || !o.wobble);
     const F = flat && !o.mask ? null : solve(W, H, o);
+    if (o.capture) o.capture({ W, H, F, o, si: seedInt(o.seed) });   // live.js: the field under the paint
     const g = F && F.g, g2 = F && F.g2, g3 = F && F.g3, gw = F ? F.gw : 0, step = o.step;
     const at = (G, x, y) => { const X = x / step, Y = y / step, i = Math.floor(X), j = Math.floor(Y), u = X - i, v = Y - j, k = j * gw + i; return G[k] * (1 - u) * (1 - v) + G[k + 1] * u * (1 - v) + G[k + gw] * (1 - u) * v + G[k + gw + 1] * u * v; };
 
@@ -559,5 +560,5 @@
   /** WCAG contrast ratio of two colours (names or hex). */
   const contrast = (a, b) => { const x = lum(color(a)), y = lum(color(b)); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 
-  root.Pour = { paint, photo, plate, fit, collage, color: hexOf, ramp: s => rampOf(s).map(rgbHex), PALETTES, COLORS, RAMPS, MODES, contrast, rng };
+  root.Pour = { paint, photo, plate, fit, collage, color: hexOf, ramp: s => rampOf(s).map(rgbHex), PALETTES, COLORS, RAMPS, MODES, contrast, rng, hash, seedInt, rgb: color };
 })(window);
