@@ -56,6 +56,14 @@ the work done.
   its settings and pulled again.
 - Each reference page takes your own photograph and puts it through the same process as
   the stand-in. Some plates also take text, or any file.
+- Live mode: `assets/live.js` adds `X.live(canvas, opts)` to the engine (`Pour.live`,
+  `Glitch.live`, `Cyanotype.live`, `Haze.live`, `Mercury.live`, `Surface.live` …). It draws the
+  plate once, then moves it on the GPU in WebGL2 with the medium's own motion (paint that keeps
+  flowing, a sort sweep, a developing print, drifting fog, a lamp across metal, a raking light),
+  answering the pointer, clicks and scroll. Frame 0 is the still plate. `assets/live-ui.js` has
+  interface pieces drawn by the same process: background, button, card, toggle, slider,
+  progress, loader, focus ring and section transition. Reduced motion or no WebGL2 gives the
+  still; each SKILL.md has a "Live" section and each reference page a live hero and a small app.
 
 ## Check
 
