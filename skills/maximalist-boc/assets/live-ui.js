@@ -9,8 +9,9 @@
  *   const ui = Pour.ui;
  *   ui.background(section, { mode: 'marble' });   ui.button(btn);   ui.card(card, { mode: 'bands' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
- *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.cursor(section);
+ *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
  *   ui.icon(span, 'paint-bucket');   span.style.maskImage = ui.iconMask(svg);
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can set()
  * it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -226,24 +227,61 @@
     return live(backdrop(el), Object.assign({ mode: 'marble', ramp: 'ember', develop: 'scroll', pointer: 0.6, hand: el, own: false }, opts));
   }
 
-  // ---------------------------------------------------------------- the opt-in cursor
+  /**
+   * An icon poured in paint: a small live sheet cut to the icon's shape with a CSS mask. It pours
+   * in when it first scrolls into view, and the paint wakes while its button or link is hovered
+   * or focused. `name` is a key of ICONS or an SVG string; the element sets the size (default
+   * 1.25em) and, without WebGL2, shows the plain shape in currentColor.
+   */
+  function icon(el, name, opts) {
+    const svg = ICONS[name] || name;
+    const o = Object.assign({ mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.2, grain: 0.2, weight: 6, rest: 0.25, hover: 1.4 }, opts);
+    style();
+    el.classList.add('mx-icon'); el.setAttribute('aria-hidden', el.getAttribute('aria-hidden') || 'true');
+    el.style.setProperty('--mx-mask', iconMask(svg, { weight: o.weight }));
+    const c = document.createElement('canvas'); el.appendChild(c);
+    const so = Object.assign({}, o); delete so.weight; delete so.rest; delete so.hover;
+    const ctl = live(c, Object.assign({ drift: 1, wet: o.rest, pointer: 0, alive: false, own: false, develop: 'in', developMs: 1200, seed: name.length || 3 }, so));
+    const host = el.closest('button,a,label,[tabindex]') || el;
+    if (ctl) {
+      const on = v => () => ctl.set({ wet: v ? o.hover : o.rest, alive: v });
+      host.addEventListener('pointerenter', on(true)); host.addEventListener('pointerleave', on(false));
+      host.addEventListener('focusin', on(true)); host.addEventListener('focusout', on(false));
+    }
+    return ctl;
+  }
+
+  // ---------------------------------------------------------------- optional: a custom cursor
   // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
   // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
   // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
   // mouse, nothing keeps running, and touch has no cursor to show.
   const CUR = 32;
   const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
-  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
-  function curCut(plate, k, shape, lines) {
-    const c = curCanvas(k), x = c.getContext('2d');
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
     x.drawImage(plate, 0, 0, c.width, c.height);
-    x.scale(k, k);
-    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
-    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
+  }
+  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
+  function curUnder(c, k, shape, w, col) {
+    const x = c.getContext('2d');
+    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
+    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
+    x.beginPath(); shape(x); x.stroke(); x.fill();
+    x.restore(); return c;
   }
   const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
   const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
   function curValue(mark, fallback) {
     return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
       const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
@@ -271,48 +309,53 @@
   }
 
   /**
-   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
-   * default, and the live background is how the style answers the pointer. The mark is a wet ring of poured swirl, outlined in black, with a black point,
-   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
-   * a second mark, the pour as a full drop. opts: mode, ramp, scale, seed (paint() options). Returns { destroy() }, which puts the previous cursor back.
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x).
+   * opts.mark picks the mark (cursor.marks lists them):
+   *   'ring'   a wet ring of poured swirl, outlined in black, with a black point (the default); hover: the pour as a full drop
+   *   'drip'   an arrow of swirl with paint running off its edges; hover: the drips run further
+   *   'blob'   a blob of marbled paint drawn out to a point; hover: the blob splashed
+   *   'splat'  a splat of bloom paint thrown round the point; hover: a wilder splat round a black point
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: mode, ramp,
+   * scale, seed (paint() options, for 'ring' and 'drip'). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.35, seed: 3, grain: 0.25 }, opts);
-    const so = Object.assign({}, o); delete so.hover;
-    const plate = k => { const c = curCanvas(k); P.paint(c, so); return c; };
+    const o = Object.assign({ mark: 'ring', mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.35, seed: 3, grain: 0.25 }, opts);
+    const so = Object.assign({}, o); delete so.hover; delete so.mark;
+    const plate = (k, more) => { const c = curCanvas(k); P.paint(c, Object.assign({}, so, more)); return c; };
     const ink = '#0b0b0b', dot = (x, r) => { x.fillStyle = ink; x.beginPath(); curDisc(x, r); x.fill(); };
-    return nativeCursor(area, o, {
-      hot: [16, 16],
-      paint: k => curCut(plate(k), k, x => { curDisc(x, 11); curDisc(x, 6); }, x => { curRing(x, 11, 1.5, ink); curRing(x, 6, 1.5, ink); dot(x, 1.3); }),
-    }, {
-      hot: [16, 16],
-      paint: k => curCut(plate(k), k, x => curDisc(x, 12.5), x => { curRing(x, 12.5, 1.5, ink); dot(x, 1.6); }),
-    });
+    // a drip hanging from x0,y0 down to y1: a run of paint ending in a bead
+    const run = (x, x0, y0, y1, w) => { x.roundRect(x0 - w / 2, y0 - 1, w, y1 - y0 + 1 - w * 0.4, w / 2); x.moveTo(x0 + w * 0.72, y1 - w * 0.6); x.arc(x0, y1 - w * 0.6, w * 0.72, 0, Math.PI * 2); };
+    const drip = (x, far) => {
+      x.moveTo(2, 2); x.lineTo(2, 22); x.lineTo(7.4, 17.4); x.lineTo(10, 23); x.lineTo(13.4, 21.6); x.lineTo(11, 16.2); x.lineTo(17.4, 16.2); x.closePath();
+      run(x, 3.6, 19, far ? 30 : 27.5, 2.4); run(x, 12.4, 16, far ? 29.5 : 25.5, 2); run(x, 16.2, 16, far ? 22.5 : 20.5, 1.6);
+    };
+    const blob = x => { x.moveTo(2, 2); x.bezierCurveTo(9, 3, 13, 5.5, 18.5, 6.2); x.bezierCurveTo(28, 7.5, 31, 20, 23.5, 26.5); x.bezierCurveTo(16.5, 31.5, 5.5, 27.5, 5.8, 18.5); x.bezierCurveTo(5.9, 13, 3, 9, 2, 2); x.closePath(); };
+    const splat = (x, wild) => {
+      for (let i = 0; i <= 96; i++) {
+        const a = i / 96 * Math.PI * 2, r = 8.6 + (wild ? 3.6 : 2.6) * Math.cos(7 * a + 0.4) + 1.1 * Math.cos(3 * a + 1.3);
+        i ? x.lineTo(16 + r * Math.cos(a), 16 + r * Math.sin(a)) : x.moveTo(16 + r * Math.cos(a), 16 + r * Math.sin(a));
+      }
+      x.closePath();
+      for (const [dx, dy, r] of wild ? [[27.5, 7, 1.8], [5.5, 27, 1.4], [28.5, 25, 1.1]] : [[27, 8, 1.4], [6, 26.5, 1.1]]) { x.moveTo(dx + r, dy); x.arc(dx, dy, r, 0, Math.PI * 2); }
+    };
+    const marks = {
+      ring: { hot: [16, 16], paint: (k, over) => over
+        ? curCut(plate(k), k, x => curDisc(x, 12.5), x => { curRing(x, 12.5, 1.5, ink); dot(x, 1.6); })
+        : curCut(plate(k), k, x => { curDisc(x, 11); curDisc(x, 6); }, x => { curRing(x, 11, 1.5, ink); curRing(x, 6, 1.5, ink); dot(x, 1.3); }) },
+      drip: { hot: [2, 2], paint: (k, over) => curUnder(curCut(plate(k), k, x => drip(x, over), null, 'nonzero'), k, x => drip(x, over), 2.6, ink) },
+      blob: { hot: [2, 2], paint: (k, over) => curUnder(curCut(plate(k, over ? { mode: 'splash', scale: 0.8 } : { mode: 'marble', scale: 1.3, vein: 1.2 }), k, blob), k, blob, 2.6, ink) },
+      splat: { hot: [16, 16], paint: (k, over) => {
+        const c = curUnder(curCut(plate(k, { mode: 'bloom', ramp: 'bloom', scale: 1, petals: 7 }), k, x => splat(x, over), null, 'nonzero'), k, x => splat(x, over), 2.4, ink);
+        if (over) { const x = c.getContext('2d'); x.setTransform(k, 0, 0, k, 0, 0); dot(x, 2); }
+        return c;
+      } },
+    };
+    const m = marks[o.mark] || marks.ring;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
+  cursor.marks = ['ring', 'drip', 'blob', 'splat'];
 
-  /**
-   * An icon poured in paint: a small live sheet cut to the icon's shape with a CSS mask. It pours
-   * in when it first scrolls into view, and the paint wakes while its button or link is hovered
-   * or focused. `name` is a key of ICONS or an SVG string; the element sets the size (default
-   * 1.25em) and, without WebGL2, shows the plain shape in currentColor.
-   */
-  function icon(el, name, opts) {
-    const svg = ICONS[name] || name;
-    const o = Object.assign({ mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.2, grain: 0.2, weight: 6, rest: 0.25, hover: 1.4 }, opts);
-    style();
-    el.classList.add('mx-icon'); el.setAttribute('aria-hidden', el.getAttribute('aria-hidden') || 'true');
-    el.style.setProperty('--mx-mask', iconMask(svg, { weight: o.weight }));
-    const c = document.createElement('canvas'); el.appendChild(c);
-    const so = Object.assign({}, o); delete so.weight; delete so.rest; delete so.hover;
-    const ctl = live(c, Object.assign({ drift: 1, wet: o.rest, pointer: 0, alive: false, own: false, develop: 'in', developMs: 1200, seed: name.length || 3 }, so));
-    const host = el.closest('button,a,label,[tabindex]') || el;
-    if (ctl) {
-      const on = v => () => ctl.set({ wet: v ? o.hover : o.rest, alive: v });
-      host.addEventListener('pointerenter', on(true)); host.addEventListener('pointerleave', on(false));
-      host.addEventListener('focusin', on(true)); host.addEventListener('focusout', on(false));
-    }
-    return ctl;
-  }
-
-  P.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS, iconMask };
+  P.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, iconMask, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

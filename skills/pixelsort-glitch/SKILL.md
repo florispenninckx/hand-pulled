@@ -18,7 +18,7 @@ The files next to this SKILL.md:
 - `assets/pixelsort.js`: `window.PixelSort`, the low-level tools. It has `sort` (interval pixel sorting by threshold, random, edges, waves or border, at any angle, with a mask), `channelShift`, `slices`, and `crush`, which is real JPEG generation loss through the browser's encoder.
 - `assets/glitch.js`: `window.Glitch`, eleven seeded plates built on it (`smear`, `wave`, `drip`, `shatter`, `collage`, `scan`, `type`, `fall`, `band`, `mosh`, `weave`), the stand-in pictures drawn in code (`dusk`, a coast at dusk; `scape`, a mountain valley in one of the `SCAPES` palettes; `strokes`, pale paint on a dark board), and the helpers `macroblock`, `slitRow`, `slitCol`, `scanlines` and `vivid`. Load `pixelsort.js` first. There are no other dependencies.
 - `assets/live.js`: `Glitch.live`, the plates moving on the GPU (WebGL2), for real interfaces. See "Live" below.
-- `assets/live-ui.js`: `Glitch.ui`, interface pieces (button, toggle, slider, progress, loader, card, focus ring, section transition, live background, an opt-in cursor, icons) broken the same way, and `Glitch.iconMask`.
+- `assets/live-ui.js`: `Glitch.ui`, interface pieces (button, toggle, slider, progress, loader, card, focus ring, section transition, live background, icons) broken the same way, and `Glitch.iconMask`.
 - `reference.html`: "Stale Vector", a fictional weekend of broken files. The smear is the hero, and below it are a lede with one phrase marked in pink and a three-column board of six plates captioned like file names, then a second board, "four more machines", with the eleven plates of `fall`, `band`, `mosh` and `weave`. A smear strip divides the page, and the programme is printed as a listing. The hero is live, and at the end "Slitdeck", a small fictional desk, uses every live UI piece. **Read it before designing.**
 
 ## The eleven plates
@@ -240,7 +240,6 @@ at 1440×900, which says nothing about a GPU. The CPU cost is the one-off still 
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | a strip sorting fast with a tear running along it; `role=status`; holds still under reduced motion |
 | focus ring | `ui.focusRing(opts)` | a frame of sorted rows around `:focus-visible`, on a transparent overlay; keep a CSS outline too |
 | section transition | `ui.transition(strip)` | a strip of the picture loading row by row as it scrolls into view |
-| cursor | `ui.cursor(area, { hover })` | Opt-in, only when the brief asks for a custom cursor. The system cursor is the default everywhere, and the pointer effect on the live background is how the style answers the mouse. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x): nothing follows the mouse and nothing keeps running, and touch has no cursor. The mark is an arrow filled with a sorted smear whose rows spill out to its right; `hover: true` gives links and controls in `area` the arrow with its pink and teal channels split. Returns `{ destroy() }`, which puts the previous cursor back |
 | icon | `ui.icon(el, name, { weight })` | an icon cut out of a sorted strip: still at rest, sorting while its control is hovered or focused, a burst on press. `name` is one of `ui.ICONS` (`lightning`, `shuffle`, `export`, `scissors`, `film`, `play`, `pause`, `broken`, `waveform`) or your own SVG string |
 
 `Glitch.iconMask(svg, { pad, weight })` turns any 256-unit SVG (the Phosphor format) into a
@@ -273,6 +272,9 @@ on `:hover`/`:focus-visible`. Size tracks in CSS (`.pg-toggle { width: 64px; hei
 
 Keep one machine per surface here too: the page's big picture sorts and moshes, controls
 sort only when touched, and type and text blocks never move.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Marks: `arrow` (default), `blocks`, `tear`, `beam`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

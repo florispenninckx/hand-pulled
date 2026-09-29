@@ -301,7 +301,6 @@ the board's blue plus fluorescent pink; `ink` and `seed` override them.
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | a small plate with the press running: drums wandering, contours traced fast in pink; `role="status"` |
 | focus ring | `ui.focusRing()` | pink and blue hairlines out of register around the `:focus-visible` element, multiplied over the page. Keep a 1px CSS outline too |
 | section transition | `ui.transition(strip)` | blue contours over a pink tint, fed through as the strip scrolls past |
-| cursor | `ui.cursor(area, { inks, hover })` | Opt-in, only when the brief asks for a custom cursor. The system cursor is the default everywhere, and the pointer effect on the live background is how the style answers the mouse. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x): nothing follows the mouse and nothing keeps running, and touch has no cursor. The mark is a registration mark in two inks, out of register, on a paper edge; `hover: true` gives links and controls in `area` the mark with a pink dot overprinted. Returns `{ destroy() }`, which puts the previous cursor back |
 | icon | `ui.icon(el, name, { ink, key, weight })` | the icon on two drums, a grain of blue and a pink hairline, multiplied onto a pale ground; pointing at or focusing its control slips the drums apart. The element sets the size |
 
 Helpers: `ui.mapLayers({ ink, tintInk, seed, levels, lo, hi })` returns tint and contour layers
@@ -315,6 +314,9 @@ A made-up app built from these pieces is "The Drum Room" in `reference.html`: to
 slider drive a live background, a button starts a run, and a progress bar, a loader and job
 cards follow it; icons head the desk, the proof button and the cards, and the pointer is the
 system's own. Copy its structure, not its names.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, inks, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Marks: `register` (default), `crop`, `arrow`, `dots`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

@@ -8,14 +8,14 @@
  * a progress bar are a drum pulled along the strip; a loader is the press running, drums
  * wandering and contours traced one after another; the focus ring is two misregistered
  * hairlines; a section transition feeds through the drums as it scrolls past; an icon is printed
- * on two drums that slip apart when you point at its control; the opt-in cursor is a registration
- * mark in two inks, printed once.
+ * on two drums that slip apart when you point at its control.
  *
  *   const ui = Riso.ui;
  *   ui.background(section);   ui.button(btn);   ui.card(card);   ui.toggle(checkbox);
  *   ui.slider(range);   const p = ui.progress(el); p.set(0.4);   ui.loader(el);
- *   ui.focusRing();   ui.transition(strip);   ui.cursor(app);   ui.icon(span, 'play');
+ *   ui.focusRing();   ui.transition(strip);   ui.icon(span, 'play');
  *   Riso.iconMask(svg, { pad, weight })   // any <path d> SVG as a drum master
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can
  * set() it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -284,82 +284,6 @@
     return live(backdrop(el), { layers: mapLayers(o), paper: 'white', seed: o.seed, feed: 'scroll', drift: 0.8, pointer: 0, trace: 0.6, traceLevels: o.levels });
   }
 
-  // ---------------------------------------------------------------- the opt-in cursor
-  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
-  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
-  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
-  // mouse, nothing keeps running, and touch has no cursor to show.
-  const CUR = 32;
-  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
-  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
-  function curCut(plate, k, shape, lines) {
-    const c = curCanvas(k), x = c.getContext('2d');
-    x.drawImage(plate, 0, 0, c.width, c.height);
-    x.scale(k, k);
-    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
-    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
-    return c;
-  }
-  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
-  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
-  function curValue(mark, fallback) {
-    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
-      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
-      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
-      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
-    });
-  }
-  let cursors = 0;
-  function nativeCursor(area, opts, base, hover) {
-    area = area || document.documentElement;
-    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-rz-cursor="${id}"]`;
-    let sheet = null, dead = false;
-    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
-      if (dead) return;
-      area.style.cursor = b;
-      area.setAttribute('data-rz-cursor', id);
-      // text fields keep their I-beam; with hover, links and controls take the second mark (the
-      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
-      sheet = document.createElement('style');
-      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
-        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
-      document.head.appendChild(sheet);
-    }).catch(() => {});   // no mark: the system cursor stays
-    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-rz-cursor'); } } };
-  }
-
-  /**
-   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
-   * default, and the live background is how the style answers the pointer. The mark is a registration mark (ring and cross hairs) printed in two inks a little out of register, on a paper edge,
-   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
-   * a second mark, the same mark with a solid dot overprinted. opts: inks (two), seed. Returns { destroy() }, which puts the previous cursor back.
-   */
-  function cursor(area, opts) {
-    const o = Object.assign({ inks: ['blue', 'fluorescent-pink'], seed: 14 }, opts);
-    const hair = (x, u, w) => { x.lineWidth = (w || 1.5) * u; x.beginPath(); x.arc(16 * u, 16 * u, 6.5 * u, 0, Math.PI * 2); x.moveTo(3 * u, 16 * u); x.lineTo(29 * u, 16 * u); x.moveTo(16 * u, 3 * u); x.lineTo(16 * u, 29 * u); x.stroke(); };
-    const mark = async (k, dot) => {
-      const n = CUR * k, draw = (x, w) => hair(x, w / CUR);
-      const stamp = (x, w) => { const u = w / CUR; draw(x, w); x.beginPath(); x.arc(16 * u, 16 * u, 4.5 * u, 0, Math.PI * 2); x.fill(); };
-      const layers = [{ ink: o.inks[0], screen: 'solid', draw }, { ink: o.inks[1], screen: 'solid', draw: dot ? stamp : draw }];
-      const c = (await Rz.print(curCanvas(k), { width: n, height: n, seed: o.seed, paper: CLEAR, misregister: 0.5 * k, layers, onLayer: () => {} })).canvas;
-      // the inks multiply on white paper, so what is left of the white is transparency
-      const x = c.getContext('2d'), im = x.getImageData(0, 0, n, n), d = im.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const a = 1 - Math.min(d[i], d[i + 1], d[i + 2]) / 255;
-        if (a < 0.02) { d[i + 3] = 0; continue; }
-        for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, 255 - (255 - d[i + j]) / a);
-        d[i + 3] = a * 255;
-      }
-      x.putImageData(im, 0, 0);
-      // a paper edge under the ink, so the mark still reads on a dark ground
-      x.globalCompositeOperation = 'destination-over'; x.strokeStyle = x.fillStyle = '#f7f6f2'; x.lineCap = 'round';
-      hair(x, k, 4);
-      if (dot) { x.beginPath(); x.arc(16 * k, 16 * k, 5.5 * k, 0, Math.PI * 2); x.fill(); }
-      return c;
-    };
-    return nativeCursor(area, o, { hot: [16, 16], paint: k => mark(k, false) }, { hot: [16, 16], paint: k => mark(k, true) });
-  }
-
   /**
    * An icon pulled on two drums: the shape in a grain of `ink`, and its hairline outline in `key`,
    * a hair out of register, on an overlay multiplied onto whatever is under it (so put it on a
@@ -391,6 +315,111 @@
     return ctl;
   }
 
+  // ---------------------------------------------------------------- optional: a custom cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
+    return c;
+  }
+  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
+  function curUnder(c, k, shape, w, col) {
+    const x = c.getContext('2d');
+    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
+    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
+    x.beginPath(); shape(x); x.stroke(); x.fill();
+    x.restore(); return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-rz-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-rz-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-rz-cursor'); } } };
+  }
+
+  /**
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, pulled once on two drums a little out of register at 32 px
+   * (1x and 2x), on a paper edge so it reads on a dark ground. opts.mark picks the mark
+   * (cursor.marks lists them):
+   *   'register'  a registration mark, ring and cross hairs (the default); hover: a solid dot overprinted
+   *   'crop'      a crop mark's corner bracket, its corner on the pointer; hover: a dot in the corner
+   *   'arrow'     an arrow in the first ink, keyed with a hairline in the second; hover: both inks solid, overprinted
+   *   'dots'      an arrow screened in halftone dots, keyed in the second ink; hover: the dots grow toward solid
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: inks (two), seed.
+   * Returns { destroy() }, which puts the previous cursor back.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ mark: 'register', inks: ['blue', 'fluorescent-pink'], seed: 14 }, opts);
+    // two drums, each draws its master in CSS px: [{ draw(x), screen, cell, density }]; paper(x) is the edge under the ink
+    const pull = async (k, drums, paper) => {
+      const n = CUR * k;
+      const layers = drums.map((d, i) => ({ ink: o.inks[i], screen: d.screen || 'solid', cell: (d.cell || 6) * k, angle: 45, density: d.density || 1, draw: x => { x.save(); x.scale(k, k); x.fillStyle = x.strokeStyle = '#000'; x.lineCap = x.lineJoin = 'round'; d.draw(x); x.restore(); } }));
+      const c = (await Rz.print(curCanvas(k), { width: n, height: n, seed: o.seed, paper: CLEAR, misregister: 0.5 * k, layers, onLayer: () => {} })).canvas;
+      // the inks multiply on white paper, so what is left of the white is transparency
+      const x = c.getContext('2d'), im = x.getImageData(0, 0, n, n), d = im.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const a = 1 - Math.min(d[i], d[i + 1], d[i + 2]) / 255;
+        if (a < 0.02) { d[i + 3] = 0; continue; }
+        for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, 255 - (255 - d[i + j]) / a);
+        d[i + 3] = a * 255;
+      }
+      x.putImageData(im, 0, 0);
+      x.save(); x.globalCompositeOperation = 'destination-over'; x.scale(k, k); x.strokeStyle = x.fillStyle = '#f7f6f2'; x.lineCap = x.lineJoin = 'round';
+      paper(x); x.restore();
+      return c;
+    };
+    const hair = (x, w) => { x.lineWidth = w || 1.5; x.beginPath(); x.arc(16, 16, 6.5, 0, Math.PI * 2); x.moveTo(3, 16); x.lineTo(29, 16); x.moveTo(16, 3); x.lineTo(16, 29); x.stroke(); };
+    const spot = (x, cx, cy, r) => { x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); };
+    const bracket = (x, w) => { x.lineWidth = w; x.beginPath(); x.moveTo(3, 15); x.lineTo(3, 3); x.lineTo(15, 3); x.moveTo(3, 3); x.stroke(); };
+    const arrow = (x, how, w) => { x.beginPath(); curPath(x, CUR_ARROW); if (how !== 'stroke') x.fill(); if (how !== 'fill') { x.lineWidth = w || 1.2; x.stroke(); } };
+    const marks = {
+      register: { hot: [16, 16], paint: (k, over) => pull(k, [{ draw: x => hair(x) }, { draw: x => { hair(x); if (over) spot(x, 16, 16, 4.5); } }], x => { hair(x, 4); if (over) spot(x, 16, 16, 5.5); }) },
+      crop: { hot: [3, 3], paint: (k, over) => pull(k, [{ draw: x => bracket(x, 2.2) }, { draw: x => { bracket(x, 1); if (over) spot(x, 8, 8, 2.6); } }], x => { bracket(x, 5); if (over) spot(x, 8, 8, 3.8); }) },
+      arrow: { hot: [2, 2], paint: (k, over) => pull(k, [{ draw: x => arrow(x, 'fill') }, { draw: x => arrow(x, over ? 'both' : 'stroke') }], x => arrow(x, 'both', 3.6)) },
+      dots: { hot: [2, 2], paint: (k, over) => pull(k, [{ draw: x => arrow(x, 'fill'), screen: 'halftone', cell: 2.6, density: over ? 1 : 0.55 }, { draw: x => arrow(x, 'stroke', 1) }], x => arrow(x, 'both', 3.6)) },
+    };
+    const m = marks[o.mark] || marks.register;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
+  }
+  cursor.marks = ['register', 'crop', 'arrow', 'dots'];
+
   Rz.iconMask = iconMask;
-  Rz.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, contours, tint, mapLayers, ICONS };
+  Rz.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, contours, tint, mapLayers, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

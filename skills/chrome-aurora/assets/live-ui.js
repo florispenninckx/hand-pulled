@@ -11,7 +11,8 @@
  *   ui.background(section);   ui.button(btn);   ui.card(card, { plate: 'ribbon', look: 'volt' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
  *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
- *   ui.cursor(area);   ui.icon(span, 'lightbulb');   Mercury.iconMask(svg)
+ *   ui.icon(span, 'lightbulb');   Mercury.iconMask(svg)
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can
  * set() it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -249,24 +250,37 @@
     return ctl;
   }
 
-  // ---------------------------------------------------------------- the opt-in cursor
+  // ---------------------------------------------------------------- optional: a custom cursor
   // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
   // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
   // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
   // mouse, nothing keeps running, and touch has no cursor to show.
   const CUR = 32;
   const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
-  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
-  function curCut(plate, k, shape, lines) {
-    const c = curCanvas(k), x = c.getContext('2d');
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
     x.drawImage(plate, 0, 0, c.width, c.height);
-    x.scale(k, k);
-    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
-    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
+  }
+  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
+  function curUnder(c, k, shape, w, col) {
+    const x = c.getContext('2d');
+    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
+    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
+    x.beginPath(); shape(x); x.stroke(); x.fill();
+    x.restore(); return c;
   }
   const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
   const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
   function curValue(mark, fallback) {
     return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
       const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
@@ -294,32 +308,65 @@
   }
 
   /**
-   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
-   * default, and the live background is how the style answers the pointer. The mark is a bead of chrome with an oil-film skin and a faint halo,
-   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
-   * a second mark, a chrome ring. opts: look, seed (film plate options). Returns { destroy() }, which puts the previous cursor back.
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x),
+   * on the 2D path (no GL context). opts.mark picks the mark (cursor.marks lists them):
+   *   'bead'   a bead of chrome with an oil-film skin and a faint halo (the default); hover: a chrome ring
+   *   'drop'   a teardrop of liquid metal, its point on the pointer; hover: the drop with a hole through it
+   *   'arrow'  an arrow cast in chrome, bevelled; hover: the arrow in titanium
+   *   'flare'  a lens-flare cross cast in titanium chrome; hover: the cross with its diagonal rays
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: look, seed (film
+   * plate options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ look: 'oxide', seed: 4 }, opts);
-    // the film plate poured over a height of our own: a dome makes the bead, a torus the ring (2D path, no GL context)
-    const plate = (k, ring) => {
+    const o = Object.assign({ mark: 'bead', look: 'oxide', seed: 4 }, opts);
+    // the film plate poured over a height of our own (white = high), so the metal takes the mark's form
+    const film = (k, h, look) => M.film(document.createElement('canvas'), { width: CUR * k, height: CUR * k, look: look || o.look, seed: o.seed, gl: false, image: h, grain: 0.02 });
+    // a height: the shape filled white on black, softened `soft` CSS px into a rounded bevel
+    const relief = (k, shape, soft, rule) => {
+      const h = curCanvas(k), x = h.getContext('2d');
+      x.fillStyle = '#000'; x.fillRect(0, 0, h.width, h.height);
+      x.filter = `blur(${soft * k}px)`; x.scale(k, k); x.fillStyle = '#fff'; x.beginPath(); shape(x); x.fill(rule || 'evenodd');
+      return h;
+    };
+    const dome = (k, ring) => {
       const n = CUR * k, h = curCanvas(k), x = h.getContext('2d');
       x.fillStyle = '#000'; x.fillRect(0, 0, n, n);
       const g = ring ? x.createRadialGradient(n / 2, n / 2, 6 * k, n / 2, n / 2, 12 * k) : x.createRadialGradient(n / 2 - k, n / 2 - k, 0, n / 2, n / 2, 8 * k);
       if (ring) { g.addColorStop(0, '#000'); g.addColorStop(0.45, '#fff'); g.addColorStop(1, '#000'); } else { g.addColorStop(0, '#fff'); g.addColorStop(0.7, '#9a9a9a'); g.addColorStop(1, '#000'); }
       x.fillStyle = g; x.fillRect(0, 0, n, n);
-      return M.film(document.createElement('canvas'), { width: n, height: n, look: o.look, seed: o.seed, gl: false, image: h, grain: 0.02 });
+      return h;
     };
-    const rim = 'rgba(0,0,0,.72)';
-    return nativeCursor(area, o, {
-      hot: [16, 16],
-      paint: k => curCut(plate(k, false), k, x => curDisc(x, 8), x => { curRing(x, 8.4, 0.9, rim); curRing(x, 11.5, 0.8, 'rgba(235,231,223,.55)'); }),
-    }, {
-      hot: [16, 16],
-      paint: k => curCut(plate(k, true), k, x => { curDisc(x, 12); curDisc(x, 6); }, x => { curRing(x, 12.2, 0.8, rim); curRing(x, 5.8, 0.8, rim); }),
-    });
+    const rim = 'rgba(0,0,0,.72)', edge = (x, path, w) => { x.beginPath(); path(x); x.lineJoin = 'round'; x.lineWidth = w || 0.9; x.strokeStyle = rim; x.stroke(); };
+    // a teardrop: its point at 2,2, its body a circle round 15,15
+    const drop = (x, hole) => {
+      const cx = 15, cy = 15, r = 9.5, d = Math.hypot(cx - 2, cy - 2), back = Math.atan2(2 - cy, 2 - cx), t = Math.acos(r / d);
+      x.moveTo(2, 2); x.arc(cx, cy, r, back + t, back - t + Math.PI * 2); x.closePath();
+      if (hole) { x.moveTo(cx + 3.6, cy + 0.6); x.arc(cx + 0.6, cy + 0.6, 3, 0, Math.PI * 2); }
+    };
+    // a star of `n` rays (4 or 8), long ones on the axes, short ones on the diagonals
+    const star = (x, n) => {
+      const pts = [];
+      for (let i = 0; i < n * 2; i++) {
+        const a = i * Math.PI / n - Math.PI / 2, r = i % 2 ? (n === 4 ? 2.2 : 2.4) : (n === 8 && (i / 2) % 2 ? 9 : 14.5);
+        pts.push([16 + r * Math.cos(a), 16 + r * Math.sin(a)]);
+      }
+      curPath(x, pts); x.moveTo(19.8, 16); x.arc(16, 16, 3.8, 0, Math.PI * 2);
+    };
+    const marks = {
+      bead: { hot: [16, 16], paint: (k, over) => over
+        ? curCut(film(k, dome(k, true)), k, x => { curDisc(x, 12); curDisc(x, 6); }, x => { curRing(x, 12.2, 0.8, rim); curRing(x, 5.8, 0.8, rim); })
+        : curCut(film(k, dome(k, false)), k, x => curDisc(x, 8), x => { curRing(x, 8.4, 0.9, rim); curRing(x, 11.5, 0.8, 'rgba(235,231,223,.55)'); }) },
+      drop: { hot: [2, 2], paint: (k, over) => curCut(film(k, relief(k, x => drop(x, over), 3.2)), k, x => drop(x, over), x => edge(x, q => drop(q, over))) },
+      arrow: { hot: [2, 2], paint: (k, over) => curCut(film(k, relief(k, x => curPath(x, CUR_ARROW), 1.8), over ? 'titanium' : null), k, x => curPath(x, CUR_ARROW), x => edge(x, q => curPath(q, CUR_ARROW), 1)) },
+      flare: { hot: [16, 16], paint: (k, over) => curUnder(curCut(film(k, relief(k, x => star(x, over ? 8 : 4), 1.4, 'nonzero'), 'titanium'), k, x => star(x, over ? 8 : 4), null, 'nonzero'), k, x => star(x, over ? 8 : 4), 1.4, rim) },
+    };
+    const m = marks[o.mark] || marks.bead;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
+  cursor.marks = ['bead', 'drop', 'arrow', 'flare'];
 
   M.iconMask = iconMask;
-  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS };
+  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

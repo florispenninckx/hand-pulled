@@ -185,12 +185,6 @@ The motion is the medium's, and it is quiet, because it sits under small mono ty
   plate masked to a rounded rectangle; keep a 1px CSS outline for no-WebGL and forced colours) ·
   `transition(el)` (a streak strip that develops as it scrolls past). Never set the text of a
   host with `textContent`: it removes the canvas. Put the label in a `<span>`.
-- `ui.cursor(area, { hover })` is opt-in, only when the brief asks for a custom cursor. The
-  system cursor is the default everywhere, and the pointer effect on the live background (the
-  raking light, the echo rings) is how the style answers the mouse. It is a native CSS cursor,
-  painted once through the still engine at 32 px (1x and 2x): a ring of reeded glass round the
-  pointer, and with `hover: true` the whole lens over links and controls. Nothing follows the
-  mouse or keeps running, and touch has no cursor. It returns `{ destroy() }`.
 - Labels on a live button sit on changing colour: give warm plates a dark label on hover
   (`.warm:hover { color: #1b1216 }`) and cool ones white.
 - Fallbacks: `prefers-reduced-motion` shows the still frame, clock 0, no rake, echo or ring, and
@@ -212,6 +206,9 @@ The motion is the medium's, and it is quiet, because it sits under small mono ty
 - What is live and what is still: every plate is live, as a captured still with motion on top.
   No stage of the engine is ported to the shader yet, so a pane itself (the reeds' refraction,
   the streak's drag) does not re-run per frame. The motion bends and lights the captured surface.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Marks: `ring` (default), `slice`, `fluted`, `comet`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Composition
 
