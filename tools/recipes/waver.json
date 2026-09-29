@@ -1,0 +1,55 @@
+{
+ "name": "Waver",
+ "file": "waver",
+ "skill": "ethereal-haze",
+ "dir": "candidates",
+ "about": "A narrow display serif seen through rising heat: at HAZE 0 it is crisp; as HAZE rises every row sways sideways in slow waves that grow toward the top of the letter, and the tops lift a little, like a word on the far side of a hot road.",
+ "base": {
+  "family": "Instrument Serif",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/instrumentserif/InstrumentSerif-Regular.ttf",
+  "sha256": "498efd461f6ddfcb7a111bf9a565709d2085d48201d501ead960d93e84ffbb88"
+ },
+ "axis": {
+  "tag": "HAZE",
+  "name": "Haze",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Clear": 0,
+   "Haze": 500,
+   "Mirage": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 6,
+  "1000": 14
+ },
+ "px": 1.5,
+ "ops": [],
+ "flow": {
+  "kind": "mirage",
+  "amp": 46,
+  "wave": 170,
+  "xwave": 700,
+  "base": -150,
+  "top": 700,
+  "power": 1.4,
+  "rise": 22,
+  "jitter": 1
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 100,
+  "bend": 4,
+  "corner": 50,
+  "min_area": 20
+ }
+}

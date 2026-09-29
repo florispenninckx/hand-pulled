@@ -1,0 +1,10 @@
+/* The chrome-aurora candidates, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Contrail: A heavy italic dragged through the light: each letter keeps a crisp leading edge while every row behind it is pulled back into a streak, longer or shorter row by row, the same rows all along the line, like paint dragged across charcoal or a light in a long exposure. TRAL sets how far it has travelled. Axis 'TRAL' 0–1000, default 0. */
+@font-face { font-family: 'Contrail'; src: url('contrail.woff2') format('woff2'); font-display: swap; }
+
+/* Fluted: A fat round display face behind fluted glass: the letter is read through vertical reeds. At REED 0 the glass is flat and the letter whole; as REED rises each reed narrows what it shows to a sliver and bends it sideways, so the letter breaks into bright bars. Axis 'REED' 0–1000, default 450. */
+@font-face { font-family: 'Fluted'; src: url('fluted.woff2') format('woff2'); font-display: swap; }
+
+/* Pool: A rounded techno face standing on liquid metal: under the baseline each letter has its own mirror image, cut into bands that thin as they sink. At RIPL 0 the pool is still; as RIPL rises the bands narrow to slivers and ripple sideways, as a strip light does on wet chrome. Axis 'RIPL' 0–1000, default 0. */
+@font-face { font-family: 'Pool'; src: url('pool.woff2') format('woff2'); font-display: swap; }

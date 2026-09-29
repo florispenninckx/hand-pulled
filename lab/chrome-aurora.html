@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Afterglass type · wave 3 B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400&family=Martian+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../skills/chrome-aurora/fonts/fonts.css">
+<link rel="stylesheet" href="../skills/chrome-aurora/fonts/candidates/candidates.css">
+<style>
+  /* Judging page for fonts wave 3 B: the current face, then three candidates, each set in the same two mockups on the skill's own live engine. */
+  :root { --page: #050505; --panel: #0e0d0c; --ink: #ebe7df; --dim: #8b877e; --rule: #242220; --accent: #ff6a00; --on: #f4f1ea; --on-hero: #f4f1ea; --ui: 'Martian Mono', ui-monospace, monospace; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); }
+  body { color: var(--ink); font: 300 13px/1.55 var(--ui); overflow-x: hidden; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .disp { font-family: var(--fam), serif; font-variation-settings: var(--fvs); font-weight: 400; }
+
+  .top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; padding: 10px 16px; background: var(--page); border-bottom: 1px solid var(--rule); }
+  .top h1 { margin: 0; font: inherit; font-weight: 500; }
+  .top h1 a { color: var(--dim); text-decoration: none; margin-right: .6em; }
+  .top .act { display: flex; align-items: center; gap: 12px; }
+  .copy { font: inherit; color: var(--page); background: var(--ink); border: 0; padding: 8px 14px; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  .copy:hover { background: var(--accent); }
+  .count { color: var(--dim); }
+  .lede { max-width: 1400px; margin: 0 auto; padding: 22px 16px 6px; color: var(--dim); }
+  .lede p { margin: 0; max-width: 62em; }
+  #verdict { display: block; width: 100%; max-width: 1368px; margin: 0 auto; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); padding: 10px; }
+  #verdict[hidden] { display: none; }
+  .vwrap { padding: 0 16px; }
+
+  .face { display: grid; grid-template-columns: minmax(0, 290px) minmax(0, 1fr); gap: 18px 28px; max-width: 1400px; margin: 0 auto; padding: 36px 16px; border-top: 1px solid var(--rule); }
+  .face:first-of-type { border-top: 0; }
+  .info { min-width: 0; }
+  .kick { margin: 0; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .is-current .kick { color: var(--accent); }
+  .info h2 { margin: 4px 0 6px; font: 500 22px/1.1 var(--ui); }
+  .idea { margin: 0 0 8px; }
+  .facts, .stops { margin: 0; color: var(--dim); font-size: 12px; }
+  .axis { display: grid; grid-template-columns: 5ch minmax(0, 1fr) 5ch; gap: 10px; align-items: center; margin: 14px 0 4px; }
+  .axis input { width: 100%; accent-color: var(--accent); }
+  .axis output { text-align: right; font-variant-numeric: tabular-nums; }
+  .pick { display: flex; gap: 6px; margin: 14px 0 0; }
+  .pick button { flex: 1; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); padding: 8px 0; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  .pick button:hover { border-color: var(--ink); }
+  .pick [data-pick=keep][aria-pressed=true] { background: #2f9e62; border-color: #2f9e62; color: #fff; }
+  .pick [data-pick=maybe][aria-pressed=true] { background: #d9a21b; border-color: #d9a21b; color: #111; }
+  .pick [data-pick=drop][aria-pressed=true] { background: #c2413b; border-color: #c2413b; color: #fff; }
+  .sample { margin: 16px 0 0; font-size: 22px; line-height: calc(var(--lh, .92) + .33); padding-left: var(--ind, 0); overflow-wrap: anywhere; }
+
+  .mocks { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 14px; min-width: 0; }
+  .poster, .site { position: relative; overflow: hidden; min-width: 0; background: var(--panel); }
+  .poster { aspect-ratio: 3 / 4; color: var(--on); display: flex; flex-direction: column; padding: 6%; }
+  .poster.pos-top { justify-content: flex-start; }
+  .poster.pos-mid { justify-content: center; text-align: center; }
+  .poster.pos-bottom { justify-content: flex-end; }
+  .p-kick, .p-foot { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .p-kick { position: absolute; top: 5%; left: 6%; right: 6%; }
+  .p-foot { position: absolute; bottom: 5%; left: 6%; right: 6%; }
+  .pos-top .p-kick { position: static; margin-bottom: 4%; }
+  .pos-bottom .p-foot { position: static; margin-top: 4%; }
+  .pos-bottom { padding-bottom: 5%; }
+  .p-word, .h-head { margin: 0; line-height: var(--lh, .92); white-space: nowrap; padding-left: var(--ind, 0); }
+  .brand { padding-left: var(--ind, 0); }
+  .p-word { padding: .04em 0 .14em; }
+  .site { min-height: 360px; color: var(--on-hero); display: flex; flex-direction: column; }
+  .site nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; }
+  .brand { font-size: 24px; line-height: 1; white-space: nowrap; }
+  .links { display: flex; gap: 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .links a { text-decoration: none; opacity: .85; }
+  .h-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; padding: 0 18px 22px; }
+  .h-head { padding-bottom: .12em; width: 100%; }
+  .h-sub { margin: 10px 0 16px; max-width: 30em; font-size: 13px; }
+  .cta { position: relative; cursor: pointer; }
+  .mbtn { display: inline-flex; align-items: center; font: 400 11px var(--ui); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); background: #000; border: 1px solid rgba(235, 231, 223, .25); border-radius: 999px; padding: 12px 22px; text-shadow: 0 0 8px rgba(0, 0, 0, .9); }
+  .site, .poster { text-shadow: 0 0 18px rgba(0, 0, 0, .5); }
+  footer { max-width: 1400px; margin: 0 auto; padding: 28px 16px 48px; color: var(--dim); font-size: 12px; border-top: 1px solid var(--rule); }
+
+  @media (max-width: 1080px) { .face { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 720px) {
+    .mocks { grid-template-columns: minmax(0, 1fr); }
+    .site { aspect-ratio: 4 / 5; }
+    .site nav { flex-wrap: wrap; }
+    .links { gap: 10px; flex-wrap: wrap; }
+    .top .count { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1><a href="index-b.html">wave 3 B</a>chrome-aurora: display faces</h1>
+  <div class="act"><span class="count" id="count"></span><button type="button" class="copy" id="copy">copy verdict</button></div>
+</header>
+<div class="lede"><p>The current face first, then three new candidates. Every face gets the same copy on the same two mockups, a poster and a site hero, over the skill's own live engine (<code>assets/</code>). Drag each axis, then mark keep, maybe or drop. Picks stay in this browser; <i>copy verdict</i> puts a plain-text summary on the clipboard.</p></div>
+<div class="vwrap"><textarea id="verdict" rows="6" readonly hidden aria-label="Verdict text"></textarea></div>
+<main>
+  <section class="face is-current" id="specula" data-face="specula" data-name="Specula" data-tag="SHEN" style="--fam: 'Specula'; --fvs: 'SHEN' 300;">
+    <div class="info">
+      <p class="kick">current face</p>
+      <h2>Specula</h2>
+      <p class="idea">wide techno face with a channel of light cut along each stroke</p>
+      <p class="facts">Orbitron · <b>SHEN</b> 0–1000, default 300 · 55 KB</p>
+      <label class="axis"><span>SHEN</span><input type="range" min="0" max="1000" step="1" value="300" aria-label="Specula axis SHEN"><output>300</output></label>
+      <p class="stops">Glint 0 · Regular 300 · Polished 1000</p>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-bottom" data-bg="poster">
+        <p class="p-kick">afterglass — iv</p>
+        <p class="p-word disp fit" data-fit="30">AFTER<br>GLASS</p>
+        <p class="p-foot">four nights · annealing hall · kessor quay</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Afterglass</span><span class="links"><a href="#" tabindex="-1">line-up</a><a href="#" tabindex="-1">hall</a><a href="#" tabindex="-1">tickets</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Light,<br>poured slowly</p>
+          <p class="h-sub">Four nights of light and low sound at the Annealing Hall.</p>
+          <button type="button" class="cta mbtn">Tickets</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="pool" data-face="pool" data-name="Pool" data-tag="RIPL" style="--fam: 'Pool'; --fvs: 'RIPL' 400; --lh: 1.45;">
+    <div class="info">
+      <p class="kick">candidate 1</p>
+      <h2>Pool</h2>
+      <p class="idea">the letter stands on liquid chrome; its reflection breaks into rippling bands</p>
+      <p class="facts">Audiowide · <b>RIPL</b> 0–1000, default 0 · 98 KB</p>
+      <label class="axis"><span>RIPL</span><input type="range" min="0" max="1000" step="1" value="400" aria-label="Pool axis RIPL"><output>400</output></label>
+      <p class="stops">Still 0 · Ripple 400 · Wake 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Pool">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-bottom" data-bg="poster">
+        <p class="p-kick">afterglass — iv</p>
+        <p class="p-word disp fit" data-fit="30">AFTER<br>GLASS</p>
+        <p class="p-foot">four nights · annealing hall · kessor quay</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Afterglass</span><span class="links"><a href="#" tabindex="-1">line-up</a><a href="#" tabindex="-1">hall</a><a href="#" tabindex="-1">tickets</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Light,<br>poured slowly</p>
+          <p class="h-sub">Four nights of light and low sound at the Annealing Hall.</p>
+          <button type="button" class="cta mbtn">Tickets</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="fluted" data-face="fluted" data-name="Fluted" data-tag="REED" style="--fam: 'Fluted'; --fvs: 'REED' 450;">
+    <div class="info">
+      <p class="kick">candidate 2</p>
+      <h2>Fluted</h2>
+      <p class="idea">seen through reeded glass: vertical flutes squeeze and shift each strip</p>
+      <p class="facts">Rammetto One · <b>REED</b> 0–1000, default 450 · 88 KB</p>
+      <label class="axis"><span>REED</span><input type="range" min="0" max="1000" step="1" value="450" aria-label="Fluted axis REED"><output>450</output></label>
+      <p class="stops">Flat 0 · Reeded 450 · Deep 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Fluted">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-bottom" data-bg="poster">
+        <p class="p-kick">afterglass — iv</p>
+        <p class="p-word disp fit" data-fit="30">AFTER<br>GLASS</p>
+        <p class="p-foot">four nights · annealing hall · kessor quay</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Afterglass</span><span class="links"><a href="#" tabindex="-1">line-up</a><a href="#" tabindex="-1">hall</a><a href="#" tabindex="-1">tickets</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Light,<br>poured slowly</p>
+          <p class="h-sub">Four nights of light and low sound at the Annealing Hall.</p>
+          <button type="button" class="cta mbtn">Tickets</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="contrail" data-face="contrail" data-name="Contrail" data-tag="TRAL" style="--fam: 'Contrail'; --fvs: 'TRAL' 400; --ind: .32em;">
+    <div class="info">
+      <p class="kick">candidate 3</p>
+      <h2>Contrail</h2>
+      <p class="idea">a heavy italic dragged through the light: crisp front, rows streaked behind</p>
+      <p class="facts">Exo 2 · <b>TRAL</b> 0–1000, default 0 · 83 KB</p>
+      <label class="axis"><span>TRAL</span><input type="range" min="0" max="1000" step="1" value="400" aria-label="Contrail axis TRAL"><output>400</output></label>
+      <p class="stops">Fixed 0 · Moving 400 · Streaked 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Contrail">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-bottom" data-bg="poster">
+        <p class="p-kick">afterglass — iv</p>
+        <p class="p-word disp fit" data-fit="30">AFTER<br>GLASS</p>
+        <p class="p-foot">four nights · annealing hall · kessor quay</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Afterglass</span><span class="links"><a href="#" tabindex="-1">line-up</a><a href="#" tabindex="-1">hall</a><a href="#" tabindex="-1">tickets</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Light,<br>poured slowly</p>
+          <p class="h-sub">Four nights of light and low sound at the Annealing Hall.</p>
+          <button type="button" class="cta mbtn">Tickets</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Candidates: <code>skills/chrome-aurora/fonts/candidates/</code> (SIL OFL 1.1, see OFL.txt there), built by <code>tools/foundry.py</code> from <code>tools/recipes/</code>. Not wired into the skill yet.</footer>
+<script src="../skills/chrome-aurora/assets/mercury.js"></script>
+<script src="../skills/chrome-aurora/assets/live.js"></script>
+<script src="../skills/chrome-aurora/assets/live-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = {"style": "chrome-aurora", "poster": {"plate": "trail", "look": "dusk", "seed": 1}, "hero": {"plate": "film", "look": "oxide", "seed": 7}, "btn": {}, "current": "Specula", "faces": [["pool", "Pool", "RIPL", "Audiowide"], ["fluted", "Fluted", "REED", "Rammetto One"], ["contrail", "Contrail", "TRAL", "Exo 2"]]};
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const KEY = 'hand-pulled:wave3b:' + CFG.style;
+  let picks = {};
+  try { picks = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { picks = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch (e) {} };
+
+  // display lines are sized to their mockup: a share of its width, shrunk until the longest line fits
+  function fit(el) {
+    const w = el.clientWidth; if (!w) return;
+    let s = w * (+el.dataset.fit) / 100;
+    el.style.fontSize = s + 'px';
+    for (let i = 0; i < 3 && el.scrollWidth > w + 0.5; i++) { s *= w / el.scrollWidth * 0.99; el.style.fontSize = s + 'px'; }
+  }
+  const fitAll = root => $$('.fit', root).forEach(fit);
+
+  function paint() {
+    $$('.face[data-face]').forEach(f => $$('[data-pick]', f).forEach(b => b.setAttribute('aria-pressed', String(picks[f.dataset.face] === b.dataset.pick))));
+    const n = CFG.faces.filter(f => picks[f[0]]).length;
+    $('#count').textContent = n + ' of ' + CFG.faces.length + ' picked';
+  }
+  function verdict() {
+    const lines = ['hand-pulled fonts wave 3 B: ' + CFG.style + ' (current face ' + CFG.current + ')'];
+    CFG.faces.forEach(([k, name, tag, base]) => lines.push((picks[k] || 'unpicked').padEnd(9) + name + ' (' + tag + ', ' + base + ')'));
+    return lines.join('\n');
+  }
+
+  $$('.face').forEach(f => {
+    const input = $('input[type=range]', f), out = $('output', f), tag = f.dataset.tag;
+    input.addEventListener('input', () => { f.style.setProperty('--fvs', "'" + tag + "' " + input.value); out.textContent = input.value; fitAll(f); });
+    $$('[data-pick]', f).forEach(b => b.addEventListener('click', () => {
+      const k = f.dataset.face; picks[k] = picks[k] === b.dataset.pick ? undefined : b.dataset.pick;
+      if (!picks[k]) delete picks[k];
+      save(); paint();
+    }));
+  });
+  $('#copy').addEventListener('click', async () => {
+    const t = verdict(), ta = $('#verdict');
+    ta.value = t; ta.hidden = false;
+    let ok = false;
+    try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {}
+    if (!ok) try { ta.select(); ok = document.execCommand('copy'); } catch (e) {}
+    $('#copy').textContent = ok ? 'copied' : 'select and copy below';
+    setTimeout(() => { $('#copy').textContent = 'copy verdict'; }, 1800);
+  });
+  paint();
+
+  // the live engine: one background per mockup (the same seed for every face), the skill's own button
+  const ui = window.Mercury && window.Mercury.ui;
+  if (ui) {
+    $$('[data-bg]').forEach(el => { try { ui.background(el, Object.assign({}, CFG[el.dataset.bg])); } catch (e) {} });
+    $$('.cta').forEach(b => { try { ui.button(b, CFG.btn); } catch (e) {} });
+    try { ui.focusRing(); } catch (e) {}
+  }
+
+  const names = Array.from(new Set($$('.face').map(f => f.style.getPropertyValue('--fam').trim())));
+  Promise.all(names.map(n => document.fonts.load('40px ' + n).catch(() => null))).then(() => fitAll(document));
+  document.fonts.ready.then(() => fitAll(document));
+  let lastW = innerWidth, t;
+  addEventListener('resize', () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(t); t = setTimeout(() => fitAll(document), 150); });
+})();
+</script>
+</body>
+</html>

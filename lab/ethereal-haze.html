@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Faye type · wave 3 B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../skills/ethereal-haze/fonts/fonts.css">
+<link rel="stylesheet" href="../skills/ethereal-haze/fonts/candidates/candidates.css">
+<style>
+  /* Judging page for fonts wave 3 B: the current face, then three candidates, each set in the same two mockups on the skill's own live engine. */
+  :root { --page: #f3ede1; --panel: #e9e0d0; --ink: #2b2320; --dim: #6e5d55; --rule: #d6cbb8; --accent: #ec4f46; --on: #2b2320; --on-hero: #fff; --ui: 'Jost', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--page); }
+  body { color: var(--ink); font: 300 13px/1.55 var(--ui); overflow-x: hidden; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .disp { font-family: var(--fam), serif; font-variation-settings: var(--fvs); font-weight: 400; }
+
+  .top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 20px; padding: 10px 16px; background: var(--page); border-bottom: 1px solid var(--rule); }
+  .top h1 { margin: 0; font: inherit; font-weight: 500; }
+  .top h1 a { color: var(--dim); text-decoration: none; margin-right: .6em; }
+  .top .act { display: flex; align-items: center; gap: 12px; }
+  .copy { font: inherit; color: var(--page); background: var(--ink); border: 0; padding: 8px 14px; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  .copy:hover { background: var(--accent); }
+  .count { color: var(--dim); }
+  .lede { max-width: 1400px; margin: 0 auto; padding: 22px 16px 6px; color: var(--dim); }
+  .lede p { margin: 0; max-width: 62em; }
+  #verdict { display: block; width: 100%; max-width: 1368px; margin: 0 auto; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--rule); padding: 10px; }
+  #verdict[hidden] { display: none; }
+  .vwrap { padding: 0 16px; }
+
+  .face { display: grid; grid-template-columns: minmax(0, 290px) minmax(0, 1fr); gap: 18px 28px; max-width: 1400px; margin: 0 auto; padding: 36px 16px; border-top: 1px solid var(--rule); }
+  .face:first-of-type { border-top: 0; }
+  .info { min-width: 0; }
+  .kick { margin: 0; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: 11px; }
+  .is-current .kick { color: var(--accent); }
+  .info h2 { margin: 4px 0 6px; font: 500 22px/1.1 var(--ui); }
+  .idea { margin: 0 0 8px; }
+  .facts, .stops { margin: 0; color: var(--dim); font-size: 12px; }
+  .axis { display: grid; grid-template-columns: 5ch minmax(0, 1fr) 5ch; gap: 10px; align-items: center; margin: 14px 0 4px; }
+  .axis input { width: 100%; accent-color: var(--accent); }
+  .axis output { text-align: right; font-variant-numeric: tabular-nums; }
+  .pick { display: flex; gap: 6px; margin: 14px 0 0; }
+  .pick button { flex: 1; font: inherit; color: var(--ink); background: transparent; border: 1px solid var(--rule); padding: 8px 0; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+  .pick button:hover { border-color: var(--ink); }
+  .pick [data-pick=keep][aria-pressed=true] { background: #2f9e62; border-color: #2f9e62; color: #fff; }
+  .pick [data-pick=maybe][aria-pressed=true] { background: #d9a21b; border-color: #d9a21b; color: #111; }
+  .pick [data-pick=drop][aria-pressed=true] { background: #c2413b; border-color: #c2413b; color: #fff; }
+  .sample { margin: 16px 0 0; font-size: 22px; line-height: calc(var(--lh, .92) + .33); padding-left: var(--ind, 0); overflow-wrap: anywhere; }
+
+  .mocks { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 14px; min-width: 0; }
+  .poster, .site { position: relative; overflow: hidden; min-width: 0; background: var(--panel); }
+  .poster { aspect-ratio: 3 / 4; color: var(--on); display: flex; flex-direction: column; padding: 6%; }
+  .poster.pos-top { justify-content: flex-start; }
+  .poster.pos-mid { justify-content: center; text-align: center; }
+  .poster.pos-bottom { justify-content: flex-end; }
+  .p-kick, .p-foot { margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .p-kick { position: absolute; top: 5%; left: 6%; right: 6%; }
+  .p-foot { position: absolute; bottom: 5%; left: 6%; right: 6%; }
+  .pos-top .p-kick { position: static; margin-bottom: 4%; }
+  .pos-bottom .p-foot { position: static; margin-top: 4%; }
+  .pos-bottom { padding-bottom: 5%; }
+  .p-word, .h-head { margin: 0; line-height: var(--lh, .92); white-space: nowrap; padding-left: var(--ind, 0); }
+  .brand { padding-left: var(--ind, 0); }
+  .p-word { padding: .04em 0 .14em; }
+  .site { min-height: 360px; color: var(--on-hero); display: flex; flex-direction: column; }
+  .site nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; }
+  .brand { font-size: 24px; line-height: 1; white-space: nowrap; }
+  .links { display: flex; gap: 14px; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+  .links a { text-decoration: none; opacity: .85; }
+  .h-body { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; padding: 0 18px 22px; }
+  .h-head { padding-bottom: .12em; width: 100%; }
+  .h-sub { margin: 10px 0 16px; max-width: 30em; font-size: 13px; }
+  .cta { position: relative; cursor: pointer; }
+  .hz-btn { border: 0; background: none; border-radius: 999px; padding: 13px 26px; overflow: hidden; font: 500 11px/1 var(--ui); letter-spacing: .16em; text-transform: uppercase; color: var(--ink); transition: color .5s; }
+  .hz-btn:hover, .hz-btn:focus-visible { color: #fff; }
+  .site nav, .h-sub { letter-spacing: .04em; }
+  footer { max-width: 1400px; margin: 0 auto; padding: 28px 16px 48px; color: var(--dim); font-size: 12px; border-top: 1px solid var(--rule); }
+
+  @media (max-width: 1080px) { .face { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 720px) {
+    .mocks { grid-template-columns: minmax(0, 1fr); }
+    .site { aspect-ratio: 4 / 5; }
+    .site nav { flex-wrap: wrap; }
+    .links { gap: 10px; flex-wrap: wrap; }
+    .top .count { display: none; }
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1><a href="index-b.html">wave 3 B</a>ethereal-haze: display faces</h1>
+  <div class="act"><span class="count" id="count"></span><button type="button" class="copy" id="copy">copy verdict</button></div>
+</header>
+<div class="lede"><p>The current face first, then three new candidates. Every face gets the same copy on the same two mockups, a poster and a site hero, over the skill's own live engine (<code>assets/</code>). Drag each axis, then mark keep, maybe or drop. Picks stay in this browser; <i>copy verdict</i> puts a plain-text summary on the clipboard.</p></div>
+<div class="vwrap"><textarea id="verdict" rows="6" readonly hidden aria-label="Verdict text"></textarea></div>
+<main>
+  <section class="face is-current" id="lull" data-face="lull" data-name="Lull" data-tag="FOCS" style="--fam: 'Lull'; --fvs: 'FOCS' 500;">
+    <div class="info">
+      <p class="kick">current face</p>
+      <h2>Lull</h2>
+      <p class="idea">hairline serif going out of focus</p>
+      <p class="facts">Bodoni Moda · <b>FOCS</b> 0–1000, default 0 · 55 KB</p>
+      <label class="axis"><span>FOCS</span><input type="range" min="0" max="1000" step="1" value="500" aria-label="Lull axis FOCS"><output>500</output></label>
+      <p class="stops">Sharp 0 · Soft 500 · Bloom 1000</p>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-mid" data-bg="poster">
+        <p class="p-kick">faye — n° 4</p>
+        <p class="p-word disp fit" data-fit="30">BRUME</p>
+        <p class="p-foot">eau de parfum · 50 ml</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Faye</span><span class="links"><a href="#" tabindex="-1">scents</a><a href="#" tabindex="-1">atelier</a><a href="#" tabindex="-1">journal</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Soft light,<br>held still</p>
+          <p class="h-sub">a scent that moves when you do</p>
+          <button type="button" class="cta hz-btn">Discover</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="pollen" data-face="pollen" data-name="Pollen" data-tag="DUST" style="--fam: 'Pollen'; --fvs: 'DUST' 400;">
+    <div class="info">
+      <p class="kick">candidate 1</p>
+      <h2>Pollen</h2>
+      <p class="idea">the letter sheds round grains that drift up and right on the wind</p>
+      <p class="facts">Marcellus · <b>DUST</b> 0–1000, default 400 · 58 KB</p>
+      <label class="axis"><span>DUST</span><input type="range" min="0" max="1000" step="1" value="400" aria-label="Pollen axis DUST"><output>400</output></label>
+      <p class="stops">Still 0 · Shed 400 · Blown 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Pollen">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-mid" data-bg="poster">
+        <p class="p-kick">faye — n° 4</p>
+        <p class="p-word disp fit" data-fit="30">BRUME</p>
+        <p class="p-foot">eau de parfum · 50 ml</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Faye</span><span class="links"><a href="#" tabindex="-1">scents</a><a href="#" tabindex="-1">atelier</a><a href="#" tabindex="-1">journal</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Soft light,<br>held still</p>
+          <p class="h-sub">a scent that moves when you do</p>
+          <button type="button" class="cta hz-btn">Discover</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="furl" data-face="furl" data-name="Furl" data-tag="TURN" style="--fam: 'Furl'; --fvs: 'TURN' 500;">
+    <div class="info">
+      <p class="kick">candidate 2</p>
+      <h2>Furl</h2>
+      <p class="idea">a broad nib whose angle turns, so the ribbon folds from thick to thin</p>
+      <p class="facts">Josefin Sans · <b>TURN</b> 0–1000, default 0 · 62 KB</p>
+      <label class="axis"><span>TURN</span><input type="range" min="0" max="1000" step="1" value="500" aria-label="Furl axis TURN"><output>500</output></label>
+      <p class="stops">Upright 0 · Turning 500 · Rolled 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Furl">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-mid" data-bg="poster">
+        <p class="p-kick">faye — n° 4</p>
+        <p class="p-word disp fit" data-fit="30">BRUME</p>
+        <p class="p-foot">eau de parfum · 50 ml</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Faye</span><span class="links"><a href="#" tabindex="-1">scents</a><a href="#" tabindex="-1">atelier</a><a href="#" tabindex="-1">journal</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Soft light,<br>held still</p>
+          <p class="h-sub">a scent that moves when you do</p>
+          <button type="button" class="cta hz-btn">Discover</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="face" id="waver" data-face="waver" data-name="Waver" data-tag="HAZE" style="--fam: 'Waver'; --fvs: 'HAZE' 500;">
+    <div class="info">
+      <p class="kick">candidate 3</p>
+      <h2>Waver</h2>
+      <p class="idea">heat-haze mirage: rows sway more toward the top of the letter</p>
+      <p class="facts">Instrument Serif · <b>HAZE</b> 0–1000, default 400 · 80 KB</p>
+      <label class="axis"><span>HAZE</span><input type="range" min="0" max="1000" step="1" value="500" aria-label="Waver axis HAZE"><output>500</output></label>
+      <p class="stops">Clear 0 · Haze 500 · Mirage 1000</p>
+      <div class="pick" role="group" aria-label="Verdict for Waver">
+        <button type="button" data-pick="keep" aria-pressed="false">keep</button><button type="button" data-pick="maybe" aria-pressed="false">maybe</button><button type="button" data-pick="drop" aria-pressed="false">drop</button>
+      </div>
+      <p class="sample disp">ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789 ÀÉÎÕÜ àéîõüçñßæøå &amp;?!€</p>
+    </div>
+    <div class="mocks">
+      <div class="poster pos-mid" data-bg="poster">
+        <p class="p-kick">faye — n° 4</p>
+        <p class="p-word disp fit" data-fit="30">BRUME</p>
+        <p class="p-foot">eau de parfum · 50 ml</p>
+      </div>
+      <div class="site" data-bg="hero">
+        <nav><span class="brand disp">Faye</span><span class="links"><a href="#" tabindex="-1">scents</a><a href="#" tabindex="-1">atelier</a><a href="#" tabindex="-1">journal</a></span></nav>
+        <div class="h-body">
+          <p class="h-head disp fit" data-fit="11.5">Soft light,<br>held still</p>
+          <p class="h-sub">a scent that moves when you do</p>
+          <button type="button" class="cta hz-btn">Discover</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Candidates: <code>skills/ethereal-haze/fonts/candidates/</code> (SIL OFL 1.1, see OFL.txt there), built by <code>tools/foundry.py</code> from <code>tools/recipes/</code>. Not wired into the skill yet.</footer>
+<script src="../skills/ethereal-haze/assets/haze.js"></script>
+<script src="../skills/ethereal-haze/assets/live.js"></script>
+<script src="../skills/ethereal-haze/assets/live-ui.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CFG = {"style": "ethereal-haze", "poster": {"fn": "field", "form": "fold", "seed": 4}, "hero": {"fn": "bloom", "palette": "sorbet", "seed": 11, "drift": 1, "mist": 0.6}, "btn": {}, "current": "Lull", "faces": [["pollen", "Pollen", "DUST", "Marcellus"], ["furl", "Furl", "TURN", "Josefin Sans"], ["waver", "Waver", "HAZE", "Instrument Serif"]]};
+  const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const KEY = 'hand-pulled:wave3b:' + CFG.style;
+  let picks = {};
+  try { picks = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { picks = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch (e) {} };
+
+  // display lines are sized to their mockup: a share of its width, shrunk until the longest line fits
+  function fit(el) {
+    const w = el.clientWidth; if (!w) return;
+    let s = w * (+el.dataset.fit) / 100;
+    el.style.fontSize = s + 'px';
+    for (let i = 0; i < 3 && el.scrollWidth > w + 0.5; i++) { s *= w / el.scrollWidth * 0.99; el.style.fontSize = s + 'px'; }
+  }
+  const fitAll = root => $$('.fit', root).forEach(fit);
+
+  function paint() {
+    $$('.face[data-face]').forEach(f => $$('[data-pick]', f).forEach(b => b.setAttribute('aria-pressed', String(picks[f.dataset.face] === b.dataset.pick))));
+    const n = CFG.faces.filter(f => picks[f[0]]).length;
+    $('#count').textContent = n + ' of ' + CFG.faces.length + ' picked';
+  }
+  function verdict() {
+    const lines = ['hand-pulled fonts wave 3 B: ' + CFG.style + ' (current face ' + CFG.current + ')'];
+    CFG.faces.forEach(([k, name, tag, base]) => lines.push((picks[k] || 'unpicked').padEnd(9) + name + ' (' + tag + ', ' + base + ')'));
+    return lines.join('\n');
+  }
+
+  $$('.face').forEach(f => {
+    const input = $('input[type=range]', f), out = $('output', f), tag = f.dataset.tag;
+    input.addEventListener('input', () => { f.style.setProperty('--fvs', "'" + tag + "' " + input.value); out.textContent = input.value; fitAll(f); });
+    $$('[data-pick]', f).forEach(b => b.addEventListener('click', () => {
+      const k = f.dataset.face; picks[k] = picks[k] === b.dataset.pick ? undefined : b.dataset.pick;
+      if (!picks[k]) delete picks[k];
+      save(); paint();
+    }));
+  });
+  $('#copy').addEventListener('click', async () => {
+    const t = verdict(), ta = $('#verdict');
+    ta.value = t; ta.hidden = false;
+    let ok = false;
+    try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {}
+    if (!ok) try { ta.select(); ok = document.execCommand('copy'); } catch (e) {}
+    $('#copy').textContent = ok ? 'copied' : 'select and copy below';
+    setTimeout(() => { $('#copy').textContent = 'copy verdict'; }, 1800);
+  });
+  paint();
+
+  // the live engine: one background per mockup (the same seed for every face), the skill's own button
+  const ui = window.Haze && window.Haze.ui;
+  if (ui) {
+    $$('[data-bg]').forEach(el => { try { ui.background(el, Object.assign({}, CFG[el.dataset.bg])); } catch (e) {} });
+    $$('.cta').forEach(b => { try { ui.button(b, CFG.btn); } catch (e) {} });
+    try { ui.focusRing(); } catch (e) {}
+  }
+
+  const names = Array.from(new Set($$('.face').map(f => f.style.getPropertyValue('--fam').trim())));
+  Promise.all(names.map(n => document.fonts.load('40px ' + n).catch(() => null))).then(() => fitAll(document));
+  document.fonts.ready.then(() => fitAll(document));
+  let lastW = innerWidth, t;
+  addEventListener('resize', () => { if (innerWidth === lastW) return; lastW = innerWidth; clearTimeout(t); t = setTimeout(() => fitAll(document), 150); });
+})();
+</script>
+</body>
+</html>

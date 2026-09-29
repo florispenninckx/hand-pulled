@@ -1,0 +1,10 @@
+/* The pixelsort-glitch candidates, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Mosh: A heavy Japanese-gothic Latin compressed like a broken video frame: big square blocks inside, small ones along the edge. As DRIP rises the bottom edge runs down in strands of pixels and loose macroblocks slide out of place, like a frame dripping into the next. Axis 'DRIP' 0–1000, default 400. */
+@font-face { font-family: 'Mosh'; src: url('mosh.woff2') format('woff2'); font-display: swap; }
+
+/* Shard: A tall black condensed grotesk on a dropped screen: each letter is cracked from one impact point into Voronoi shards. At CRAK 0 the cracks are closed and the letter is whole; as CRAK rises the shards spring away from the impact, fall and turn. Axis 'CRAK' 0–1000, default 350. */
+@font-face { font-family: 'Shard'; src: url('shard.woff2') format('woff2'); font-display: swap; }
+
+/* Slipband: A black expanded grotesk read through a slipping scanner: the letters are cut into bands at the same heights all along the line, and as SLIP rises the bands slide sideways, open thin slits, and some leave a stuttered ghost of themselves further on. Axis 'SLIP' 0–1000, default 500. */
+@font-face { font-family: 'Slipband'; src: url('slipband.woff2') format('woff2'); font-display: swap; }

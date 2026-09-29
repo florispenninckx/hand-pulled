@@ -1,0 +1,72 @@
+{
+ "name": "Pollen",
+ "file": "pollen",
+ "skill": "ethereal-haze",
+ "dir": "candidates",
+ "about": "A flared, lightly-stressed serif that sheds grain: at DUST 0 the letter is whole and clean; as DUST rises its edge thins and a cloud of round grains lifts out of it and drifts up and to the right, like pollen shaken off a petal or a grain gradient dissolving into stipple.",
+ "base": {
+  "family": "Marcellus",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/marcellus/Marcellus-Regular.ttf",
+  "sha256": "1cf0cd10b17d35e852729962cc1ffaffed94514895972458345e2df34abb2f81"
+ },
+ "axis": {
+  "tag": "DUST",
+  "name": "Dust",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Still": 0,
+   "Shed": 400,
+   "Blown": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 10,
+  "1000": 30
+ },
+ "ops": [
+  {
+   "op": "offset",
+   "d": {
+    "0": 0,
+    "400": -3,
+    "1000": -8
+   }
+  }
+ ],
+ "dust": {
+  "n": 80,
+  "min_n": 8,
+  "density": 0.00016,
+  "r": [
+   8,
+   22
+  ],
+  "band": 44,
+  "reach": 280,
+  "power": 1.7,
+  "wind": [
+   0.35,
+   0.45
+  ],
+  "shrink": 0.45
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 3,
+  "seg": 90,
+  "bend": 4,
+  "corner": 45,
+  "smooth": 3,
+  "nsmooth": 8,
+  "reach": 60,
+  "min_area": 30
+ }
+}

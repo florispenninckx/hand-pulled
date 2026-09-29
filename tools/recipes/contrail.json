@@ -1,0 +1,59 @@
+{
+ "name": "Contrail",
+ "file": "contrail",
+ "skill": "chrome-aurora",
+ "dir": "candidates",
+ "about": "A heavy italic dragged through the light: each letter keeps a crisp leading edge while every row behind it is pulled back into a streak, longer or shorter row by row, the same rows all along the line, like paint dragged across charcoal or a light in a long exposure. TRAL sets how far it has travelled.",
+ "base": {
+  "family": "Exo 2",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/exo2/Exo2-Italic[wght].ttf",
+  "sha256": "bad568cea9ed23d6ae4aea41ad3f7747752952aabdd85d7f01474af392a21b32",
+  "location": {
+   "wght": 900
+  }
+ },
+ "axis": {
+  "tag": "TRAL",
+  "name": "Trail",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Fixed": 0,
+   "Moving": 400,
+   "Streaked": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 10,
+  "1000": 70
+ },
+ "pad": 160,
+ "ops": [
+  {
+   "op": "round",
+   "r": 5,
+   "mode": "convex"
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 90,
+  "bend": 4,
+  "corner": 45,
+  "min_area": 40
+ },
+ "flow": {
+  "kind": "drag",
+  "stretch": 1.1,
+  "cell": 70,
+  "sharp": 2.2,
+  "floor": 0.04
+ }
+}

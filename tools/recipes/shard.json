@@ -1,0 +1,59 @@
+{
+ "name": "Shard",
+ "file": "shard",
+ "skill": "pixelsort-glitch",
+ "dir": "candidates",
+ "about": "A tall black condensed grotesk on a dropped screen: each letter is cracked from one impact point into Voronoi shards. At CRAK 0 the cracks are closed and the letter is whole; as CRAK rises the shards spring away from the impact, fall and turn.",
+ "base": {
+  "family": "Big Shoulders Display",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/bigshouldersdisplay/BigShouldersDisplay[wght].ttf",
+  "sha256": "60e208dc276a1c35fc5b62e94f9fb959c40c11783a9eb7548175c14b1fbeb720",
+  "location": {
+   "wght": 900
+  }
+ },
+ "axis": {
+  "tag": "CRAK",
+  "name": "Crack",
+  "default": 350,
+  "masters": [
+   0,
+   350,
+   1000
+  ],
+  "instances": {
+   "Whole": 0,
+   "Cracked": 350,
+   "Shattered": 1000
+  }
+ },
+ "seed": 2,
+ "track": 14,
+ "ops": [
+  {
+   "op": "round",
+   "r": 3,
+   "mode": "convex"
+  }
+ ],
+ "pieces": {
+  "kind": "shards",
+  "n": 9,
+  "spread": 130,
+  "move": 55,
+  "fall": 35,
+  "turn": 7,
+  "min": 500,
+  "bleed": 1.5
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 70,
+  "bend": 4,
+  "corner": 40,
+  "min_area": 60
+ }
+}

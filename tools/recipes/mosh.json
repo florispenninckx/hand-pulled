@@ -1,0 +1,45 @@
+{
+ "name": "Mosh",
+ "file": "mosh",
+ "skill": "pixelsort-glitch",
+ "dir": "candidates",
+ "about": "A heavy Japanese-gothic Latin compressed like a broken video frame: big square blocks inside, small ones along the edge. As DRIP rises the bottom edge runs down in strands of pixels and loose macroblocks slide out of place, like a frame dripping into the next.",
+ "base": {
+  "family": "Dela Gothic One",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/delagothicone/DelaGothicOne-Regular.ttf",
+  "sha256": "4ff87a0965f1b0505e5a2c58424bc6ad3cff27e56a82f21c2fc9d6b0e3857ee2"
+ },
+ "axis": {
+  "tag": "DRIP",
+  "name": "Drip",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Frame": 0,
+   "Regular": 400,
+   "Molten": 1000
+  }
+ },
+ "seed": 6,
+ "track": 10,
+ "composites": true,
+ "blocks": {
+  "cell": 96,
+  "min": 24,
+  "at": 0.5,
+  "drip": 300,
+  "p_drip": 0.55,
+  "split": 2,
+  "wave": 70,
+  "p_slip": 0.2,
+  "slip": 60,
+  "bleed": 1
+ },
+ "ops": []
+}
