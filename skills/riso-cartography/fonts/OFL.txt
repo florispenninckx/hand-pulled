@@ -1,9 +1,9 @@
-Fonts in this folder: Blockplan, Blockplan Drop.
+Fonts in this folder: Blockplan, Blockplan Drop, Isohypse.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
 
-Blockplan (blockplan-drop.woff2, blockplan.woff2)
+Blockplan (blockplan.woff2)
   from Anton, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/anton/Anton-Regular.ttf
   Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont.git)
 
@@ -11,11 +11,15 @@ Blockplan Drop (blockplan-drop.woff2)
   from Anton, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/anton/Anton-Regular.ttf
   Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont.git)
 
+Isohypse (isohypse.woff2)
+  from Rubik, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/rubik/Rubik[wght].ttf
+  Copyright 2015 The Rubik Project Authors (https://github.com/googlefonts/rubik)
+
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Blockplan, Blockplan Drop) and use no Reserved Font Name of their bases
-(Anton). We reserve no names for our own fonts.
+names (Blockplan, Blockplan Drop, Isohypse) and use no Reserved Font Name of their bases
+(Anton, Rubik). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 

@@ -29,7 +29,8 @@ Adding a face: copy a recipe in tools/recipes/ and change it.
   base                      an OFL font in google/fonts: commit, path, sha256 (plus "location"
                             {"wght": 820} to pin a variable base to one instance)
   axis                      tag (4 capitals), name, default, masters (must include the default),
-                            instances {name: position}
+                            instances {name: position}; optional standard, the setting a page
+                            should use when it is not the default (fonts.css and the specimen say it)
   warp, track               sx / sy / slant and extra advance in units, per position
   ops                       the process, in order; any number may be {"position": value}, and
                             values between positions are interpolated. The ops are the op_*
@@ -1603,7 +1604,9 @@ def write_css(skill, candidate=False):
             continue
         if len(files) == 1 and files[0].stem == r['file']:
             if r.get('variable', True):
-                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}. */")
+                std = ax.get('standard', ax.get('default', 0))
+                use = '' if std == ax.get('default', 0) else f" Standard setting: font-variation-settings: '{ax['tag']}' {std};"
+                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}.{use} */")
             else:
                 lines.append(f"/* {r['name']}: {r['about']} Static. */")
             lines.append(f"@font-face {{ font-family: '{r['name']}'; src: url('{files[0].name}') format('woff2'); font-display: swap; }}")
@@ -1688,7 +1691,7 @@ def make_specimen(skill):
         fam = r['name']
         word = th['word']
         if var:
-            tag, dflt = ax['tag'], int(ax.get('default', 0))
+            tag, dflt = ax['tag'], int(ax.get('standard', ax.get('default', 0)))   # the dial starts at the standard setting
             inst = ', '.join(f"{k} {v}" for k, v in ax.get('instances', {}).items())
             live = ' live' if i == 0 else ''
             faces.append(f'''  <section class="face">

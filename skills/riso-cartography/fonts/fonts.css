@@ -5,3 +5,6 @@
 
 /* Blockplan Drop: The second ink for Blockplan: the same letters, uncut, a little fat and rough at the edge as a riso drum leaves them, extruded into a solid drop shadow by DROP. Set it under Blockplan at the same size and tracking (the advances match) in a second spot colour, and nudge it out of register. Axis 'DROP' 0–1000, default 400. */
 @font-face { font-family: 'Blockplan Drop'; src: url('blockplan-drop.woff2') format('woff2'); font-display: swap; }
+
+/* Isohypse: A contour-map face: a heavy rounded grotesk drawn as lines of equal height, ring inside ring from its edge, from a solid letter scored with fine paper lines to a hairline survey. Axis 'TOPO' 0–1000, default 0. Standard setting: font-variation-settings: 'TOPO' 500; */
+@font-face { font-family: 'Isohypse'; src: url('isohypse.woff2') format('woff2'); font-display: swap; }

@@ -1,5 +1,8 @@
 /* The indigo-grain faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
 
+/* Marbler: A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath. Axis 'SWRL' 0–1000, default 400. Standard setting: font-variation-settings: 'SWRL' 640; */
+@font-face { font-family: 'Marbler'; src: url('marbler.woff2') format('woff2'); font-display: swap; }
+
 /* Seep: The wide melting title cut: an extended geometric softened like a wet cyanotype, whose ink seeps down out of every bottom edge. At MELT 0 it is soft and whole; as MELT rises the letters sag into long, tapering runs. Axis 'MELT' 0–1000, default 400. */
 @font-face { font-family: 'Seep'; src: url('seep.woff2') format('woff2'); font-display: swap; }
 

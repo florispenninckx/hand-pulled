@@ -2,8 +2,7 @@
  "name": "Isohypse",
  "file": "isohypse",
  "skill": "riso-cartography",
- "candidate": true,
- "about": "A contour-map face: a heavy rounded grotesk drawn as lines of equal height, ring inside ring from its edge, from a solid letter scored with fine paper lines to a hairline survey.",
+  "about": "A contour-map face: a heavy rounded grotesk drawn as lines of equal height, ring inside ring from its edge, from a solid letter scored with fine paper lines to a hairline survey.",
  "base": {
   "family": "Rubik",
   "repo": "google/fonts",
@@ -17,7 +16,7 @@
  "axis": {
   "tag": "TOPO",
   "name": "Contour",
-  "default": 0,
+  "default": 0, "standard": 500,
   "masters": [
    0,
    1000

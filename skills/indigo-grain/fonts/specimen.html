@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>indigo-grain type specimen</title>
-<meta name="description" content="The indigo-grain display faces (Seep, Sunprint, Sunprint Halo), made by tools/foundry.py, each with its process axis.">
+<meta name="description" content="The indigo-grain display faces (Marbler, Seep, Sunprint, Sunprint Halo), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,13 +44,22 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>indigo-grain</span><span>SIL OFL 1.1</span></div>
-    <h1>Seep, Sunprint, Sunprint Halo: display faces, titles only</h1>
+    <h1>Marbler, Seep, Sunprint, Sunprint Halo: display faces, titles only</h1>
   </header>
+  <section class="face">
+    <h2>Marbler <span>SWRL 0–1000 · variable · 57 KB</span></h2>
+    <p class="note">A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath.</p>
+    <p class="sample live" id="s0" style="font-family:'Marbler';--v:640;font-variation-settings:'SWRL' var(--v)">Tide</p>
+    <label class="dial"><span>SWRL</span><input type="range" min="0" max="1000" value="640" data-for="s0" aria-label="Swirl"><output>live</output></label>
+    <p class="alpha" style="font-family:'Marbler';font-variation-settings:'SWRL' 640">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Marbler';font-variation-settings:'SWRL' 0">Tide</p><span>SWRL 0</span></div><div><p style="font-family:'Marbler';font-variation-settings:'SWRL' 250">Tide</p><span>SWRL 250</span></div><div><p style="font-family:'Marbler';font-variation-settings:'SWRL' 500">Tide</p><span>SWRL 500</span></div><div><p style="font-family:'Marbler';font-variation-settings:'SWRL' 750">Tide</p><span>SWRL 750</span></div><div><p style="font-family:'Marbler';font-variation-settings:'SWRL' 1000">Tide</p><span>SWRL 1000</span></div></div>
+    <p class="meta">Named instances: Floated 0, Regular 400, Marbled 1000.</p>
+  </section>
   <section class="face">
     <h2>Seep <span>MELT 0–1000 · variable · 51 KB</span></h2>
     <p class="note">The wide melting title cut: an extended geometric softened like a wet cyanotype, whose ink seeps down out of every bottom edge. At MELT 0 it is soft and whole; as MELT rises the letters sag into long, tapering runs.</p>
-    <p class="sample live" id="s0" style="font-family:'Seep';--v:400;font-variation-settings:'MELT' var(--v)">Tide</p>
-    <label class="dial"><span>MELT</span><input type="range" min="0" max="1000" value="400" data-for="s0" aria-label="Melt"><output>live</output></label>
+    <p class="sample" id="s1" style="font-family:'Seep';--v:400;font-variation-settings:'MELT' var(--v)">Tide</p>
+    <label class="dial"><span>MELT</span><input type="range" min="0" max="1000" value="400" data-for="s1" aria-label="Melt"><output>400</output></label>
     <p class="alpha" style="font-family:'Seep';font-variation-settings:'MELT' 400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Seep';font-variation-settings:'MELT' 0">Tide</p><span>MELT 0</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 250">Tide</p><span>MELT 250</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 500">Tide</p><span>MELT 500</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 750">Tide</p><span>MELT 750</span></div><div><p style="font-family:'Seep';font-variation-settings:'MELT' 1000">Tide</p><span>MELT 1000</span></div></div>
     <p class="meta">Named instances: Wet 0, Regular 400, Run 1000.</p>
@@ -58,8 +67,8 @@
   <section class="face">
     <h2>Sunprint <span>EXPO 0–1000 · variable · 82 KB</span></h2>
     <p class="note">A sun-print face: letters laid on cyanotype paper and exposed, from a crisp contact print through a long exposure where the light creeps under the edges, to a blown-out print where the strokes swell into pools and the counters drown.</p>
-    <p class="sample" id="s1" style="font-family:'Sunprint';--v:300;font-variation-settings:'EXPO' var(--v)">Tide</p>
-    <label class="dial"><span>EXPO</span><input type="range" min="0" max="1000" value="300" data-for="s1" aria-label="Exposure"><output>300</output></label>
+    <p class="sample" id="s2" style="font-family:'Sunprint';--v:300;font-variation-settings:'EXPO' var(--v)">Tide</p>
+    <label class="dial"><span>EXPO</span><input type="range" min="0" max="1000" value="300" data-for="s2" aria-label="Exposure"><output>300</output></label>
     <p class="alpha" style="font-family:'Sunprint';font-variation-settings:'EXPO' 300">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 0">Tide</p><span>EXPO 0</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 250">Tide</p><span>EXPO 250</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 500">Tide</p><span>EXPO 500</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 750">Tide</p><span>EXPO 750</span></div><div><p style="font-family:'Sunprint';font-variation-settings:'EXPO' 1000">Tide</p><span>EXPO 1000</span></div></div>
     <p class="meta">Named instances: Contact 0, Regular 300, Long 650, Blown 1000.</p>
@@ -76,11 +85,12 @@
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
+.x{font-family:'Marbler'; font-variation-settings:'SWRL' 640;}
 .x{font-family:'Seep'; font-variation-settings:'MELT' 400;}
 .x{font-family:'Sunprint'; font-variation-settings:'EXPO' 300;}
 .x{font-family:'Sunprint Halo'; font-weight:400;}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Krona One, Unbounded (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Krona One, Syne, Unbounded (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {

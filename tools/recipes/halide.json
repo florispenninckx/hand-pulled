@@ -2,8 +2,7 @@
  "name": "Halide",
  "file": "halide",
  "skill": "abstract-texture",
- "candidate": true,
- "about": "A halation face: a wide Didone overexposed, the light of its heavy strokes spreading into the film so stems swell into soft pools and joins fill with glow while the hairlines hold.",
+  "about": "A halation face: a wide Didone overexposed, the light of its heavy strokes spreading into the film so stems swell into soft pools and joins fill with glow while the hairlines hold.",
  "base": {
   "family": "Bodoni Moda",
   "repo": "google/fonts",
@@ -18,7 +17,7 @@
  "axis": {
   "tag": "GLOW",
   "name": "Glow",
-  "default": 400,
+  "default": 400, "standard": 610,
   "masters": [
    0,
    400,

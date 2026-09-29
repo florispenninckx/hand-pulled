@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>riso-cartography type specimen</title>
-<meta name="description" content="The riso-cartography display faces (Blockplan, Blockplan Drop), made by tools/foundry.py, each with its process axis.">
+<meta name="description" content="The riso-cartography display faces (Blockplan, Blockplan Drop, Isohypse), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,7 +44,7 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>riso-cartography</span><span>SIL OFL 1.1</span></div>
-    <h1>Blockplan, Blockplan Drop: display faces, titles only</h1>
+    <h1>Blockplan, Blockplan Drop, Isohypse: display faces, titles only</h1>
   </header>
   <section class="face">
     <h2>Blockplan <span>CUTS 0–1000 · variable · 22 KB</span></h2>
@@ -65,6 +65,15 @@
     <p class="meta">Named instances: Flat 0, Regular 400, Deep 1000.</p>
   </section>
   <section class="face">
+    <h2>Isohypse <span>TOPO 0–1000 · variable · 115 KB</span></h2>
+    <p class="note">A contour-map face: a heavy rounded grotesk drawn as lines of equal height, ring inside ring from its edge, from a solid letter scored with fine paper lines to a hairline survey.</p>
+    <p class="sample" id="s2" style="font-family:'Isohypse';--v:500;font-variation-settings:'TOPO' var(--v)">Riverside</p>
+    <label class="dial"><span>TOPO</span><input type="range" min="0" max="1000" value="500" data-for="s2" aria-label="Contour"><output>500</output></label>
+    <p class="alpha" style="font-family:'Isohypse';font-variation-settings:'TOPO' 500">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Isohypse';font-variation-settings:'TOPO' 0">Rive</p><span>TOPO 0</span></div><div><p style="font-family:'Isohypse';font-variation-settings:'TOPO' 250">Rive</p><span>TOPO 250</span></div><div><p style="font-family:'Isohypse';font-variation-settings:'TOPO' 500">Rive</p><span>TOPO 500</span></div><div><p style="font-family:'Isohypse';font-variation-settings:'TOPO' 750">Rive</p><span>TOPO 750</span></div><div><p style="font-family:'Isohypse';font-variation-settings:'TOPO' 1000">Rive</p><span>TOPO 1000</span></div></div>
+    <p class="meta">Named instances: Filled 0, Regular 500, Survey 1000.</p>
+  </section>
+  <section class="face">
     <h2>Two inks <span>Blockplan over Blockplan Drop, misregistered</span></h2>
     <p class="note">Set the same words twice at the same size: Blockplan Drop in the second ink underneath, Blockplan on top, and nudge the lower layer a few hundredths of an em, as a second drum would.</p>
     <p class="stack" data-text="walk the old course of the river" style="--b:'Blockplan Drop';--f:'Blockplan'">walk the old course of the river</p>
@@ -75,10 +84,11 @@
 
 .x{font-family:'Blockplan'; font-variation-settings:'CUTS' 400;}
 .x{font-family:'Blockplan Drop'; font-variation-settings:'DROP' 400;}
+.x{font-family:'Isohypse'; font-variation-settings:'TOPO' 500;}
 .two{position:relative;font-family:'Blockplan';color:#e8413b}
 .two::before{content:attr(data-text);position:absolute;inset:0;z-index:-1;font-family:'Blockplan Drop';font-variation-settings:'DROP' 400;color:#1f6fb2;mix-blend-mode:multiply;transform:translate(.02em,.015em)}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Anton (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Anton, Rubik (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {

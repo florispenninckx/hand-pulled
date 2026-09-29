@@ -2,8 +2,7 @@
  "name": "Marbler",
  "file": "marbler",
  "skill": "indigo-grain",
- "candidate": true,
- "about": "A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath.",
+  "about": "A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath.",
  "base": {
   "family": "Syne",
   "repo": "google/fonts",
@@ -17,7 +16,7 @@
  "axis": {
   "tag": "SWRL",
   "name": "Swirl",
-  "default": 400,
+  "default": 400, "standard": 640,
   "masters": [
    0,
    400,
