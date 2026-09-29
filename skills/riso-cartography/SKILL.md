@@ -316,7 +316,7 @@ cards follow it; icons head the desk, the proof button and the cards, and the po
 system's own. Copy its structure, not its names.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, inks, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `register` (default), `crop`, `arrow`, `dots`. It returns `{ destroy() }`, which puts the previous cursor back.
+Marks: `register` (default), `crop`, `arrow`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

@@ -279,8 +279,6 @@
     x.beginPath(); shape(x); x.stroke(); x.fill();
     x.restore(); return c;
   }
-  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
-  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
   const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
   // the pointer arrow, its tip (the hotspot) at 2,2
   const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
@@ -315,11 +313,9 @@
    * for one. The system cursor is the default, and the live background is how the style answers
    * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x),
    * each mark in white and black outlines so it reads on any ground. opts.mark picks the mark
-   * (cursor.marks lists them); every hover mark splits its pink and teal channels apart:
+   * (cursor.marks lists them; an unknown name gives the default); every hover mark splits its pink and teal channels apart:
    *   'arrow'   an arrow filled with a sorted smear, its rows spilling out to the right (the default)
    *   'blocks'  an arrow broken into 2 px macroblocks, each one flat, two rows slipped sideways
-   *   'tear'    a cross-hair of sorted rows, each arm torn into slipped segments
-   *   'beam'    an I-beam whose stem is a column of sorted slits
    * opts.hover: true gives links and controls inside `area` the hover mark. opts: seed, scene,
    * image (smear options). Returns { destroy() }, which puts the previous cursor back.
    */
@@ -345,12 +341,6 @@
     const blocks = x => { for (const [bx, by] of grid) x.rect(bx, by, 2, 2); };
     // each block flat, the colour of the smear at its corner: the picture as a stream of macroblocks
     const flat = k => { const sm = smear(k), t = curCanvas(k), x = t.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sm, 0, 0, CUR * k, CUR * k, 0, 0, CUR / 2, CUR / 2); x.drawImage(t, 0, 0, CUR / 2, CUR / 2, 0, 0, CUR * k, CUR * k); return t; };
-    // arms of sorted rows, each cut into segments that slip a pixel or two off the line
-    const tear = (x, far) => {
-      const s = far ? 1.6 : 1;
-      for (const [a, b, d] of [[2, 7, 1], [7, 13, -1], [19, 25, 1], [25, 30, -1]]) { x.rect(a, 14.5 + d * s, b - a, 3); x.rect(14.5 - d * s, a, 3, b - a); }
-    };
-    const beam = x => { x.rect(14.5, 5, 3, 22); x.rect(10, 3, 12, 2.4); x.rect(10, 26.6, 12, 2.4); };
     const marks = {
       arrow: { hot: [2, 2], paint: (k, over) => {
         const sm = smear(k), c = curCanvas(k), x = c.getContext('2d');
@@ -364,18 +354,11 @@
         return c;
       } },
       blocks: { hot: [2, 2], paint: (k, over) => cut(k, flat(k), blocks, over, 'nonzero') },
-      tear: { hot: [16, 16], paint: (k, over) => cut(k, smear(k), x => tear(x, over), over, 'nonzero') },
-      beam: { hot: [16, 16], paint: (k, over) => {
-        // the smear turned a quarter, so its sorted rows stand up as slits in the stem
-        const sm = smear(k), t = curCanvas(k), x = t.getContext('2d'), n = CUR * k;
-        x.translate(n, 0); x.rotate(Math.PI / 2); x.drawImage(sm, 0, 0);
-        return cut(k, t, beam, over, 'nonzero');
-      } },
     };
     const m = marks[o.mark] || marks.arrow;
     return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
-  cursor.marks = ['arrow', 'blocks', 'tear', 'beam'];
+  cursor.marks = ['arrow', 'blocks'];
 
   G.iconMask = iconMask;
   G.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, cursor };

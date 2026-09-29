@@ -291,7 +291,7 @@ is most of it, and is skipped while `τ` stands still); a flat field and the cap
 longer shows the stair-steps a captured marble could tear into at its vein saddles when very wet.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `ring` (default), `drip`, `blob`, `splat`. It returns `{ destroy() }`, which puts the previous cursor back.
+Mark: `ring` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## What makes it authentic
 

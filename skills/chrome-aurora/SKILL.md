@@ -370,7 +370,7 @@ level and fill sit on top. Nothing is captured. The studio's lamps themselves st
 look puts them. Moving them (a `lamp` option on `set()`) is the natural next step.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `bead` (default), `drop`, `arrow`, `flare`. It returns `{ destroy() }`, which puts the previous cursor back.
+Mark: `arrow` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Verify before calling it done
 

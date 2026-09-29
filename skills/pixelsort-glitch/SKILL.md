@@ -274,7 +274,7 @@ Keep one machine per surface here too: the page's big picture sorts and moshes, 
 sort only when touched, and type and text blocks never move.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `arrow` (default), `blocks`, `tear`, `beam`. It returns `{ destroy() }`, which puts the previous cursor back.
+Marks: `arrow` (default), `blocks`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

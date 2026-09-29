@@ -208,7 +208,7 @@ The motion is the medium's, and it is quiet, because it sits under small mono ty
   the streak's drag) does not re-run per frame. The motion bends and lights the captured surface.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `ring` (default), `slice`, `fluted`, `comet`. It returns `{ destroy() }`, which puts the previous cursor back.
+Marks: `ring` (default), `fluted`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Composition
 

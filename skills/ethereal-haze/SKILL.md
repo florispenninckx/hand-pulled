@@ -280,7 +280,7 @@ shader costs one texelFetch for scatter, one or two texture reads (nine with a f
 under way), four grain fetches and a three-octave value noise for fog and mist.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `sun` (default), `star`, `petal`, `cross`. It returns `{ destroy() }`, which puts the previous cursor back.
+Marks: `sun` (default), `cross`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Credits and prior art
 

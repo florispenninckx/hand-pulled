@@ -266,16 +266,6 @@
     x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
   }
-  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
-  function curUnder(c, k, shape, w, col) {
-    const x = c.getContext('2d');
-    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
-    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
-    x.beginPath(); shape(x); x.stroke(); x.fill();
-    x.restore(); return c;
-  }
-  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
-  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
   const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
   // the pointer arrow, its tip (the hotspot) at 2,2
   const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
@@ -310,55 +300,31 @@
    * for one. The system cursor is the default, and the live background is how the style answers
    * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x):
    * each mark is a small sun print, what lay on the paper left pale. opts.mark picks the mark
-   * (cursor.marks lists them):
-   *   'coin'  a coin with a pale cross on Prussian blue, a paper rim (the default); hover: a larger coin with a ring and a dot
-   *   'leaf'  a leaf, its tip on the pointer, printed with its veins pale; hover: the negative, a pale leaf with blue veins
-   *   'fern'  an arrow with a fern frond laid along it; hover: the negative, a pale arrow with a blue frond
-   *   'hand'  a pointing hand laid on the paper, pale with a blue edge; hover: the negative
+   * (cursor.marks lists them; an unknown name gives the default):
+   *   'fern'  an arrow with a fern frond laid along it (the default); hover: the negative, a pale arrow with a blue frond
    * opts.hover: true gives links and controls inside `area` the hover mark. opts: palette, seed
    * (print options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ mark: 'coin', palette: 'lily', seed: 7 }, opts);
+    const o = Object.assign({ mark: 'fern', palette: 'lily', seed: 7 }, opts);
     // print() with `lay(x)` laid on the paper, drawn in CSS px (white blocks the light and stays pale)
     const sun = (k, lay, grain, focus) => C.print(curCanvas(k), { width: CUR * k, height: CUR * k, palette: o.palette, seed: o.seed, focus: focus || 0.25, haze: focus ? 0.05 : 0.15, grain: grain || 1.2, objects: (x, w) => {
       x.save(); x.scale(w / CUR, w / CUR); x.fillStyle = x.strokeStyle = '#fff'; x.lineCap = x.lineJoin = 'round'; lay(x); x.restore();
     } });
     const paper = '#f5f2fb', shade = 'rgba(10,23,64,.5)';
     const rim = (x, path, w) => { x.lineJoin = 'round'; x.beginPath(); path(x); x.lineWidth = 2.4; x.strokeStyle = shade; x.stroke(); x.lineWidth = w || 1; x.strokeStyle = paper; x.stroke(); };
-    const coin = (k, big) => {
-      const r = big ? 11.5 : 9.5;
-      const p = sun(k, x => {
-        if (big) { x.lineWidth = 1.6; x.beginPath(); x.arc(16, 16, 6, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(16, 16, 1.6, 0, Math.PI * 2); x.fill(); }
-        else { x.fillRect(15.1, 11, 1.8, 10); x.fillRect(11, 15.1, 10, 1.8); }
-      });
-      return curCut(p, k, x => curDisc(x, r), x => { curRing(x, r + 0.5, 1, paper); curRing(x, r + 1.4, 0.8, shade); });
-    };
-    const leaf = x => { x.moveTo(2, 2); x.bezierCurveTo(14, 1, 29, 13, 25, 25); x.bezierCurveTo(13, 29, 1, 14, 2, 2); x.closePath(); };
-    const veins = x => {
-      x.lineWidth = 1.1; x.beginPath(); x.moveTo(3, 3); x.lineTo(24.5, 24.5);
-      for (const t of [7, 11.5, 16, 20]) { x.moveTo(t, t); x.lineTo(t + 5.2 - t * 0.12, t - 1.2); x.moveTo(t, t); x.lineTo(t - 1.2, t + 5.2 - t * 0.12); }
-      x.stroke();
-    };
     const frond = x => {
       x.lineWidth = 1.3; x.beginPath(); x.moveTo(3.4, 6); x.quadraticCurveTo(5.5, 14, 9.6, 21.5);
       for (let i = 0; i < 6; i++) { const y = 8 + i * 2.2, cx = 3.6 + i * 0.95, l = 3.2 - i * 0.3; x.moveTo(cx, y); x.lineTo(cx + l, y - 1.4); if (i > 1) { x.moveTo(cx, y); x.lineTo(cx - Math.min(1.2, l * 0.4), y - 1.1); } }
       x.stroke();
     };
-    // a hand, its index finger up with the fingertip at 12.8,2
-    const hand = x => { x.roundRect(10.6, 2, 4.4, 14, 2.2); x.roundRect(14.4, 10.2, 3.8, 7, 1.9); x.roundRect(17.8, 11.2, 3.6, 7, 1.8); x.roundRect(8.6, 12.5, 14, 13.5, 4); x.roundRect(4.4, 14.4, 7.4, 4, 2); };
-    // the silhouette with an edge `w` CSS px wide round it (stroke and fill, one path)
-    const grown = (path, w) => x => { path(x); x.lineWidth = w; x.stroke(); };
     const marks = {
-      coin: { hot: [16, 16], paint: (k, over) => coin(k, over) },
-      leaf: { hot: [2, 2], paint: (k, over) => curCut(sun(k, over ? x => { x.beginPath(); leaf(x); x.fill(); x.strokeStyle = '#000'; veins(x); } : veins, 0.8), k, leaf, x => rim(x, leaf)) },
       fern: { hot: [2, 2], paint: (k, over) => curCut(sun(k, over ? x => { x.beginPath(); curPath(x, CUR_ARROW); x.fill(); x.fillStyle = x.strokeStyle = '#000'; frond(x); } : frond, 0.6, 0.08), k, x => curPath(x, CUR_ARROW), x => rim(x, q => curPath(q, CUR_ARROW))) },
-      hand: { hot: [13, 2], paint: (k, over) => curUnder(curCut(sun(k, over ? x => { x.beginPath(); grown(hand, 2.6)(x); x.fill(); x.fillStyle = x.strokeStyle = '#000'; x.beginPath(); hand(x); x.fill(); } : x => { x.beginPath(); hand(x); x.fill(); }, 0.8), k, grown(hand, 2.6), null, 'nonzero'), k, hand, 4.4, paper) },
     };
-    const m = marks[o.mark] || marks.coin;
+    const m = marks[o.mark] || marks.fern;
     return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
-  cursor.marks = ['coin', 'leaf', 'fern', 'hand'];
+  cursor.marks = ['fern'];
 
   C.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

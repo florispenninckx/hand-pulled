@@ -374,7 +374,7 @@ process. `ui.ICONS` carries eleven Phosphor Light paths (sun, image, drop, slide
 pause, aperture, flower, butterfly, clock, lightning), inlined; nothing is fetched.
 
 **Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
-Marks: `coin` (default), `leaf`, `fern`, `hand`. It returns `{ destroy() }`, which puts the previous cursor back.
+Mark: `fern` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

@@ -333,16 +333,6 @@
     x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
   }
-  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
-  function curUnder(c, k, shape, w, col) {
-    const x = c.getContext('2d');
-    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
-    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
-    x.beginPath(); shape(x); x.stroke(); x.fill();
-    x.restore(); return c;
-  }
-  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
-  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
   const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
   // the pointer arrow, its tip (the hotspot) at 2,2
   const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
@@ -377,20 +367,19 @@
    * for one. The system cursor is the default, and the live background is how the style answers
    * the pointer. A native CSS cursor, pulled once on two drums a little out of register at 32 px
    * (1x and 2x), on a paper edge so it reads on a dark ground. opts.mark picks the mark
-   * (cursor.marks lists them):
+   * (cursor.marks lists them; an unknown name gives the default):
    *   'register'  a registration mark, ring and cross hairs (the default); hover: a solid dot overprinted
    *   'crop'      a crop mark's corner bracket, its corner on the pointer; hover: a dot in the corner
    *   'arrow'     an arrow in the first ink, keyed with a hairline in the second; hover: both inks solid, overprinted
-   *   'dots'      an arrow screened in halftone dots, keyed in the second ink; hover: the dots grow toward solid
    * opts.hover: true gives links and controls inside `area` the hover mark. opts: inks (two), seed.
    * Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
     const o = Object.assign({ mark: 'register', inks: ['blue', 'fluorescent-pink'], seed: 14 }, opts);
-    // two drums, each draws its master in CSS px: [{ draw(x), screen, cell, density }]; paper(x) is the edge under the ink
+    // two solid drums, each draws its master in CSS px: [{ draw(x) }]; paper(x) is the edge under the ink
     const pull = async (k, drums, paper) => {
       const n = CUR * k;
-      const layers = drums.map((d, i) => ({ ink: o.inks[i], screen: d.screen || 'solid', cell: (d.cell || 6) * k, angle: 45, density: d.density || 1, draw: x => { x.save(); x.scale(k, k); x.fillStyle = x.strokeStyle = '#000'; x.lineCap = x.lineJoin = 'round'; d.draw(x); x.restore(); } }));
+      const layers = drums.map((d, i) => ({ ink: o.inks[i], screen: 'solid', cell: 6 * k, angle: 45, density: 1, draw: x => { x.save(); x.scale(k, k); x.fillStyle = x.strokeStyle = '#000'; x.lineCap = x.lineJoin = 'round'; d.draw(x); x.restore(); } }));
       const c = (await Rz.print(curCanvas(k), { width: n, height: n, seed: o.seed, paper: CLEAR, misregister: 0.5 * k, layers, onLayer: () => {} })).canvas;
       // the inks multiply on white paper, so what is left of the white is transparency
       const x = c.getContext('2d'), im = x.getImageData(0, 0, n, n), d = im.data;
@@ -413,12 +402,11 @@
       register: { hot: [16, 16], paint: (k, over) => pull(k, [{ draw: x => hair(x) }, { draw: x => { hair(x); if (over) spot(x, 16, 16, 4.5); } }], x => { hair(x, 4); if (over) spot(x, 16, 16, 5.5); }) },
       crop: { hot: [3, 3], paint: (k, over) => pull(k, [{ draw: x => bracket(x, 2.2) }, { draw: x => { bracket(x, 1); if (over) spot(x, 8, 8, 2.6); } }], x => { bracket(x, 5); if (over) spot(x, 8, 8, 3.8); }) },
       arrow: { hot: [2, 2], paint: (k, over) => pull(k, [{ draw: x => arrow(x, 'fill') }, { draw: x => arrow(x, over ? 'both' : 'stroke') }], x => arrow(x, 'both', 3.6)) },
-      dots: { hot: [2, 2], paint: (k, over) => pull(k, [{ draw: x => arrow(x, 'fill'), screen: 'halftone', cell: 2.6, density: over ? 1 : 0.55 }, { draw: x => arrow(x, 'stroke', 1) }], x => arrow(x, 'both', 3.6)) },
     };
     const m = marks[o.mark] || marks.register;
     return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
-  cursor.marks = ['register', 'crop', 'arrow', 'dots'];
+  cursor.marks = ['register', 'crop', 'arrow'];
 
   Rz.iconMask = iconMask;
   Rz.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, contours, tint, mapLayers, ICONS, cursor };

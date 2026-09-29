@@ -286,14 +286,6 @@
     x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
   }
-  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
-  function curUnder(c, k, shape, w, col) {
-    const x = c.getContext('2d');
-    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
-    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
-    x.beginPath(); shape(x); x.stroke(); x.fill();
-    x.restore(); return c;
-  }
   const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
   const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
   const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
@@ -329,47 +321,28 @@
    * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
    * for one. The system cursor is the default, and the live background is how the style answers
    * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x).
-   * opts.mark picks the mark (cursor.marks lists them):
+   * opts.mark picks the mark (cursor.marks lists them; an unknown name gives the default):
    *   'ring'    a ring of reeded glass round the pointer (the default); hover: the whole lens
-   *   'slice'   one reed sliced out of the pane, its point up and left; hover: two reeds
    *   'fluted'  an arrow cut from the fluted glass; hover: the arrow in aurora light
-   *   'comet'   a streak with its head on the point; hover: the head ringed
    * opts.hover: true gives links and controls inside `area` the hover mark. opts: palette, seed
    * (reeded plate options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
     const o = Object.assign({ mark: 'ring', palette: 'ember', seed: 5 }, opts);
-    // a plate printed at 48k px (more reeds to the mark than at 32k), turned `deg` so its grain runs along the mark
-    const plate = (k, kind, pal, deg) => Promise.resolve(S[kind || 'reeded'](document.createElement('canvas'), { width: 48 * k, height: 48 * k, palette: pal || o.palette, seed: o.seed, text: false })).then(p => {
-      if (!deg) return p;
-      const c = curCanvas(k), x = c.getContext('2d'), n = c.width;
-      x.translate(n / 2, n / 2); x.rotate(deg * Math.PI / 180); x.drawImage(p, -0.75 * n, -0.75 * n, 1.5 * n, 1.5 * n);
-      return c;
-    });
+    // a plate printed at 48k px (more reeds to the mark than at 32k)
+    const plate = (k, kind, pal) => Promise.resolve(S[kind || 'reeded'](document.createElement('canvas'), { width: 48 * k, height: 48 * k, palette: pal || o.palette, seed: o.seed, text: false }));
     const ink = 'rgba(24,14,10,.85)', dot = (x, r) => { x.fillStyle = '#1a0f0a'; x.beginPath(); curDisc(x, r); x.fill(); };
     const edge = (x, path, w) => { x.beginPath(); path(x); x.lineJoin = 'round'; x.lineWidth = w || 1; x.strokeStyle = ink; x.stroke(); };
-    // along the diagonal from the point at 3,3: a = distance along it, b = across it
-    const diag = (a, b) => [3 + (a + b) / Math.SQRT2, 3 + (a - b) / Math.SQRT2];
-    const slice = (x, w) => curPath(x, [diag(0, 0), diag(6, w), diag(29, w), diag(30.5, 0), diag(29, -w), diag(6, -w)]);
-    const comet = x => { x.moveTo(27, 27); x.arc(7, 7, 4.6, Math.PI * 0.75, Math.PI * 1.75); x.closePath(); };
     const marks = {
       ring: { hot: [16, 16], paint: (k, over) => plate(k).then(p => over
         ? curCut(p, k, x => curDisc(x, 12), x => { curRing(x, 12.5, 1, ink); dot(x, 1.4); })
         : curCut(p, k, x => { curDisc(x, 11); curDisc(x, 5.5); }, x => { curRing(x, 11.5, 1, ink); curRing(x, 5, 1, ink); dot(x, 1.2); })) },
-      slice: { hot: [3, 3], paint: (k, over) => plate(k, 'reeded', null, 45).then(p => curCut(p, k, x => slice(x, over ? 5.2 : 3.2), x => {
-        edge(x, q => slice(q, over ? 5.2 : 3.2));
-        if (over) { x.beginPath(); x.moveTo(...diag(6, 0)); x.lineTo(...diag(30.5, 0)); x.lineWidth = 0.9; x.strokeStyle = ink; x.stroke(); }
-      })) },
       fluted: { hot: [2, 2], paint: (k, over) => plate(k, over ? 'aurora' : 'reeded', over ? 'north' : null).then(p => curCut(p, k, x => curPath(x, CUR_ARROW), x => edge(x, q => curPath(q, CUR_ARROW), 1.1))) },
-      comet: { hot: [4, 4], paint: (k, over) => plate(k, 'streak', 'signal', 45).then(p => curCut(p, k, comet, x => {
-        edge(x, comet);
-        if (over) { x.beginPath(); x.arc(7, 7, 6.6, 0, Math.PI * 2); x.lineWidth = 1; x.strokeStyle = ink; x.stroke(); }
-      })) },
     };
     const m = marks[o.mark] || marks.ring;
     return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
-  cursor.marks = ['ring', 'slice', 'fluted', 'comet'];
+  cursor.marks = ['ring', 'fluted'];
 
   S.iconMask = iconMask;
   S.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, iconMask, ICONS, cursor };

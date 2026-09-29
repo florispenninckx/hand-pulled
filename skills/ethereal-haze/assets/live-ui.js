@@ -317,19 +317,8 @@
     x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
     return c;
   }
-  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
-  function curUnder(c, k, shape, w, col) {
-    const x = c.getContext('2d');
-    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
-    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
-    x.beginPath(); shape(x); x.stroke(); x.fill();
-    x.restore(); return c;
-  }
   const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
   const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
-  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
-  // the pointer arrow, its tip (the hotspot) at 2,2
-  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
   function curValue(mark, fallback) {
     return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
       const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
@@ -360,10 +349,8 @@
    * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
    * for one. The system cursor is the default, and the live background is how the style answers
    * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x).
-   * opts.mark picks the mark (cursor.marks lists them):
+   * opts.mark picks the mark (cursor.marks lists them; an unknown name gives the default):
    *   'sun'    a small sun cut from a grain field, with a cream rim (the default); hover: a halo round a red point
-   *   'star'   a soft four-point star of the same light; hover: a red point at its heart
-   *   'petal'  one petal of the flame field, its tip on the pointer; hover: a cream vein and a red point
    *   'cross'  a cross-hair of four grain strokes round the point; hover: a ring of light round them
    * opts.hover: true gives links and controls inside `area` the hover mark. opts: seed, colors
    * (field options). Returns { destroy() }, which puts the previous cursor back.
@@ -374,25 +361,11 @@
     const cream = '#fff6ec', edge = 'rgba(90,40,26,.45)', red = '#e2231a';
     const rim = (x, path) => { x.lineJoin = 'round'; x.beginPath(); path(x); x.lineWidth = 2.6; x.strokeStyle = edge; x.stroke(); x.lineWidth = 1; x.strokeStyle = cream; x.stroke(); };
     const point = (x, cx, cy, r) => { x.fillStyle = red; x.beginPath(); x.moveTo(cx + r, cy); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); };
-    // four points on the axes, the sides drawn in toward the centre
-    const star = x => {
-      const P = [[16, 2.5], [29.5, 16], [16, 29.5], [2.5, 16]];
-      x.moveTo(...P[0]);
-      for (let i = 0; i < 4; i++) { const [a, b] = [P[i], P[(i + 1) % 4]]; x.quadraticCurveTo(16 + (a[0] + b[0] - 32) * 0.09, 16 + (a[1] + b[1] - 32) * 0.09, b[0], b[1]); }
-      x.closePath();
-    };
-    // a petal on the diagonal, its tip at 3,3 and its round end toward the lower right
-    const petal = x => { x.moveTo(3, 3); x.bezierCurveTo(15, 1.5, 30, 15, 25.5, 25.5); x.bezierCurveTo(15, 30, 1.5, 15, 3, 3); x.closePath(); };
     const arms = x => { for (const [ax, ay, w, h] of [[3, 14.6, 8.4, 2.8], [20.6, 14.6, 8.4, 2.8], [14.6, 3, 2.8, 8.4], [14.6, 20.6, 2.8, 8.4]]) x.roundRect(ax, ay, w, h, 1.4); };
     const marks = {
       sun: { hot: [16, 16], paint: (k, over) => over
         ? curCut(plate(k), k, x => { curDisc(x, 12.5); curDisc(x, 8.5); }, x => { curRing(x, 13, 1, cream); curRing(x, 8, 1, cream); curRing(x, 14, 0.8, edge); point(x, 16, 16, 1.5); })
         : curCut(plate(k), k, x => curDisc(x, 9), x => { curRing(x, 9.5, 1, cream); curRing(x, 10.5, 0.8, edge); }) },
-      star: { hot: [16, 16], paint: (k, over) => curCut(plate(k), k, star, x => { rim(x, star); if (over) point(x, 16, 16, 2); }) },
-      petal: { hot: [3, 3], paint: (k, over) => curCut(plate(k, 'flame'), k, petal, x => {
-        rim(x, petal);
-        if (over) { x.beginPath(); x.moveTo(5, 5); x.quadraticCurveTo(14, 13, 22, 22); x.lineWidth = 1; x.strokeStyle = cream; x.stroke(); point(x, 4.2, 4.2, 1.6); }
-      }) },
       cross: { hot: [16, 16], paint: (k, over) => curCut(plate(k, 'flow'), k, x => { arms(x); if (over) { curDisc(x, 13); x.moveTo(27, 16); x.arc(16, 16, 11, 0, Math.PI * 2, true); } }, x => {
         rim(x, arms); point(x, 16, 16, 1.3);
         if (over) { curRing(x, 13.5, 0.8, edge); curRing(x, 10.5, 0.8, edge); }
@@ -401,7 +374,7 @@
     const m = marks[o.mark] || marks.sun;
     return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
   }
-  cursor.marks = ['sun', 'star', 'petal', 'cross'];
+  cursor.marks = ['sun', 'cross'];
 
   H.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, iconMask, ICONS, RAMPS, cursor };
   H.iconMask = iconMask;
