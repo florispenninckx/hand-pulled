@@ -7,9 +7,9 @@
  * takes a fresh stamp when pressed; a switch's knob is its own drum, slid across; a slider and
  * a progress bar are a drum pulled along the strip; a loader is the press running, drums
  * wandering and contours traced one after another; the focus ring is two misregistered
- * hairlines; a section transition feeds through the drums as it scrolls past; the cursor is a
- * registration mark in two inks trailing the mouse; an icon is printed on two drums that slip
- * apart when you point at its control.
+ * hairlines; a section transition feeds through the drums as it scrolls past; an icon is printed
+ * on two drums that slip apart when you point at its control; the opt-in cursor is a registration
+ * mark in two inks, printed once.
  *
  *   const ui = Riso.ui;
  *   ui.background(section);   ui.button(btn);   ui.card(card);   ui.toggle(checkbox);
@@ -28,7 +28,6 @@
   const live = Rz.live;
   const clamp01 = x => x < 0 ? 0 : x > 1 ? 1 : x;
   const dpr = () => Math.min(2, root.devicePixelRatio || 1);
-  const RM = root.matchMedia ? root.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
 
   // Phosphor Icons, light weight (MIT). 256 viewBox, filled outlines.
   const P = d => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><path d="${d}"/></svg>`;
@@ -60,16 +59,10 @@
 .rz-track>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .rz-track:has(input:focus-visible){outline:1px solid var(--rz-focus,#0078bf);outline-offset:4px}
 .rz-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;mix-blend-mode:multiply}
-.rz-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;mix-blend-mode:multiply}
 .rz-icon{display:inline-block;position:relative;vertical-align:middle;flex:none}
 .rz-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:multiply}`;
     document.head.appendChild(s);
   }
-  // one rAF for the pieces that move something themselves (the cursor's follow)
-  const tickers = new Set();
-  let raf = 0;
-  const loop = now => { raf = 0; for (const f of tickers) f(now); if (tickers.size) raf = requestAnimationFrame(loop); };
-  const tick = f => { tickers.add(f); if (!raf) raf = requestAnimationFrame(loop); return () => tickers.delete(f); };
   // pure white paper with no fibre: an overlay multiplied onto the page shows only its ink
   const CLEAR = { tone: '#ffffff', fibre: 0 };
   // a canvas behind `host`'s content, filling it
@@ -291,43 +284,80 @@
     return live(backdrop(el), { layers: mapLayers(o), paper: 'white', seed: o.seed, feed: 'scroll', drift: 0.8, pointer: 0, trace: 0.6, traceLevels: o.levels });
   }
 
+  // ---------------------------------------------------------------- the opt-in cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines) {
+    const c = curCanvas(k), x = c.getContext('2d');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.scale(k, k);
+    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
+    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-rz-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-rz-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-rz-cursor'); } } };
+  }
+
   /**
-   * A cursor for `area`: a registration mark (ring and cross hairs) printed in two inks a little
-   * out of register, trailing the mouse on an overlay multiplied onto the page. The drums wander,
-   * a click stamps it. The system cursor stays. Mouse only: hidden on touch and pen, and with
-   * reduced motion. The view is made once, on the first mouse move, and then only moved.
+   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
+   * default, and the live background is how the style answers the pointer. The mark is a registration mark (ring and cross hairs) printed in two inks a little out of register, on a paper edge,
+   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
+   * a second mark, the same mark with a solid dot overprinted. opts: inks (two), seed. Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ size: 44, lag: 0.1, inks: ['blue', 'fluorescent-pink'], seed: 14 }, opts), k = dpr();
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'rz-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    const mark = (x, w, h) => {
-      const r = Math.min(w, h) * 0.26, cx = w / 2, cy = h / 2;
-      x.lineWidth = 1.4 * k;
-      x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke();
-      x.beginPath(); x.moveTo(cx - r * 1.6, cy); x.lineTo(cx + r * 1.6, cy); x.moveTo(cx, cy - r * 1.6); x.lineTo(cx, cy + r * 1.6); x.stroke();
+    const o = Object.assign({ inks: ['blue', 'fluorescent-pink'], seed: 14 }, opts);
+    const hair = (x, u, w) => { x.lineWidth = (w || 1.5) * u; x.beginPath(); x.arc(16 * u, 16 * u, 6.5 * u, 0, Math.PI * 2); x.moveTo(3 * u, 16 * u); x.lineTo(29 * u, 16 * u); x.moveTo(16 * u, 3 * u); x.lineTo(16 * u, 29 * u); x.stroke(); };
+    const mark = async (k, dot) => {
+      const n = CUR * k, draw = (x, w) => hair(x, w / CUR);
+      const stamp = (x, w) => { const u = w / CUR; draw(x, w); x.beginPath(); x.arc(16 * u, 16 * u, 4.5 * u, 0, Math.PI * 2); x.fill(); };
+      const layers = [{ ink: o.inks[0], screen: 'solid', draw }, { ink: o.inks[1], screen: 'solid', draw: dot ? stamp : draw }];
+      const c = (await Rz.print(curCanvas(k), { width: n, height: n, seed: o.seed, paper: CLEAR, misregister: 0.5 * k, layers, onLayer: () => {} })).canvas;
+      // the inks multiply on white paper, so what is left of the white is transparency
+      const x = c.getContext('2d'), im = x.getImageData(0, 0, n, n), d = im.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const a = 1 - Math.min(d[i], d[i + 1], d[i + 2]) / 255;
+        if (a < 0.02) { d[i + 3] = 0; continue; }
+        for (let j = 0; j < 3; j++) d[i + j] = Math.max(0, 255 - (255 - d[i + j]) / a);
+        d[i + 3] = a * 255;
+      }
+      x.putImageData(im, 0, 0);
+      // a paper edge under the ink, so the mark still reads on a dark ground
+      x.globalCompositeOperation = 'destination-over'; x.strokeStyle = x.fillStyle = '#f7f6f2'; x.lineCap = 'round';
+      hair(x, k, 4);
+      if (dot) { x.beginPath(); x.arc(16 * k, 16 * k, 5.5 * k, 0, Math.PI * 2); x.fill(); }
+      return c;
     };
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); }
-      if (!ctl) ctl = live(c, { layers: o.inks.map(ink => ({ ink, screen: 'solid', draw: mark })), paper: CLEAR, seed: o.seed, misregister: 1.2, drift: 2.5, speed: 1.3, pointer: 0, own: false, stampInk: o.inks[1] });
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 0.8, 0.3); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const q = 1 - Math.exp(-dt / o.lag);
-      x += (tx - x) * q; y += (ty - y) * q;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
+    return nativeCursor(area, o, { hot: [16, 16], paint: k => mark(k, false) }, { hot: [16, 16], paint: k => mark(k, true) });
   }
 
   /**

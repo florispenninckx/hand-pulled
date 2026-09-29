@@ -59,12 +59,9 @@
 .mx-slider>.mx-thumb{transition:none}
 .mx-track:has(input:focus-visible){outline:2px solid var(--mx-focus,#cdf564);outline-offset:3px}
 .mx-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none}
-.mx-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;border-radius:50%}
-.mx-cursor>canvas{width:100%;height:100%;display:block;transition:transform .25s cubic-bezier(.3,1.4,.5,1)}
-.mx-cursor.mx-over>canvas{transform:scale(1.5)}
 .mx-icon{display:inline-block;position:relative;vertical-align:middle;width:1.25em;height:1.25em;flex:none;background:currentColor;-webkit-mask:var(--mx-mask) center/contain no-repeat;mask:var(--mx-mask) center/contain no-repeat}
 .mx-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
-@media (prefers-reduced-motion: reduce){.mx-track>.mx-thumb{transition:none}.mx-cursor>canvas{transition:none}}`;
+@media (prefers-reduced-motion: reduce){.mx-track>.mx-thumb{transition:none}}`;
     document.head.appendChild(s);
   }
   // a canvas behind `host`'s content, filling it
@@ -87,12 +84,6 @@
     t.appendChild(c); t.appendChild(input); t.appendChild(th);
     return { t, c, th };
   }
-
-  // one rAF for the pieces that move something themselves (the cursor's follow)
-  const tickers = new Set();
-  let raf = 0;
-  const loop = now => { raf = 0; for (const f of tickers) f(now); if (tickers.size) raf = requestAnimationFrame(loop); };
-  const tick = f => { tickers.add(f); if (!raf) raf = requestAnimationFrame(loop); return () => tickers.delete(f); };
 
   /**
    * iconMask(svg, { weight }) — an icon's SVG (one or more <path d>, any viewBox) as a CSS mask
@@ -235,39 +226,68 @@
     return live(backdrop(el), Object.assign({ mode: 'marble', ramp: 'ember', develop: 'scroll', pointer: 0.6, hand: el, own: false }, opts));
   }
 
+  // ---------------------------------------------------------------- the opt-in cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines) {
+    const c = curCanvas(k), x = c.getContext('2d');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.scale(k, k);
+    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
+    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-mx-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-mx-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-mx-cursor'); } } };
+  }
+
   /**
-   * A wet ring of paint that trails the mouse inside `area` and swells over anything clickable;
-   * a press drops paint into it. The system cursor stays. Mouse only: hidden on touch and pen,
-   * and with reduced motion. opts: size (px), band (px), lag (s), and live() options.
+   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
+   * default, and the live background is how the style answers the pointer. The mark is a wet ring of poured swirl, outlined in black, with a black point,
+   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
+   * a second mark, the pour as a full drop. opts: mode, ramp, scale, seed (paint() options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ size: 40, band: 5, lag: 0.09, mode: 'swirl', ramp: 'citric acid citric+50 mint', scale: 0.25, grain: 0.25 }, opts);
-    style();
-    const box = document.createElement('div');
-    box.className = 'mx-cursor'; box.setAttribute('aria-hidden', 'true');
-    Object.assign(box.style, { width: o.size + 'px', height: o.size + 'px' });
-    const c = document.createElement('canvas'); box.appendChild(c);
-    document.body.appendChild(box);
-    const so = Object.assign({}, o); delete so.size; delete so.band; delete so.lag;
-    const ring = { pad: o.band / 2, band: o.band, radius: (o.size - o.band) / 2 };
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
-    const show = v => { box.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      box.classList.toggle('mx-over', !!(e.target.closest && e.target.closest('a,button,input,label,select,textarea,[tabindex]')));
-      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, Object.assign({ drift: 1, wet: 1.2, pointer: 0, alive: true, own: false, ring }, so)); }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 1); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag);
-      x += (tx - x) * k; y += (ty - y) * k;
-      box.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
+    const o = Object.assign({ mode: 'swirl', ramp: 'klein cornflower acid citric', scale: 0.35, seed: 3, grain: 0.25 }, opts);
+    const so = Object.assign({}, o); delete so.hover;
+    const plate = k => { const c = curCanvas(k); P.paint(c, so); return c; };
+    const ink = '#0b0b0b', dot = (x, r) => { x.fillStyle = ink; x.beginPath(); curDisc(x, r); x.fill(); };
+    return nativeCursor(area, o, {
+      hot: [16, 16],
+      paint: k => curCut(plate(k), k, x => { curDisc(x, 11); curDisc(x, 6); }, x => { curRing(x, 11, 1.5, ink); curRing(x, 6, 1.5, ink); dot(x, 1.3); }),
+    }, {
+      hot: [16, 16],
+      paint: k => curCut(plate(k), k, x => curDisc(x, 12.5), x => { curRing(x, 12.5, 1.5, ink); dot(x, 1.6); }),
     });
-    return { get ctl() { return ctl; }, el: box };
   }
 
   /**

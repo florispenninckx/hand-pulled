@@ -242,6 +242,7 @@ A press, or Enter/Space, is a soft bloom.
 | loader | `const l = ui.loader(el); l.stop()` | `role="status"`; a small sun breathing fast while a lamp circles behind the gauze |
 | focus ring | `ui.focusRing(scope?)` | CSS only: a 1px ink outline and a warm halo that breathes on `:focus-visible` (it also shows without WebGL2) |
 | section transition | `ui.transition(strip, opts)` | a strip of haze that racks focus with scroll: sharp mid-viewport, soft as it leaves |
+| cursor | `ui.cursor(area, { hover })` | Opt-in, only when the brief asks for a custom cursor. The system cursor is the default everywhere, and the pointer effect on the live background is how the style answers the mouse. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x): nothing follows the mouse and nothing keeps running, and touch has no cursor. The mark is a small sun cut from a grain field, with a cream rim; `hover: true` gives links and controls in `area` the sun as a halo round a red point. Returns `{ destroy() }`, which puts the previous cursor back |
 
 Ramps for the pieces: `Haze.ui.RAMPS` (`coral`, `rose`, `apricot`), or pass your own list
 of colours. Keep a page to one moving hero and quiet pieces. Motion here is slow: a 10 s

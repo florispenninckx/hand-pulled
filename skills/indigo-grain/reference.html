@@ -661,7 +661,6 @@
   setDrift.addEventListener('input', () => { const d = setDrift.value / 100; [views.frame, stage, views.hero].forEach(v => v && v.set({ drift: d })); });
 
   ui.focusRing({ palette: 'cobalt' });
-  ui.cursor($('#studio'));
   show(true);
 })();
 </script>

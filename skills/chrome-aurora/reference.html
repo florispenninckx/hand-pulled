@@ -423,7 +423,6 @@
   ui.focusRing();
   ui.transition(document.getElementById('strip'));
   document.querySelectorAll('.ic[data-icon]').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 3 + i }));
-  ui.cursor(document.querySelector('[aria-labelledby="h-desk"]'));
   const label = document.getElementById('fade-l');
   let run = 0;
   document.getElementById('go').addEventListener('click', () => {

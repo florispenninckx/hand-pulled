@@ -53,7 +53,6 @@
 .pg-track>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .pg-track:has(input:focus-visible){outline:2px solid var(--pg-focus,#3fd0c9);outline-offset:2px}
 .pg-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;image-rendering:pixelated}
-.pg-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;image-rendering:pixelated}
 .pg-icon{display:inline-block;position:relative;vertical-align:-.2em;width:1.25em;height:1.25em}
 .pg-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;image-rendering:pixelated}`;
     document.head.appendChild(s);
@@ -209,37 +208,72 @@
     return live(backdrop(el), Object.assign({ mode: 'smear', scene: 6, seed: 8, develop: 'scroll', sweep: 0.6, own: false, hand: el }, opts));
   }
 
+  // ---------------------------------------------------------------- the opt-in cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines) {
+    const c = curCanvas(k), x = c.getContext('2d');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.scale(k, k);
+    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
+    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-pg-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-pg-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-pg-cursor'); } } };
+  }
+
   /**
-   * A slit that trails the mouse inside `area`: a short strip of sorted rows, streaking, that
-   * sits behind the pointer on the side it came from, and bursts on a press. The system cursor
-   * stays. Mouse only: hidden for touch and pen, and with reduced motion.
+   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
+   * default, and the live background is how the style answers the pointer. The mark is an arrow filled with a sorted smear, its rows spilling out to the right as a strip,
+   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
+   * a second mark, the same arrow with its pink and teal channels split. opts: seed, scene, image (smear options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ w: 120, h: 12, lag: 0.08, seed: 17 }, opts);
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'pg-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.w + 'px', height: o.h + 'px' });
-    document.body.appendChild(c);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0, dir = 1;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, strip({ pixel: 1, seed: o.seed, sweep: 1, speed: 3, lo: 0.1, alive: true })); }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (ctl && e.pointerType === 'mouse') ctl.pulse(o.w / 2, o.h / 2, 1); });
-    if (RM.addEventListener) RM.addEventListener('change', () => { if (RM.matches) { on = false; show(false); } });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag), vx = tx - x;
-      x += vx * k; y += (ty - y) * k;
-      if (Math.abs(vx) > 2) dir = vx > 0 ? 1 : -1;
-      c.style.transform = `translate(${Math.round(dir > 0 ? x - o.w - 6 : x + 6)}px,${Math.round(y + 12)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
+    const o = Object.assign({ seed: 17 }, opts);
+    const arrow = x => { x.moveTo(2, 2); x.lineTo(2, 22); x.lineTo(7, 17.5); x.lineTo(10.5, 25); x.lineTo(13.5, 23.6); x.lineTo(10, 16.2); x.lineTo(16.5, 16.2); x.closePath(); };
+    const mark = (k, split) => {
+      const sm = G.smear(curCanvas(k), { width: CUR * k, height: CUR * k, seed: o.seed, scene: o.scene, image: o.image, pixel: k });
+      const c = curCanvas(k), x = c.getContext('2d');
+      x.scale(k, k);
+      // the sorted rows run on out of the arrow, one device row each, to lengths of their own
+      for (let y = 5; y < 22; y += 2) x.drawImage(sm, 0, y * k, CUR * k, k, 9, y, 11 + (y * 37) % 11, 1);
+      x.beginPath(); arrow(x); x.lineJoin = 'round'; x.lineWidth = 2.6; x.strokeStyle = '#f4f1ea'; x.stroke();
+      if (split) for (const [dx, col] of [[-2.5, '#ff3fa4'], [2.5, '#19e3d0']]) { x.save(); x.translate(dx, 0); x.beginPath(); arrow(x); x.fillStyle = col; x.fill(); x.restore(); }
+      x.setTransform(1, 0, 0, 1, 0, 0);
+      x.drawImage(curCut(sm, k, arrow, q => { q.beginPath(); arrow(q); q.lineJoin = 'round'; q.lineWidth = 1; q.strokeStyle = '#0b0b0e'; q.stroke(); }), 0, 0);
+      return c;
+    };
+    return nativeCursor(area, o, { hot: [2, 2], paint: k => mark(k, false) }, { hot: [2, 2], paint: k => mark(k, true) });
   }
 
   /**

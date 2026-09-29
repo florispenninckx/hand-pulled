@@ -61,7 +61,6 @@
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .ma-ring>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.ma-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;mix-blend-mode:screen;display:none;border-radius:50%}
 .ma-icon{display:inline-block;position:relative;vertical-align:middle;flex:none}
 .ma-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:screen}`;
     document.head.appendChild(s);
@@ -250,41 +249,75 @@
     return ctl;
   }
 
+  // ---------------------------------------------------------------- the opt-in cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines) {
+    const c = curCanvas(k), x = c.getContext('2d');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.scale(k, k);
+    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
+    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-ma-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-ma-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-ma-cursor'); } } };
+  }
+
   /**
-   * A small lamp that trails the mouse: a bead of chrome, screen-blended, its highlight swinging
-   * against the motion, a press rippling it. The system cursor stays. Mouse only: hidden for touch
-   * and pen, and with reduced motion. opts: size (px), lag (s).
+   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
+   * default, and the live background is how the style answers the pointer. The mark is a bead of chrome with an oil-film skin and a faint halo,
+   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
+   * a second mark, a chrome ring. opts: look, seed (film plate options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ size: 26, lag: 0.09, plate: 'glass', look: 'eye', seed: 9, grain: 0.02 }, opts);
-    area = area || document.documentElement;
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'ma-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, vx = 0, vy = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); }
-      if (!ctl) ctl = live(c, { plate: o.plate, look: o.look, seed: o.seed, grain: o.grain, zoom: 90, drift: 0.6, pointer: 1, radius: 0.8, lag: 0.05, tilt: 0, clickPulse: false, own: false });
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (on && e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 1); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag), px = x, py = y;
-      x += (tx - x) * k; y += (ty - y) * k;
-      vx += ((x - px) / dt - vx) * 0.2; vy += ((y - py) / dt - vy) * 0.2;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-      // the lamp hangs up and to the left, and swings back against the motion
-      if (ctl) { const sw = o.size * 0.3, sp = Math.hypot(vx, vy) + 1e-6, a = Math.min(1, sp / 900);
-        ctl.point(o.size * 0.36 - vx / sp * sw * a, o.size * 0.3 - vy / sp * sw * a); }
+    const o = Object.assign({ look: 'oxide', seed: 4 }, opts);
+    // the film plate poured over a height of our own: a dome makes the bead, a torus the ring (2D path, no GL context)
+    const plate = (k, ring) => {
+      const n = CUR * k, h = curCanvas(k), x = h.getContext('2d');
+      x.fillStyle = '#000'; x.fillRect(0, 0, n, n);
+      const g = ring ? x.createRadialGradient(n / 2, n / 2, 6 * k, n / 2, n / 2, 12 * k) : x.createRadialGradient(n / 2 - k, n / 2 - k, 0, n / 2, n / 2, 8 * k);
+      if (ring) { g.addColorStop(0, '#000'); g.addColorStop(0.45, '#fff'); g.addColorStop(1, '#000'); } else { g.addColorStop(0, '#fff'); g.addColorStop(0.7, '#9a9a9a'); g.addColorStop(1, '#000'); }
+      x.fillStyle = g; x.fillRect(0, 0, n, n);
+      return M.film(document.createElement('canvas'), { width: n, height: n, look: o.look, seed: o.seed, gl: false, image: h, grain: 0.02 });
+    };
+    const rim = 'rgba(0,0,0,.72)';
+    return nativeCursor(area, o, {
+      hot: [16, 16],
+      paint: k => curCut(plate(k, false), k, x => curDisc(x, 8), x => { curRing(x, 8.4, 0.9, rim); curRing(x, 11.5, 0.8, 'rgba(235,231,223,.55)'); }),
+    }, {
+      hot: [16, 16],
+      paint: k => curCut(plate(k, true), k, x => { curDisc(x, 12); curDisc(x, 6); }, x => { curRing(x, 12.2, 0.8, rim); curRing(x, 5.8, 0.8, rim); }),
     });
-    return { get ctl() { return ctl; }, canvas: c };
   }
 
   M.iconMask = iconMask;

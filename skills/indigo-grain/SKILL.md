@@ -365,7 +365,7 @@ that climbed regardless of content, so do not trust them.
 | loader | `ui.loader(el)` | a small pool of light orbiting under the grain |
 | focus ring | `ui.focusRing(opts)` | an exposed band around `:focus-visible` elements, transparent elsewhere |
 | section transition | `ui.transition(strip)` | paper darkening into the next section as it scrolls |
-| cursor | `ui.cursor(area)` | a soft screen-blended spot trailing the mouse; off for touch and reduced motion |
+| cursor | `ui.cursor(area, { hover })` | Opt-in, only when the brief asks for a custom cursor. The system cursor is the default everywhere, and the pointer effect on the live background is how the style answers the mouse. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x): nothing follows the mouse and nothing keeps running, and touch has no cursor. The mark is a cyanotype coin, a pale cross printed on Prussian blue with a paper rim; `hover: true` gives links and controls in `area` a larger coin printed with a ring. Returns `{ destroy() }`, which puts the previous cursor back |
 | icon | `ui.icon(el, name)` | a Phosphor light icon exposed like a botanical; lights on hover |
 
 Every piece keeps the native element and its semantics; the canvas sits under it with

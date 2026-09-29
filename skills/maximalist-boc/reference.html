@@ -407,7 +407,6 @@
   wetness.addEventListener('input', wetNow); keep.addEventListener('change', wetNow);
   const bar = ui.progress($('#bar'), { value: 0 });
   document.querySelectorAll('.desk .ico').forEach(e => ui.icon(e, e.dataset.icon));
-  ui.cursor(document.querySelector('.desk'));
   const spin = $('#spin'), spinner = ui.loader(spin);
   $('#pour-run').addEventListener('click', () => {
     spin.hidden = false; bar.set(0);

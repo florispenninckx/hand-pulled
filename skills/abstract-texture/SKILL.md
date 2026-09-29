@@ -185,6 +185,12 @@ The motion is the medium's, and it is quiet, because it sits under small mono ty
   plate masked to a rounded rectangle; keep a 1px CSS outline for no-WebGL and forced colours) ·
   `transition(el)` (a streak strip that develops as it scrolls past). Never set the text of a
   host with `textContent`: it removes the canvas. Put the label in a `<span>`.
+- `ui.cursor(area, { hover })` is opt-in, only when the brief asks for a custom cursor. The
+  system cursor is the default everywhere, and the pointer effect on the live background (the
+  raking light, the echo rings) is how the style answers the mouse. It is a native CSS cursor,
+  painted once through the still engine at 32 px (1x and 2x): a ring of reeded glass round the
+  pointer, and with `hover: true` the whole lens over links and controls. Nothing follows the
+  mouse or keeps running, and touch has no cursor. It returns `{ destroy() }`.
 - Labels on a live button sit on changing colour: give warm plates a dark label on hover
   (`.warm:hover { color: #1b1216 }`) and cool ones white.
 - Fallbacks: `prefers-reduced-motion` shows the still frame, clock 0, no rake, echo or ring, and

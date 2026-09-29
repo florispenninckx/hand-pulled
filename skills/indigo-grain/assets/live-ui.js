@@ -53,7 +53,6 @@
 .cy-track>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .cy-track:has(input:focus-visible){outline:1px solid var(--cy-focus,#1c2a6b);outline-offset:3px}
 .cy-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none}
-.cy-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;mix-blend-mode:screen;display:none}
 .cy-icon{display:inline-block;position:relative;vertical-align:middle}
 .cy-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}`;
     document.head.appendChild(s);
@@ -67,7 +66,7 @@
     host.insertBefore(c, host.firstChild);
     return c;
   }
-  // one rAF for the pieces that move something themselves (loader orbit, cursor follow)
+  // one rAF for the pieces that move something themselves (the loader orbit)
   const tickers = new Set();
   let raf = 0;
   const loop = now => { raf = 0; for (const f of tickers) f(now); if (tickers.size) raf = requestAnimationFrame(loop); };
@@ -227,35 +226,68 @@
     return live(backdrop(el), { mode: 'develop', T, palette: pal, seed, coarse: 0.9, grain: 1.2, develop: 'scroll', drift: 0.5, pointer: 0, alive: true });
   }
 
+  // ---------------------------------------------------------------- the opt-in cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd, so a second circle cuts a ring), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines) {
+    const c = curCanvas(k), x = c.getContext('2d');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.scale(k, k);
+    x.globalCompositeOperation = 'destination-in'; x.beginPath(); shape(x); x.fill('evenodd');
+    x.globalCompositeOperation = 'source-over'; if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-cy-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-cy-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-cy-cursor'); } } };
+  }
+
   /**
-   * A safelight that trails the mouse inside `area`: a soft grainy spot, screen-blended. The
-   * system cursor stays. Hidden on touch and with reduced motion.
+   * An opt-in cursor for `area`, only when the brief asks for one: the system cursor is the
+   * default, and the live background is how the style answers the pointer. The mark is a cyanotype coin: a pale photogram of a cross printed on Prussian blue, with a paper rim,
+   * painted once through the still engine. opts.hover: true gives links and controls inside `area`
+   * a second mark, a larger coin printed with a ring and a dot. opts: palette, seed (print options). Returns { destroy() }, which puts the previous cursor back.
    */
   function cursor(area, opts) {
-    const o = Object.assign({ size: 150, lag: 0.12, palette: { ground: '#000', stops: [[0, '#000000'], [0.5, '#16336e'], [0.8, '#3f7fd0'], [1, '#bfe4ff']] } }, opts);
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'cy-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    const T = (u, v) => 0.62 * Math.exp(-((u - 0.5) ** 2 + (v - 0.5) ** 2) / 0.045);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, { mode: 'develop', T, palette: o.palette, grain: 1.3, drift: 0, pointer: 0, alive: true, own: false }); }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', () => ctl && ctl.pulse(o.size / 2, o.size / 2, 0.5));
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag);
-      x += (tx - x) * k; y += (ty - y) * k;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
+    const o = Object.assign({ palette: 'lily', seed: 7 }, opts);
+    const coin = (k, big) => {
+      const r = big ? 11.5 : 9.5;
+      const p = C.print(curCanvas(k), { width: CUR * k, height: CUR * k, palette: o.palette, seed: o.seed, focus: 0.25, haze: 0.15, grain: 1.2, objects: (x, w, h) => {
+        const u = w / CUR; x.fillStyle = x.strokeStyle = '#fff';
+        if (big) { x.lineWidth = 1.6 * u; x.beginPath(); x.arc(w / 2, h / 2, 6 * u, 0, Math.PI * 2); x.stroke(); x.beginPath(); x.arc(w / 2, h / 2, 1.6 * u, 0, Math.PI * 2); x.fill(); }
+        else { x.fillRect(w / 2 - 0.9 * u, h / 2 - 5 * u, 1.8 * u, 10 * u); x.fillRect(w / 2 - 5 * u, h / 2 - 0.9 * u, 10 * u, 1.8 * u); }
+      } });
+      return curCut(p, k, x => curDisc(x, r), x => { curRing(x, r + 0.5, 1, '#f5f2fb'); curRing(x, r + 1.4, 0.8, 'rgba(10,23,64,.5)'); });
+    };
+    return nativeCursor(area, o, { hot: [16, 16], paint: k => coin(k, false) }, { hot: [16, 16], paint: k => coin(k, true) });
   }
 
   /**
