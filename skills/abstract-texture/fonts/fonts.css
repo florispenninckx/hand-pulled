@@ -1,4 +1,10 @@
 /* The abstract-texture faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
 
+/* Halide: A halation face: a wide Didone overexposed, the light of its heavy strokes spreading into the film so stems swell into soft pools and joins fill with glow while the hairlines hold. Axis 'GLOW' 0–1000, default 400. Standard: font-variation-settings: 'GLOW' 610. */
+@font-face { font-family: 'Halide'; src: url('halide.woff2') format('woff2'); font-display: swap; }
+
+/* Sateen: A satin face: a wide rounded display letter printed on silk and pulled, so its strokes ripple in soft folds, from flat cloth to deep waves. Axis 'FOLD' 0–1000, default 0. Standard: font-variation-settings: 'FOLD' 500. */
+@font-face { font-family: 'Sateen'; src: url('sateen.woff2') format('woff2'); font-display: swap; }
+
 /* Tideline: An echo-contour face: a heavy grotesk trailed by outline copies of itself, like a shape dragged through a slow shutter. At ECHO 0 the copies hide inside the letter; as ECHO rises they fan out down and to the right, each ring thinner than the last. Axis 'ECHO' 0–1000, default 0. */
 @font-face { font-family: 'Tideline'; src: url('tideline.woff2') format('woff2'); font-display: swap; }

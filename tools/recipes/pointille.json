@@ -1,0 +1,53 @@
+{
+ "name": "Pointille",
+ "file": "pointille",
+ "skill": "abstract-texture",
+ "dir": "candidates",
+ "about": "A halftone face: a black geometric printed through a coarse dot screen, from a solid letter with pearled edges to an out-of-focus orb of dots.",
+ "base": {
+  "family": "Outfit",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/outfit/Outfit[wght].ttf",
+  "sha256": "fc7287273e66929776e2ba54f144fe699080bec29f61bf649d70d871468aeade",
+  "location": {
+   "wght": 900
+  }
+ },
+ "axis": {
+  "tag": "DOTS",
+  "name": "Screen",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Solid": 0,
+   "Regular": 500,
+   "Screen": 1000
+  }
+ },
+ "track": {
+  "0": 10,
+  "1000": 40
+ },
+ "ops": [],
+ "dots": {
+  "mode": "screen",
+  "cell": 46,
+  "angle": 45,
+  "blur": {
+   "0": 6,
+   "1000": 42
+  },
+  "rmax": {
+   "0": 36,
+   "1000": 32
+  },
+  "floor": 0.05,
+  "min_r": 3,
+  "pad": 110
+ },
+ "fit": {}
+}

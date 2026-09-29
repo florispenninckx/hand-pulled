@@ -29,7 +29,12 @@ Adding a face: copy a recipe in tools/recipes/ and change it.
   base                      an OFL font in google/fonts: commit, path, sha256 (plus "location"
                             {"wght": 820} to pin a variable base to one instance)
   axis                      tag (4 capitals), name, default, masters (must include the default),
-                            instances {name: position}
+                            instances {name: position}; optional standard, the setting a page
+                            should use (fonts.css states it and the specimen dial starts there)
+  stream / flow             carry the traced outline along a stream (make_stream), or move the
+                            traced samples of every master (flow_warp); two different mechanisms
+  dir                       a subfolder of fonts/ such as "candidates": a face on trial, off the
+                            skill's fonts.css and specimen
   warp, track               sx / sy / slant and extra advance in units, per position
   ops                       the process, in order; any number may be {"position": value}, and
                             values between positions are interpolated. The ops are the op_*
@@ -264,15 +269,17 @@ def soft(dist):
 
 
 def value_noise(shape, cell, seed, octaves=1):
-    """Smooth noise in -1..1 with features `cell` pixels apart."""
+    """Smooth noise in -1..1 with features `cell` pixels apart; `cell` may be (rows, cols) for
+    noise stretched along one direction."""
     rng = np.random.default_rng(seed)
     out, amp, tot = np.zeros(shape), 1.0, 0.0
+    cy, cx = (cell, cell) if np.isscalar(cell) else cell
     for _ in range(octaves):
-        c = max(cell, 1.0)
-        lat = rng.uniform(-1, 1, (int(shape[0] / c) + 4, int(shape[1] / c) + 4))
+        c = (max(cy, 1.0), max(cx, 1.0))
+        lat = rng.uniform(-1, 1, (int(shape[0] / c[0]) + 4, int(shape[1] / c[1]) + 4))
         big = ndimage.zoom(lat, c, order=3, mode='nearest')
         out += amp * big[:shape[0], :shape[1]]
-        tot += amp; amp *= 0.5; cell /= 2
+        tot += amp; amp *= 0.5; cy /= 2; cx /= 2
     return out / tot
 
 
@@ -313,7 +320,9 @@ def op_noise(f, o, pos, g, seed):
     amp = at(o['amp'], pos)
     if amp == 0:
         return f
-    n = value_noise(f.shape, at(o['cell'], pos) / g.px, seed + o.get('seed', 0), o.get('octaves', 2))
+    c = at(o['cell'], pos) / g.px
+    st = at(o.get('stretch', 1), pos)                # > 1: streaks along x (a dry brush)
+    n = value_noise(f.shape, (c, c * st) if st != 1 else c, seed + o.get('seed', 0), o.get('octaves', 2))
     if 'band' in o:
         n *= np.exp(-(sdf(f) * g.px / at(o['band'], pos)) ** 2)
     return f + amp * n
@@ -353,7 +362,11 @@ def op_skeleton(f, o, pos, g, seed):
         stroke = np.median(dist[skel])
         skel &= dist > at(o.get('trim', 0.35), pos) * stroke
     r = at(o['r'], pos) / g.px
-    d = ndimage.distance_transform_edt(~skel) if skel.any() else np.full(f.shape, 1e3)
+    d, near = ndimage.distance_transform_edt(~skel, return_indices=True) if skel.any() else (np.full(f.shape, 1e3), None)
+    vary = at(o.get('vary', 0), pos)
+    if vary and near is not None:                 # the width swells and narrows along the stroke
+        n = value_noise(f.shape, at(o.get('vcell', 120), pos) / g.px, seed + o.get('seed', 0) + 11, 2)
+        r = r * np.clip(1 + vary * n[near[0], near[1]] * 1.6, 0.25, 3)
     out = soft(r - d)
     drop = at(o.get('drop', 0), pos)
     if drop > 0 and skel.any():
@@ -447,6 +460,9 @@ def op_drip(f, o, pos, g, seed):
     L = at(o['len'], pos) / g.px
     if L <= 0:
         return f
+    k = {'down': 0, 'right': -1, 'up': 2, 'left': 1}[o.get('dir', 'down')]
+    if k:                                         # turn the run direction to "down" and back
+        return np.rot90(op_drip(np.rot90(f, k).copy(), {**o, 'dir': 'down'}, pos, g, seed), -k).copy()
     n = value_noise((1, f.shape[1]), at(o.get('cell', 80), pos) / g.px, seed + o.get('seed', 0), 2)[0]
     Lc = L * np.clip(0.5 + 0.9 * n, 0.05, 1.0)
     fade = at(o.get('fade', 0.6), pos)
@@ -461,6 +477,174 @@ def op_drip(f, o, pos, g, seed):
         sh[k:] = src[:-k]
         wgt = np.clip((Lc - k) / np.maximum(Lc, 1e-6), 0, 1)
         out = np.maximum(out, sh * ((1 - fade) + fade * wgt) * (k <= Lc))
+    return out
+
+
+def _coords(f, g):
+    """Font-unit x and y of every pixel centre."""
+    rows, cols = np.mgrid[0:f.shape[0], 0:f.shape[1]]
+    return g.x0 + (cols + 0.5) * g.px, g.y0 - (rows + 0.5) * g.px
+
+
+def _bands(s, spacing, width):
+    """Signed distance (units, + inside) to stripes `width` wide repeating every `spacing` along s."""
+    m = np.mod(s, spacing)
+    return np.where(m < width, np.minimum(m, width - m), -np.minimum(m - width, spacing - m))
+
+
+def op_bloom(f, o, pos, g, seed):
+    """Halation: the letter plus its own glow, blurred by r and cut at `at`, so heavy strokes and
+    joins swell into soft pools while the hairlines stay where they were."""
+    r = at(o['r'], pos) / g.px
+    if r <= 0:
+        return f
+    return np.maximum(f, op_level(ndimage.gaussian_filter(f, r), {'at': o['at'], 'soft': 0.04}, pos, g, seed))
+
+
+def op_xray(f, o, pos, g, seed):
+    """A photogram of glass: every stroke hollowed to a rim `inset` wide, with a vein `vein`
+    thick left standing along its middle."""
+    m = f > 0.5
+    if not m.any():
+        return f
+    skel = morphology.skeletonize(m)
+    dist = ndimage.distance_transform_edt(m)
+    if skel.any():
+        skel &= dist > at(o.get('trim', 0.6), pos) * np.median(dist[skel])
+    if not skel.any():
+        return f
+    dsk = ndimage.distance_transform_edt(~skel)
+    hollow = soft(sdf(f) - at(o['inset'], pos) / g.px)
+    vein = soft(at(o['vein'], pos) / 2 / g.px - dsk)
+    return np.maximum(np.minimum(f, 1 - hollow), np.minimum(vein, f))
+
+
+def op_streets(f, o, pos, g, seed):
+    """Figure-ground: a grown street plan cut through the letter, so it falls into city blocks.
+    Blocks are `spacing` × `spacing`·`ratio` units on a grid turned by `angle` ± `jitter`
+    degrees, bent by `warp` units of noise, with cross streets staggered block by block and one
+    avenue `avenue` times as wide. Streets are `w` units wide."""
+    w = at(o['w'], pos)
+    rng = np.random.default_rng(seed + o.get('seed', 0) + 5)
+    X, Y = _coords(f, g)
+    th = math.radians(o.get('angle', 0) + rng.uniform(-1, 1) * o.get('jitter', 12))
+    u = X * math.cos(th) + Y * math.sin(th)
+    v = -X * math.sin(th) + Y * math.cos(th)
+    wc = o.get('wcell', 260) / g.px
+    u = u + o.get('warp', 30) * value_noise(f.shape, wc, seed + 21, 2)
+    v = v + o.get('warp', 30) * value_noise(f.shape, wc, seed + 22, 2)
+    S, R = o['spacing'], o['spacing'] * o.get('ratio', 1.6)
+    u = u + rng.uniform(0, S); v = v + rng.uniform(0, R)
+    row = np.floor(u / S)
+    stag = (np.sin(row * 12.9898 + rng.uniform(0, 6.28)) * 43758.5453) % 1.0 * R
+    d = np.minimum(np.abs(_bands(u, S, 0)), np.abs(_bands(v + stag, R, 0)))
+    cut = soft((w / 2 - d) / g.px)
+    if o.get('avenue', 0):
+        a = th + math.radians(rng.choice([-1, 1]) * rng.uniform(30, 60))
+        cx, cy = np.mean(X[f > 0.5]) if (f > 0.5).any() else 0, 350
+        s = (X - cx) * -math.sin(a) + (Y - cy) * math.cos(a)
+        cut = np.maximum(cut, soft((w * o['avenue'] / 2 - np.abs(s)) / g.px))
+    return np.minimum(f, 1 - cut)
+
+
+def op_contours(f, o, pos, g, seed):
+    """Contour lines: the letter drawn as rings of equal distance from its edge, `spacing` units
+    apart (the first half a spacing in) and `t` thick, wandering by `wobble` units of noise like hand-drawn heights."""
+    d = sdf(f) * g.px
+    wob = at(o.get('wobble', 0), pos)
+    if wob:
+        d = d + wob * value_noise(f.shape, at(o.get('cell', 90), pos) / g.px, seed + o.get('seed', 0) + 3, 2)
+    t = at(o['t'], pos)                           # centred between the levels, so both edges move
+    ring = soft(_bands(d - o['spacing'] / 2 + t / 2, o['spacing'], t) / g.px)
+    return np.minimum(f, ring)
+
+
+def op_hatch(f, o, pos, g, seed):
+    """A riso tint: the letter kept as a rim `rim` units wide and filled with hatching at `angle`
+    degrees, lines `t` thick every `spacing` units."""
+    X, Y = _coords(f, g)
+    a = math.radians(at(o.get('angle', 45), pos))
+    s = X * math.cos(a) + Y * math.sin(a)
+    hatch = soft(_bands(s, o['spacing'], at(o['t'], pos)) / g.px)
+    rim = soft(at(o['rim'], pos) / g.px - sdf(f))
+    return np.minimum(f, np.maximum(rim, hatch))
+
+
+def op_caustic(f, o, pos, g, seed):
+    """Water light: the web of bright lines a rippled surface throws on the floor of a pool, cut
+    through the letter. The web is the edges of cells `cell` units across, bent by `warp` units
+    of noise; lines are `w` units wide and swell by `swell` where three cells meet."""
+    rng = np.random.default_rng(seed + o.get('seed', 0) + 13)
+    X, Y = _coords(f, g)
+    cell = o['cell']
+    xa, xb, ya, yb = X.min() - cell, X.max() + cell, Y.min() - cell, Y.max() + cell
+    n = int((xb - xa) * (yb - ya) / cell ** 2)
+    pts = np.stack([rng.uniform(xa, xb, n), rng.uniform(ya, yb, n)], 1)
+    wc = o.get('wcell', 160) / g.px
+    Xw = X + o.get('warp', 20) * value_noise(f.shape, wc, seed + 51, 2)
+    Yw = Y + o.get('warp', 20) * value_noise(f.shape, wc, seed + 52, 2)
+    d, _ = cKDTree(pts).query(np.stack([Xw.ravel(), Yw.ravel()], 1), k=3)
+    d1, d2, d3 = (d[:, i].reshape(f.shape) for i in range(3))
+    edge = (d2 - d1) / 2                          # units to the nearest cell wall
+    node = (d3 - d1) / 2                          # small where three cells meet
+    w = at(o['w'], pos) / 2 + at(o.get('swell', 0), pos) * np.exp(-node / (0.18 * cell))
+    return np.minimum(f, 1 - soft((w - edge) / g.px))
+
+
+def _slide(f, dy, dx):
+    """f moved by (dy, dx) pixels, whole pixels by slicing when both are whole (fast), else linear."""
+    if float(dy).is_integer() and float(dx).is_integer():
+        dy, dx = int(dy), int(dx)
+        out = np.zeros_like(f)
+        H, W = f.shape
+        if abs(dy) >= H or abs(dx) >= W:
+            return out
+        out[max(dy, 0):H + min(dy, 0), max(dx, 0):W + min(dx, 0)] = f[max(-dy, 0):H + min(-dy, 0), max(-dx, 0):W + min(-dx, 0)]
+        return out
+    return ndimage.shift(f, (dy, dx), order=1, mode='constant')
+
+
+def op_nib(f, o, pos, g, seed):
+    """Broad nib: the skeleton of the ink redrawn with a flat pen `w` units wide held at `angle`
+    degrees (0 = flat), over a round hairline `hair` units thick. Strokes that run along the nib
+    come out thin and strokes across it thick, so turning the nib turns the contrast over."""
+    m = f > 0.5
+    if not m.any():
+        return f
+    skel = morphology.skeletonize(m)
+    if 'trim' in o and skel.any():
+        dist = ndimage.distance_transform_edt(m)
+        skel &= dist > o['trim'] * np.median(dist[skel])
+    core = soft(at(o.get('hair', 6), pos) / 2 / g.px - ndimage.distance_transform_edt(~skel))
+    w = at(o['w'], pos) / g.px
+    a = math.radians(at(o['angle'], pos))
+    out = core.copy()
+    for t in np.linspace(-w / 2, w / 2, max(int(w / 0.7), 2)):
+        out = np.maximum(out, _slide(core, -math.sin(a) * t, math.cos(a) * t))
+    return out
+
+
+def op_trail(f, o, pos, g, seed):
+    """A paint trail: the letter swept `len` units towards `angle` (degrees, 180 = to the left)
+    while it thins by `taper` units per 100 of travel, so the front stays crisp and the tail runs
+    out in strands. `vary` (0..1) lets the rate change smoothly across the sweep, over `cell` units."""
+    L = at(o['len'], pos) / g.px
+    if L <= 0:
+        return f
+    a = math.radians(at(o.get('angle', 180), pos))
+    k = at(o.get('taper', 20), pos) / 100
+    d = sdf(f)
+    if o.get('vary', 0):
+        n = value_noise(f.shape, at(o.get('cell', 60), pos) / g.px, seed + o.get('seed', 0), 2)
+        k = k * np.clip(1 + o['vary'] * n, 0.2, None)
+    out = f.copy()
+    horiz = abs(math.sin(a)) < 1e-9
+    for t in np.arange(1, L + 1, 1.0):
+        piece = soft(d - t * k)
+        if piece.max() <= 0.5:
+            break
+        dy, dx = -math.sin(a) * t, math.cos(a) * t
+        out = np.maximum(out, _slide(piece, 0.0, float(round(dx))) if horiz else _slide(piece, dy, dx))
     return out
 
 
@@ -856,6 +1040,16 @@ def make_glyph(args):
         return make_pixel(recipe, gname, positions, polys, adv0, out)
     if 'echo' in recipe:
         return make_echo(recipe, gname, positions, polys, adv0, out)
+    if 'stream' in recipe:
+        return make_stream(recipe, gname, positions, polys, adv0, out)
+    if 'reed' in recipe:
+        return make_reed(recipe, gname, positions, polys, adv0, out)
+    if recipe.get('dots', {}).get('mode') == 'screen':
+        return make_screen(recipe, gname, positions, polys, adv0, out)
+    if 'pieces' in recipe:
+        return make_pieces(recipe, gname, positions, polys, adv0, out)
+    if 'blocks' in recipe:
+        return make_blocks(recipe, gname, positions, polys, adv0, out)
 
     px = recipe.get('px', 2.0)
     pad = recipe.get('pad', 160)
@@ -870,7 +1064,9 @@ def make_glyph(args):
     g = Grid(lo[0], hi[1], int(math.ceil((hi[0] - lo[0]) / px)), int(math.ceil((hi[1] - lo[1]) / px)), px)
     seed = recipe.get('seed', 1) * 7919 + zlib.crc32(gname.encode()) % 100000
 
-    fields = {p: process(polys, p, recipe, g, seed, gname) for p in positions}
+    flow = recipe.get('flow')               # a flow face is traced once and its samples are moved,
+    fields = {p: process(polys, p, recipe, g, seed, gname)   # so only the traced master is processed
+              for p in (positions if not flow else [trace_pos])}
     step = fit.get('step', 2.0 * px / 2)
     C = trace(fields[trace_pos], g, step, fit.get('min_area', 60))
     if not C:                   # the process erased this glyph at the traced master (a hairline sign
@@ -886,6 +1082,11 @@ def make_glyph(args):
     per = {p: [] for p in positions}
     for P in C:
         per[trace_pos].append(P)
+        if flow:
+            front = max(float(Q[:, 0].max()) for Q in C)
+            for p in chain[1:]:
+                per[p].append(flow_warp(P, flow, (p - trace_pos) / 1000, seed, front))
+            continue
         for p in chain[1:]:
             src = min((q for q in positions if per[q] and len(per[q]) == len(per[trace_pos]) and q != p and
                        abs(q - trace_pos) < abs(p - trace_pos)), key=lambda q: abs(q - p))
@@ -907,11 +1108,15 @@ def make_glyph(args):
         sx = warp_matrix(recipe, p)[0, 0]
         tr = at(track, p)
         mask = raster(quads_to_polys(contours[p]), g) > 0.5
-        ink = fields[p] > 0.5
+        ink = fields[p] > 0.5 if p in fields else raster(per[p], g) > 0.5
         xor = np.logical_xor(mask, ink).sum() * px * px
         perim = sum(np.linalg.norm(np.diff(np.vstack([P, P[:1]]), axis=0), axis=1).sum() for P in per[p]) or 1
         cs = [[((float(q[0]) + tr, float(q[1])), on) for q, on in c] for c in contours[p]]
         out['masters'][p] = {'contours': cs, 'adv': adv0 * sx + 2 * tr, 'dev': float(xor / perim)}
+    if recipe.get('dots', {}).get('mode') == 'spray':
+        add_spray(recipe, gname, positions, polys, g, fields, out)
+    if 'dust' in recipe:
+        add_dust(recipe, positions, fields[trace_pos], g, seed, out)
     return out
 
 
@@ -1006,6 +1211,454 @@ def make_echo(recipe, gname, positions, polys, adv0, out):
             cs += [[((float(q[0]) + dx + tr, float(q[1]) + dy), on) for q, on in c] for c in rc]
         out['masters'][p] = {'contours': cs, 'adv': adv0 * W[0, 0] + 2 * tr, 'dev': dev}
     return out
+
+
+def _glyph_grid(recipe, polys, pad=None):
+    px, pad = recipe.get('px', 2.0), recipe.get('pad', 160) if pad is None else pad
+    W = warp_matrix(recipe, 0)
+    allp = np.concatenate(polys) @ W.T
+    lo, hi = allp.min(0) - pad, allp.max(0) + pad
+    return Grid(lo[0], hi[1], int(math.ceil((hi[0] - lo[0]) / px)), int(math.ceil((hi[1] - lo[1]) / px)), px)
+
+
+def _seed(recipe, gname):
+    return recipe.get('seed', 1) * 7919 + zlib.crc32(gname.encode()) % 100000
+
+
+def _shift(cs, dx, dy):
+    return [[((float(q[0]) + dx, float(q[1]) + dy), on) for q, on in c] for c in cs]
+
+
+def stream_map(fl, P, u, seed, box):
+    """Move points P (units) by the stream at strength u (0..1).
+    fold: two shears, x += ax sin(2πy/lx + φ) then y += ay sin(2πx/ly + φ'), so the letter
+          ripples like satin and no stroke ever crosses another.
+    curl: P advected through a divergence-free swirl (the curl of smooth noise, features
+          `cell` units apart) for `amp` units, the way marbling ink is combed and stirred."""
+    rng = np.random.default_rng(seed)
+    Q = P.copy()
+    if fl['mode'] == 'fold':
+        ph = rng.uniform(0, 2 * np.pi, 2) * fl.get('phase', 1.0)
+        Q[:, 0] += u * fl.get('ax', 0) * np.sin(2 * np.pi * Q[:, 1] / fl.get('lx', 400) + ph[0])
+        Q[:, 1] += u * fl.get('ay', 0) * np.sin(2 * np.pi * Q[:, 0] / fl.get('ly', 400) + ph[1])
+        return Q
+    (x0, y0), (x1, y1) = box
+    h = 4.0                                       # the potential on a 4-unit lattice
+    nx, ny = int((x1 - x0) / h) + 3, int((y1 - y0) / h) + 3
+    psi = value_noise((ny, nx), fl['cell'] / h, seed + 31, fl.get('octaves', 2))
+    gy, gx = np.gradient(psi)                     # rows run up in y here
+    vx, vy = gy, -gx
+    vmax = np.sqrt(vx ** 2 + vy ** 2).max() + 1e-9
+    vx, vy = vx / vmax, vy / vmax
+    total = u * fl['amp']
+    n = max(1, int(math.ceil(total / 3.0)))
+    for _ in range(n):
+        c = [(Q[:, 1] - y0) / h, (Q[:, 0] - x0) / h]
+        Q[:, 0] += ndimage.map_coordinates(vx, c, order=1, mode='nearest') * total / n
+        Q[:, 1] += ndimage.map_coordinates(vy, c, order=1, mode='nearest') * total / n
+    return Q
+
+
+def make_stream(recipe, gname, positions, polys, adv0, out):
+    """recipe.stream: the processed letter is traced once and its outline carried along a stream
+    (see stream_map), so every master has the same points by construction. Not recipe.flow,
+    which moves the traced samples in the main path (see flow_warp)."""
+    fl, fit = recipe['stream'], recipe.get('fit', {})
+    g = _glyph_grid(recipe, polys)
+    seed = _seed(recipe, gname)
+    f = process(polys, positions[0], recipe, g, seed, gname)
+    C = trace(f, g, fit.get('step', 3.0), fit.get('min_area', 60))
+    a, b = positions[0], positions[-1]
+    box = ((g.x0 - 200, g.y0 - g.h * g.px - 200), (g.x0 + g.w * g.px + 200, g.y0 + 200))
+    cont = {p: [] for p in positions}
+    for P in C:
+        Ps = np.stack([stream_map(fl, P, (p - a) / (b - a) if b > a else 1.0, seed, box) for p in positions])
+        fitted = fit_spline(Ps, fit.get('tol', 2.5), fit.get('seg', 50), fit.get('bend', 4), fit.get('corner', 50), 0)
+        for m, p in enumerate(positions):
+            cont[p].append(fitted[m])
+    for p in positions:
+        tr = at(recipe.get('track', 0), p)
+        out['masters'][p] = {'contours': _shift(cont[p], tr, 0), 'adv': adv0 * warp_matrix(recipe, 0)[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def make_reed(recipe, gname, positions, polys, adv0, out):
+    """recipe.reed: the letter seen through reeded glass. It is cut into vertical reeds `w` units
+    wide (overlapping by `bleed`, so at the axis minimum no seam shows) and reed k slides up or
+    down by amp · sin(2π x / period + φ) plus `jitter` of noise, like an image broken by flutes."""
+    rc, fit = recipe['reed'], recipe.get('fit', {})
+    g = _glyph_grid(recipe, polys, 40)
+    seed = _seed(recipe, gname)
+    rng = np.random.default_rng(seed)
+    f = process(polys, positions[0], recipe, g, seed, gname)
+    X, _ = _coords(f, g)
+    w, bl = rc['w'], rc.get('bleed', 1.5)
+    k0, k1 = int(math.floor(g.x0 / w)), int(math.ceil((g.x0 + g.w * g.px) / w))
+    ph = rng.uniform(0, 2 * np.pi) if rc.get('random_phase', False) else 0.0
+    pieces = []
+    for k in range(k0, k1):
+        xa, xb = k * w - bl, (k + 1) * w + bl
+        strip = np.minimum(f, soft(np.minimum(X - xa, xb - X) / g.px))
+        if strip.max() < 0.5:
+            continue
+        xc = (k + 0.5) * w
+        dy = rc['amp'] * math.sin(2 * math.pi * xc / rc.get('period', 200) + ph) + rc.get('jitter', 0) * rng.uniform(-1, 1)
+        dx = rc.get('slide', 0) * rng.uniform(-1, 1)
+        for P in trace(strip, g, fit.get('step', 2.0), fit.get('min_area', 40)):
+            c = fit_spline(P[None], fit.get('tol', 2.0), fit.get('seg', 40), fit.get('bend', 4), fit.get('corner', 40), 0)[0]
+            pieces.append((c, dx, dy))
+    a, b = positions[0], positions[-1]
+    for p in positions:
+        u = (p - a) / (b - a) if b > a else 1.0
+        tr = at(recipe.get('track', 0), p)
+        cs = []
+        for c, dx, dy in pieces:
+            cs += _shift([c], dx * u + tr, dy * u)
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * warp_matrix(recipe, 0)[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def _dot(cx, cy, r):
+    """A round dot: four off-curve points (TrueType puts the on-curve points between them), clockwise."""
+    return [((cx + r, cy + r), False), ((cx + r, cy - r), False), ((cx - r, cy - r), False), ((cx - r, cy + r), False)]
+
+
+def make_screen(recipe, gname, positions, polys, adv0, out):
+    """recipe.dots, mode screen: the letter as a halftone. It is blurred by `blur` units (per
+    position) and printed through a dot screen `cell` units apart at `angle` degrees; a dot's
+    radius is `rmax` · sqrt(coverage), so where the letter is solid the dots run together."""
+    dc = recipe['dots']
+    g = _glyph_grid(recipe, polys, dc.get('pad', 120))
+    seed = _seed(recipe, gname)
+    f0 = process(polys, positions[0], recipe, g, seed, gname)
+    cell, th = dc['cell'], math.radians(dc.get('angle', 45))
+    e1, e2 = np.array([math.cos(th), math.sin(th)]), np.array([-math.sin(th), math.cos(th)])
+    (xa, ya), (xb, yb) = (g.x0, g.y0 - g.h * g.px), (g.x0 + g.w * g.px, g.y0)
+    n = int(max(xb - xa, yb - ya) * 1.5 / cell) + 2
+    I, J = np.mgrid[-n:n + 1, -n:n + 1]
+    L = I.reshape(-1, 1) * cell * e1 + J.reshape(-1, 1) * cell * e2
+    L = L[(L[:, 0] > xa) & (L[:, 0] < xb) & (L[:, 1] > ya) & (L[:, 1] < yb)]
+    rad = {}
+    for p in positions:
+        fb = ndimage.gaussian_filter(f0, at(dc['blur'], p) / g.px)
+        cov = np.clip((g.sample(fb, L) - dc.get('floor', 0.04)) / (1 - dc.get('floor', 0.04)), 0, 1)
+        rad[p] = at(dc['rmax'], p) * np.sqrt(cov) ** dc.get('gamma', 1.0)
+    keep = np.max([rad[p] for p in positions], 0) >= dc.get('min_r', 3)
+    tr0 = recipe.get('track', 0)
+    for p in positions:
+        tr = at(tr0, p)
+        cs = [_dot(x + tr, y, r) for (x, y), r in zip(L[keep], rad[p][keep])]
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * warp_matrix(recipe, 0)[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def add_spray(recipe, gname, positions, polys, g, fields, out):
+    """recipe.dots, mode spray: `n` grains scattered round the letter, most of them close to its
+    edge (falling off over `reach` units, a few inside the band the process ate away). They sit
+    at radius 0 at the axis minimum and grow to `r` (a range) at the maximum."""
+    dc = recipe['dots']
+    rng = np.random.default_rng(_seed(recipe, gname) + 99)
+    f0 = raster(polys, g)
+    if f0.max() < 0.5:
+        return
+    d = -sdf(f0) * g.px                           # units outside the clean letter
+    area = (f0 > 0.5).sum() * g.px ** 2
+    n = int(dc['n'] * min(1.6, max(0.25, area / 120000)))
+    w = np.exp(-np.abs(d - dc.get('peak', 10)) / dc['reach']) * (d > -dc.get('inside', 20))
+    w = w.ravel() / w.sum()
+    idx = rng.choice(w.size, size=n, replace=False, p=w)
+    rr, cc = np.unravel_index(idx, f0.shape)
+    P = g.to_units(np.stack([rr + rng.uniform(0, 1, n), cc + rng.uniform(0, 1, n)], 1))
+    r1 = rng.uniform(*dc['r'], n) * np.exp(-np.maximum(d[rr, cc], 0) / (3 * dc['reach']))
+    a, b = positions[0], positions[-1]
+    for p in positions:
+        u = ((p - a) / (b - a)) ** dc.get('ease', 1.0) if b > a else 1.0
+        tr = at(recipe.get('track', 0), p)
+        out['masters'][p]['contours'] += [_dot(x + tr, y, r * u) for (x, y), r in zip(P, r1)]
+
+
+def _lerp(v, u):
+    """A piece parameter: a number, or [value at the axis minimum, value at the maximum]."""
+    return v[0] + (v[1] - v[0]) * u if isinstance(v, (list, tuple)) else v
+
+
+def _fit_field(field, g, fit, px):
+    return [fit_spline(P[None], fit.get('tol', 1.5), fit.get('seg', 40), fit.get('bend', 4),
+                       fit.get('corner', 50), 0)[0]
+            for P in trace(field, g, fit.get('step', px), fit.get('min_area', 60))]
+
+
+def make_pieces(recipe, gname, positions, polys, adv0, out):
+    """recipe.pieces: the processed letter is cut into pieces, each traced once, and every master
+    moves the pieces rigidly (turn, squash about the piece's centre, shift), so all masters share
+    their points by construction. At the axis minimum the pieces overlap by `bleed` units and read
+    as the whole letter. `kind`:
+      hbands   horizontal bands (heights `h` [min, max]) at the same heights in every glyph, so a
+               word slides like one scanned image; a fraction `p` of bands shift by up to `shift`,
+               with a per-glyph `jitter`, open a `gap`, and a fraction `p_double` leave a ghost
+               copy `double` units further on
+      vbands   vertical reeds `w` units wide, each squashed to `squeeze` about a point `pivot`
+               (0..1) across it and moved by `dx`, as fluted glass refracts what is behind it
+      shards   the letter broken along `n` Voronoi cells crowded round an impact point; each shard
+               moves up to `move` units away from it, falls up to `fall`, and turns up to `turn`°
+      reflect  the letter stands whole on the baseline over its mirror image (squashed to `sy`,
+               `gap` units below), cut into bands `h` units high that thin by `fade` per band; along
+               the axis the bands thin to `thin` and ripple sideways by up to `ripple` units"""
+    pc = recipe['pieces']
+    kind = pc['kind']
+    px, pad = recipe.get('px', 2.0), recipe.get('pad', 160)
+    bleed = pc.get('bleed', 1.0)
+    W = warp_matrix(recipe, positions[0])
+    allp = np.concatenate(polys) @ W.T
+    lo, hi = allp.min(0) - pad, allp.max(0) + pad
+    if kind == 'reflect':
+        lo[1] = min(lo[1], -hi[1] * pc.get('sy', 0.7) - pc.get('gap', 20))
+    g = Grid(lo[0], hi[1], int(math.ceil((hi[0] - lo[0]) / px)), int(math.ceil((hi[1] - lo[1]) / px)), px)
+    gseed = zlib.crc32(gname.encode()) % 100000
+    seed = recipe.get('seed', 1) * 7919 + gseed
+    f = process(polys, positions[0], recipe, g, seed, gname)
+    fit = recipe.get('fit', {})
+    ys = g.y0 - (np.arange(g.h) + 0.5) * px        # the y of each row, the x of each column
+    xs = g.x0 + (np.arange(g.w) + 0.5) * px
+    word = np.random.default_rng(recipe.get('seed', 1))   # shared by every glyph
+    rng = np.random.default_rng(seed)                     # this glyph's own
+    pieces = []                                           # (field, params)
+
+    def rows(a, b):                                       # ink between heights a < b, with bleed
+        return ((ys >= a - bleed) & (ys <= b + bleed))[:, None]
+
+    if kind == 'hbands':
+        edges = [pc.get('from', -400)]
+        while edges[-1] < pc.get('to', 1300):
+            edges.append(edges[-1] + word.uniform(*pc['h']))
+        for a, b in zip(edges, edges[1:]):
+            moved = word.random() < pc.get('p', 0.5)
+            dx = word.uniform(-1, 1) * pc.get('shift', 0) if moved else 0.0
+            dx *= 1 + pc.get('jitter', 0) * rng.uniform(-1, 1)
+            ghost = moved and word.random() < pc.get('p_double', 0)
+            gdx = math.copysign(pc.get('double', 0), dx or 1)
+            gap = pc.get('gap', 0) if moved else 0
+            band = f * rows(a, b)
+            if band.max() <= 0.5:
+                continue
+            sy = [1.0, max(0.1, 1 - gap / (b - a))]
+            pieces.append((band, {'c': (0, (a + b) / 2), 'tx': [0, dx], 'sy': sy}))
+            if ghost:
+                pieces.append((band, {'c': (0, (a + b) / 2), 'tx': [0, dx + gdx],
+                                      'sy': [1.0, sy[1] * pc.get('ghost_sy', 0.5)]}))
+    elif kind == 'vbands':
+        w = pc['w']
+        x = math.floor(lo[0] / w) * w
+        k = 0
+        while x < hi[0]:
+            band = f * ((xs >= x - bleed) & (xs <= x + w + bleed))[None, :]
+            if band.max() > 0.5:
+                c = x + pc.get('pivot', 0.5) * w
+                dx = pc.get('dx', 0)
+                if isinstance(dx, dict):                  # {"amp": a, "every": n}: a slow wave
+                    dx = dx['amp'] * math.sin(2 * math.pi * k / dx.get('every', 5) + gseed)
+                pieces.append((band, {'c': (c, 0), 'sx': [1.0, pc['squeeze']], 'tx': [0, dx]}))
+            x += w
+            k += 1
+    elif kind == 'shards':
+        ink = f > 0.5
+        rr, cc = np.nonzero(ink)
+        if len(rr):
+            P = np.stack([xs[cc], ys[rr]], 1)
+            hit = P[rng.integers(len(P))]
+            n = pc.get('n', 8)
+            spread = pc.get('spread', 160)
+            near = hit + rng.normal(0, spread, (n // 2, 2))
+            far = P[rng.integers(len(P), size=n - n // 2)]
+            seeds = np.vstack([near, far])
+            lab = np.full(f.shape, -1)
+            lab[rr, cc] = cKDTree(seeds).query(P)[1]
+            for i in range(n):
+                m = lab == i
+                if m.sum() * px * px < pc.get('min', 400):
+                    continue
+                grown = ndimage.distance_transform_edt(~m) * px <= bleed + px
+                cen = P[lab[rr, cc] == i].mean(0)
+                v = cen - hit
+                v = v / (np.linalg.norm(v) + 1e-9)
+                mv = pc.get('move', 60) * rng.uniform(0.3, 1.0)
+                pieces.append((f * grown, {'c': tuple(cen), 'tx': [0, v[0] * mv],
+                                           'ty': [0, v[1] * mv - pc.get('fall', 0) * rng.uniform(0, 1)],
+                                           'rot': [0, rng.uniform(-1, 1) * pc.get('turn', 6)]}))
+    elif kind == 'reflect':
+        pieces.append((f, {}))
+        sy, gap = pc.get('sy', 0.7), pc.get('gap', 20)
+        mirror = [np.stack([P[:, 0], -P[:, 1] * sy - gap], 1) for P in polys]
+        fm = process(mirror, positions[0], recipe, g, seed, gname) * (ys < -gap)[:, None]
+        top, k, h = -gap, 0, pc['h']
+        while top > lo[1]:
+            b = top - h
+            band = fm * rows(b, top)
+            if band.max() > 0.5:
+                t0 = max(pc.get('floor', 0.25), 1 - pc.get('fade', 0.08) * k)
+                ph = 2 * math.pi * k / pc.get('every', 4.5) + (gseed % 628) / 100 * pc.get('jitter', 0)
+                amp = pc.get('ripple', 0) * (1 + pc.get('grow', 0) * k)
+                pieces.append((band, {'c': (0, top - h / 2), 'sy': [t0, t0 * pc.get('thin', 0.5)],
+                                      'tx': [0, amp * math.sin(ph)]}))
+            top, k = b, k + 1
+    else:
+        sys.exit(f'pieces: unknown kind {kind}')
+
+    fitted = [(_fit_field(field, g, fit, px), prm) for field, prm in pieces]
+    a, b = positions[0], positions[-1]
+    for p in positions:
+        u = (p - a) / (b - a) if b > a else 1.0
+        tr = at(recipe.get('track', 0), p)
+        cs = []
+        for cons, prm in fitted:
+            cx, cy = prm.get('c', (0, 0))
+            t = math.radians(_lerp(prm.get('rot', 0), u))
+            R = np.array([[math.cos(t), -math.sin(t)], [math.sin(t), math.cos(t)]])
+            M = R @ np.diag([_lerp(prm.get('sx', 1), u), _lerp(prm.get('sy', 1), u)])
+            ox, oy = cx + _lerp(prm.get('tx', 0), u) + tr, cy + _lerp(prm.get('ty', 0), u)
+            for c in cons:
+                q = np.array([pt for pt, _ in c]) - (cx, cy)
+                q = q @ M.T + (ox, oy)
+                cs.append([((float(x), float(y)), on) for (x, y), (_, on) in zip(q, c)])
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * W[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def make_blocks(recipe, gname, positions, polys, adv0, out):
+    """recipe.blocks: the letter compressed like a video frame: a quadtree of square blocks from
+    `cell` units down to `min` (big blocks inside, small ones along the edge; a block is ink when
+    more than `at` of it is covered). Along the axis the lowest edge of a fraction `p_drip` of the
+    `min`-wide columns drips down by up to `drip` units (in `split` strands per column, lengths
+    varying as smooth noise over `wave` units), and a fraction `p_slip` of the big blocks slide
+    down by up to `slip`."""
+    bc = recipe['blocks']
+    S, m = bc['cell'], bc['min']
+    K = S // m
+    bleed = bc.get('bleed', 1.0)
+    W = warp_matrix(recipe, positions[0])
+    wp = [P @ W.T for P in polys]
+    allp = np.concatenate(wp)
+    x0 = math.floor(allp[:, 0].min() / S) * S - S
+    y0 = math.ceil(allp[:, 1].max() / S) * S + S
+    nw = int(math.ceil((allp[:, 0].max() - x0) / S)) + 1
+    nh = int(math.ceil((y0 - allp[:, 1].min()) / S)) + 1
+    g = Grid(x0, y0, nw * K, nh * K, m)
+    ink = raster(wp, g, ss=8) > bc.get('at', 0.5)
+    seed = recipe.get('seed', 1) * 7919 + zlib.crc32(gname.encode()) % 100000
+    rng = np.random.default_rng(seed)
+    rects = []                                     # (xa, xb, ya, yb, dy at full strength)
+
+    def quad(r, c, k):
+        sub = ink[r:r + k, c:c + k]
+        if not sub.any():
+            return
+        if sub.all() or k == 1:
+            if k == 1 and not sub.all():
+                return
+            slip = -rng.uniform(0.2, 1) * bc.get('slip', 0) if k > 1 and rng.random() < bc.get('p_slip', 0) else 0.0
+            rects.append((x0 + c * m, x0 + (c + k) * m, y0 - (r + k) * m, y0 - r * m, slip))
+            return
+        h = k // 2
+        for dr in (0, h):
+            for dc in (0, h):
+                quad(r + dr, c + dc, h)
+
+    for R in range(nh):
+        for C in range(nw):
+            quad(R * K, C * K, K)
+    split = bc.get('split', 2)
+    wave = value_noise((1, g.w * split), bc.get('wave', 90) / (m / split), seed + 5, 2)[0]
+    for c in range(g.w):
+        col = np.nonzero(ink[:, c])[0]
+        if not len(col) or rng.random() >= bc.get('p_drip', 0.6):
+            continue
+        bot = y0 - (col.max() + 1) * m
+        for s in range(split):
+            L = bc.get('drip', 200) * float(np.clip(0.5 + 0.9 * wave[c * split + s], 0.05, 1.0))
+            xa = x0 + c * m + s * m / split
+            rects.append((xa, xa + m / split, bot - L, bot + m / 2, 'drip'))
+    lo, hi = positions[0], positions[-1]
+    for p in positions:
+        u = (p - lo) / (hi - lo) if hi > lo else 1.0
+        tr = at(recipe.get('track', 0), p)
+        cs = []
+        for xa, xb, ya, yb, dy in rects:
+            if dy == 'drip':                           # the strand grows out of the letter's edge
+                top = yb
+                yb_, ya_ = top, top - (top - ya) * u - m / 2 * (1 - u)
+                cs.append(_rect(xa + tr - bleed, ya_ - bleed, xb + tr + bleed, yb_ + bleed))
+            else:
+                cs.append(_rect(xa + tr - bleed, ya + dy * u - bleed, xb + tr + bleed, yb + dy * u + bleed))
+        out['masters'][p] = {'contours': cs, 'adv': adv0 * W[0, 0] + 2 * tr, 'dev': 0.0}
+    return out
+
+
+def add_dust(recipe, positions, f, g, seed, out):
+    """recipe.dust: grains that the letter sheds. `n` round grains (radius `r` [min, max]) are
+    taken from inside the ink, at least their radius and at most `band` units from the edge, so at
+    the axis minimum they hide in the letter. Along the axis each drifts out along the edge normal
+    by up to `reach` units (most stay close: distance ~ random**`power`), is carried by `wind`
+    (dx, dy per unit of drift), and shrinks to `shrink` of its size. Grains are four off-curve points."""
+    dc = recipe['dust']
+    d = sdf(f) * g.px
+    rng = np.random.default_rng(seed + 11)
+    area = (f > 0.5).sum() * g.px ** 2
+    n = int(np.clip(area * dc.get('density', 1e-4), dc.get('min_n', 6), dc.get('n', 40)))
+    rmin, rmax = dc['r']
+    gy, gx = np.gradient(d)
+    grains = []
+    for _ in range(n * 4):
+        if len(grains) >= n:
+            break
+        r = rng.uniform(rmin, rmax)
+        ok = np.argwhere((d > r + 2) & (d < dc.get('band', 40) + r))
+        if not len(ok):
+            continue
+        rr, cc = ok[rng.integers(len(ok))]
+        P = g.to_units(np.array([[rr + 0.5, cc + 0.5]]))[0]
+        nv = np.array([-gx[rr, cc], gy[rr, cc]])      # outward, in units (rows run down)
+        nv = nv / (np.linalg.norm(nv) + 1e-9)
+        D = dc.get('reach', 120) * rng.random() ** dc.get('power', 1.6) + r + 4
+        wx, wy = dc.get('wind', (0, 0))
+        grains.append((P, (nv + (wx, wy)) * D, r))
+    a, b = positions[0], positions[-1]
+    for p in positions:
+        u = (p - a) / (b - a) if b > a else 1.0
+        tr = at(recipe.get('track', 0), p)
+        for P, mv, r in grains:
+            x, y = P + mv * u
+            s = r * (1 + (dc.get('shrink', 0.6) - 1) * u) * 0.94
+            out['masters'][p]['contours'].append(
+                [((x + tr - s, y - s), False), ((x + tr - s, y + s), False),
+                 ((x + tr + s, y + s), False), ((x + tr + s, y - s), False)])
+
+
+def flow_warp(P, fc, u, seed, front=0.0):
+    """recipe.flow: every traced sample moved by a smooth field, `u` (0..1) of the way.
+    kind "drag": a long exposure. Each row of the letter is stretched back (to the left) from the
+    glyph's leading edge `front` by up to `stretch` times its length; how far varies row by row in
+    waves `cell` units tall (the same rows in every glyph, sharpened by `sharp`), so the front stays
+    crisp and the back breaks into streaks. x moves by a function of x and y, y stays, and
+    x' grows with x in every row, so an outline never crosses itself.
+    kind "mirage": heat shimmer. Rows sway sideways by `amp` units in waves `wave` units tall
+    whose phase drifts across the glyph over `xwave` units; the sway grows with height from
+    `base` to `top` (to the power `power`), and the top also lifts by `rise`. The map moves x by
+    a function of y (and slowly of x) and y by a function of y, so an outline never crosses itself."""
+    x, y = P[:, 0], P[:, 1]
+    if fc.get('kind') == 'drag':
+        c = fc.get('cell', 60)
+        wv = 0.6 * np.sin(2 * math.pi * y / c + 1.3) + 0.4 * np.sin(2 * math.pi * y / (c * 0.37) + 4.1)
+        m = np.clip(0.5 + 0.5 * wv, 0, 1) ** fc.get('sharp', 1.5)
+        s = fc['stretch'] * u * (fc.get('floor', 0.15) + (1 - fc.get('floor', 0.15)) * m)
+        return np.stack([front - (front - x) * (1 + s), y], 1)
+    if fc.get('kind', 'mirage') != 'mirage':
+        sys.exit(f"flow: unknown kind {fc.get('kind')}")
+    base, top = fc.get('base', 0), fc.get('top', 700)
+    h = np.clip((y - base) / (top - base), 0, None) ** fc.get('power', 1.5)
+    ph = 2 * math.pi * x / fc.get('xwave', 900) + (seed % 628) / 100 * fc.get('jitter', 1)
+    dx = fc['amp'] * u * h * np.sin(2 * math.pi * y / fc['wave'] + ph)
+    dy = fc.get('rise', 0) * u * h
+    return np.stack([x + dx, y + dy], 1)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1157,7 +1810,10 @@ def vertical_metrics(recipe, font, scale, glyphs, positions):
 
 
 def out_dir(recipe):
-    return ROOT / 'skills' / recipe['skill'] / 'fonts'
+    """skills/<skill>/fonts, or its subfolder `dir` (e.g. "candidates": faces on trial, with their
+    own OFL.txt and <dir>.css, never listed in the skill's fonts.css)."""
+    od = ROOT / 'skills' / recipe['skill'] / 'fonts'
+    return od / recipe['dir'] if recipe.get('dir') else od
 
 
 def build(name, chars=None, jobs=None, proof=False):
@@ -1220,8 +1876,8 @@ def build(name, chars=None, jobs=None, proof=False):
     meta = {'variable': ok_var, 'files': [f.name for f in files], 'positions': positions,
             'error': {str(p): round(float(np.mean(devs[p])), 2) for p in positions}}
     (tmp / 'meta.json').write_text(json.dumps(meta, indent=1))
-    write_ofl(recipe['skill'])
-    write_css(recipe['skill'])
+    write_ofl(recipe['skill'], recipe.get('dir'))
+    write_css(recipe['skill'], recipe.get('dir'))
     if proof:
         make_proof(name)
     return meta
@@ -1252,10 +1908,10 @@ def make_variable(recipe, masters, positions, tmp):
     return vf
 
 
-def write_ofl(skill):
-    od = ROOT / 'skills' / skill / 'fonts'
+def write_ofl(skill, sub=None):
+    od = ROOT / 'skills' / skill / 'fonts' / (sub or '')
     rs = [load_recipe(n) for n in all_recipes()]
-    rs = [r for r in rs if r['skill'] == skill and any(od.glob(f"{r['file']}*.woff2"))]
+    rs = [r for r in rs if r['skill'] == skill and r.get('dir') == sub and any(od.glob(f"{r['file']}*.woff2"))]
     if not rs:
         return
     names = ', '.join(r['name'] for r in rs)
@@ -1266,7 +1922,7 @@ def write_ofl(skill):
     for r in rs:
         b = r['base']
         _, ofl = base_paths(r)
-        files = ', '.join(p.name for p in sorted(od.glob(f"{r['file']}*.woff2")))
+        files = ', '.join(p.name for p in face_files(od, r))
         head += [f"{r['name']} ({files})",
                  f"  from {b['family']}, {b['repo']} @ {b['commit']}, {b['path']}",
                  f"  {base_copyright(ofl)}", '']
@@ -1286,11 +1942,13 @@ def face_files(od, recipe):
     return sorted(f for f in od.glob('*.woff2') if re.fullmatch(pat, f.name))
 
 
-def write_css(skill):
-    od = ROOT / 'skills' / skill / 'fonts'
+def write_css(skill, sub=None):
+    od = ROOT / 'skills' / skill / 'fonts' / (sub or '')
     rs = [load_recipe(n) for n in all_recipes()]
-    rs = [r for r in rs if r['skill'] == skill]
-    lines = [f'/* The {skill} faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */', '']
+    rs = [r for r in rs if r['skill'] == skill and r.get('dir') == sub]
+    rs.sort(key=lambda r: r['name'] != SPECIMEN.get(skill, {}).get('main'))   # the skill's main face first
+    what = f'The {skill} {sub}' if sub else f'The {skill} faces'
+    lines = [f'/* {what}, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */', '']
     for r in rs:
         ax = r['axis']
         files = face_files(od, r)
@@ -1298,7 +1956,8 @@ def write_css(skill):
             continue
         if len(files) == 1 and files[0].stem == r['file']:
             if r.get('variable', True):
-                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}. */")
+                std = f" Standard: font-variation-settings: '{ax['tag']}' {ax['standard']}." if 'standard' in ax else ''
+                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}.{std} */")
             else:
                 lines.append(f"/* {r['name']}: {r['about']} Static. */")
             lines.append(f"@font-face {{ font-family: '{r['name']}'; src: url('{files[0].name}') format('woff2'); font-display: swap; }}")
@@ -1309,7 +1968,7 @@ def write_css(skill):
                 w = 100 + round(p / 1000 * 8) * 100
                 lines.append(f"@font-face {{ font-family: '{r['name']}'; src: url('{f.name}') format('woff2'); font-weight: {w}; font-display: swap; }}")
         lines.append('')
-    (od / 'fonts.css').write_text('\n'.join(lines))
+    (od / (f'{sub}.css' if sub else 'fonts.css')).write_text('\n'.join(lines))
 
 
 # ---------------------------------------------------------------------------------------------
@@ -1353,18 +2012,18 @@ def make_proof(name, text=None, out=None):
 
 SPECIMEN = {
     'pixelsort-glitch': {'bg': '#0b0b12', 'fg': '#f2f2f2', 'dim': '#8a8fa6', 'ink': '#ff3d8b', 'panel': '#15151f',
-                         'word': 'Scanline', 'line': 'rows dragged out of the slit'},
+                         'word': 'Scanline', 'line': 'rows dragged out of the slit', 'main': 'Rowdrag'},
     'riso-cartography': {'bg': '#f4efe4', 'fg': '#1d1d1d', 'dim': '#6b665c', 'ink': '#e8413b', 'ink2': '#1f6fb2',
                          'panel': '#ebe4d4', 'word': 'Riverside', 'line': 'walk the old course of the river',
-                         'stack': ['Blockplan', 'Blockplan Drop']},
+                         'stack': ['Blockplan', 'Blockplan Drop'], 'main': 'Isohypse'},
     'ethereal-haze': {'bg': '#f6e7da', 'fg': '#3a1c14', 'dim': '#9a6a5a', 'ink': '#e2553f', 'panel': '#f1d9c8',
-                      'word': 'Poppy', 'line': 'the inside of a flower, too close'},
+                      'word': 'Poppy', 'line': 'the inside of a flower, too close', 'main': 'Lull'},
     'chrome-aurora': {'bg': '#07080a', 'fg': '#e9edf2', 'dim': '#7d8594', 'ink': '#9fe8ff', 'panel': '#111317',
-                      'word': 'MERCURY', 'line': 'LIQUID LIGHT ON BLACK'},
+                      'word': 'MERCURY', 'line': 'LIQUID LIGHT ON BLACK', 'main': 'Specula'},
     'abstract-texture': {'bg': '#d9d6cf', 'fg': '#141414', 'dim': '#5f5c56', 'ink': '#2b50ff', 'panel': '#cdc9c0',
-                         'word': 'reverb', 'line': 'a surface seen through glass'},
+                         'word': 'reverb', 'line': 'a surface seen through glass', 'main': 'Halide'},
     'indigo-grain': {'bg': '#1e3590', 'fg': '#f3f3ef', 'dim': '#cfd8f2', 'ink': '#f3f3ef', 'panel': '#111a4a',
-                     'word': 'Tide', 'line': 'cobalt into white'},
+                     'word': 'Tide', 'line': 'cobalt into white', 'main': 'Marbler'},
 }
 
 
@@ -1375,7 +2034,8 @@ def _esc(s):
 def make_specimen(skill):
     od = ROOT / 'skills' / skill / 'fonts'
     th = SPECIMEN[skill]
-    rs = [r for r in (load_recipe(n) for n in all_recipes()) if r['skill'] == skill and face_files(od, r)]
+    rs = [r for r in (load_recipe(n) for n in all_recipes()) if r['skill'] == skill and not r.get('dir') and face_files(od, r)]   # candidates stay off the specimen
+    rs.sort(key=lambda r: r['name'] != th.get('main'))   # the main face first: it is the live one
     faces, strips, codes = [], [], []
     for i, r in enumerate(rs):
         ax, files = r['axis'], face_files(od, r)
@@ -1383,7 +2043,7 @@ def make_specimen(skill):
         fam = r['name']
         word = th['word']
         if var:
-            tag, dflt = ax['tag'], int(ax.get('default', 0))
+            tag, dflt = ax['tag'], int(ax.get('standard', ax.get('default', 0)))   # the recipe's standard setting, else its default
             inst = ', '.join(f"{k} {v}" for k, v in ax.get('instances', {}).items())
             live = ' live' if i == 0 else ''
             faces.append(f'''  <section class="face">

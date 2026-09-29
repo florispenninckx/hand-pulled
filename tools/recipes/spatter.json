@@ -1,0 +1,92 @@
+{
+ "name": "Spatter",
+ "file": "spatter",
+ "skill": "indigo-grain",
+ "dir": "candidates",
+ "about": "An ink-spray face: a fat display letter whose edge is eaten by the spray and thrown off as grains, from a clean print to a letter dissolving into a cloud of dots.",
+ "base": {
+  "family": "Bowlby One",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/bowlbyone/BowlbyOne-Regular.ttf",
+  "sha256": "c46a806d7b51fd4987e5f0be449fe40a944cb407e43290ce1cdeed029a8cdc1d"
+ },
+ "axis": {
+  "tag": "SPRY",
+  "name": "Spray",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Clean": 0,
+   "Regular": 500,
+   "Sprayed": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 10,
+  "1000": 30
+ },
+ "ops": [
+  {
+   "op": "noise",
+   "amp": {
+    "0": 0,
+    "1000": 0.35
+   },
+   "cell": 70,
+   "octaves": 1,
+   "band": {
+    "0": 20,
+    "1000": 30
+   },
+   "seed": 2
+  },
+  {
+   "op": "offset",
+   "d": {
+    "0": 0,
+    "1000": -18
+   }
+  },
+  {
+   "op": "blur",
+   "r": 3
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  },
+  {
+   "op": "clean",
+   "min": 400,
+   "holes": 300
+  }
+ ],
+ "dots": {
+  "mode": "spray",
+  "n": 40,
+  "reach": 46,
+  "peak": 10,
+  "inside": 26,
+  "r": [
+   8,
+   22
+  ],
+  "ease": 1.0
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 5,
+  "seg": 80,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 6,
+  "nsmooth": 12,
+  "reach": 60
+ },
+ "pad": 200
+}

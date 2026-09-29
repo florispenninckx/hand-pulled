@@ -1,5 +1,8 @@
 /* The riso-cartography faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
 
+/* Isohypse: A contour-map face: a heavy rounded grotesk drawn as lines of equal height, ring inside ring from its edge, from a solid letter scored with fine paper lines to a hairline survey. Axis 'TOPO' 0–1000, default 0. Standard: font-variation-settings: 'TOPO' 500. */
+@font-face { font-family: 'Isohypse'; src: url('isohypse.woff2') format('woff2'); font-display: swap; }
+
 /* Blockplan: A stencil face cut from a condensed poster grotesk: a bridge through every counter so no island falls out of the screen. CUTS runs from hairline bridges to wide gaps you can read the paper through. Axis 'CUTS' 0–1000, default 400. */
 @font-face { font-family: 'Blockplan'; src: url('blockplan.woff2') format('woff2'); font-display: swap; }
 

@@ -1,7 +1,15 @@
-Fonts in this folder: Tideline.
+Fonts in this folder: Halide, Sateen, Tideline.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
+
+Halide (halide.woff2)
+  from Bodoni Moda, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/bodonimoda/BodoniModa[opsz,wght].ttf
+  Copyright 2020 The Bodoni Moda Project Authors (https://github.com/indestructible-type/Bodoni)
+
+Sateen (sateen.woff2)
+  from Fredoka, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/fredoka/Fredoka[wdth,wght].ttf
+  Copyright 2016 The Fredoka Project Authors (https://github.com/hafontia/Fredoka-One)
 
 Tideline (tideline.woff2)
   from Bricolage Grotesque, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/bricolagegrotesque/BricolageGrotesque[opsz,wdth,wght].ttf
@@ -10,14 +18,14 @@ Tideline (tideline.woff2)
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Tideline) and use no Reserved Font Name of their bases
-(Bricolage Grotesque). We reserve no names for our own fonts.
+names (Halide, Sateen, Tideline) and use no Reserved Font Name of their bases
+(Bodoni Moda, Bricolage Grotesque, Fredoka). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-https://scripts.sil.org/OFL
+https://openfontlicense.org/
 
 
 -----------------------------------------------------------

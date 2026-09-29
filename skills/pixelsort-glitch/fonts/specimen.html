@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rowdrag specimen</title>
-<meta name="description" content="The pixelsort-glitch display faces (Rowdrag), made by tools/foundry.py, each with its process axis.">
+<title>pixelsort-glitch type specimen</title>
+<meta name="description" content="The pixelsort-glitch display faces (Rowdrag, Slipband), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,25 +44,35 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>pixelsort-glitch</span><span>SIL OFL 1.1</span></div>
-    <h1>Rowdrag: display faces, titles only</h1>
+    <h1>Rowdrag, Slipband: display faces, titles only</h1>
   </header>
   <section class="face">
     <h2>Rowdrag <span>SORT 0–1000 · variable · 9 KB</span></h2>
     <p class="note">A quantised pixel face whose rows get sorted: at SORT 0 a clean blocky grotesk on a 60-unit grid; as SORT rises, strips of pixel rows are dragged sideways into streaks and whole rows slip out of register.</p>
-    <p class="sample live" id="s0" style="font-family:'Rowdrag';--v:0;font-variation-settings:'SORT' var(--v)">Scanline</p>
-    <label class="dial"><span>SORT</span><input type="range" min="0" max="1000" value="0" data-for="s0" aria-label="Sort"><output>live</output></label>
-    <p class="alpha" style="font-family:'Rowdrag';font-variation-settings:'SORT' 0">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <p class="sample live" id="s0" style="font-family:'Rowdrag';--v:600;font-variation-settings:'SORT' var(--v)">Scanline</p>
+    <label class="dial"><span>SORT</span><input type="range" min="0" max="1000" value="600" data-for="s0" aria-label="Sort"><output>live</output></label>
+    <p class="alpha" style="font-family:'Rowdrag';font-variation-settings:'SORT' 600">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 0">Scan</p><span>SORT 0</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 250">Scan</p><span>SORT 250</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 500">Scan</p><span>SORT 500</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 750">Scan</p><span>SORT 750</span></div><div><p style="font-family:'Rowdrag';font-variation-settings:'SORT' 1000">Scan</p><span>SORT 1000</span></div></div>
     <p class="meta">Named instances: Clean 0, Sorted 500, Dragged 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Slipband <span>SLIP 0–1000 · variable · 79 KB</span></h2>
+    <p class="note">A black expanded grotesk read through a slipping scanner: the letters are cut into bands at the same heights all along the line, and as SLIP rises the bands slide sideways, open thin slits, and some leave a stuttered ghost of themselves further on.</p>
+    <p class="sample" id="s1" style="font-family:'Slipband';--v:500;font-variation-settings:'SLIP' var(--v)">Scanline</p>
+    <label class="dial"><span>SLIP</span><input type="range" min="0" max="1000" value="500" data-for="s1" aria-label="Slip"><output>500</output></label>
+    <p class="alpha" style="font-family:'Slipband';font-variation-settings:'SLIP' 500">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Slipband';font-variation-settings:'SLIP' 0">Scan</p><span>SLIP 0</span></div><div><p style="font-family:'Slipband';font-variation-settings:'SLIP' 250">Scan</p><span>SLIP 250</span></div><div><p style="font-family:'Slipband';font-variation-settings:'SLIP' 500">Scan</p><span>SLIP 500</span></div><div><p style="font-family:'Slipband';font-variation-settings:'SLIP' 750">Scan</p><span>SLIP 750</span></div><div><p style="font-family:'Slipband';font-variation-settings:'SLIP' 1000">Scan</p><span>SLIP 1000</span></div></div>
+    <p class="meta">Named instances: Still 0, Slipped 500, Torn 1000.</p>
   </section>
 
   <section class="face">
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
-.x{font-family:'Rowdrag'; font-variation-settings:'SORT' 0;}</pre>
+.x{font-family:'Rowdrag'; font-variation-settings:'SORT' 600;}
+.x{font-family:'Slipband'; font-variation-settings:'SLIP' 500;}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Space Grotesk (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Archivo, Space Grotesk (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {

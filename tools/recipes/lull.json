@@ -18,6 +18,7 @@
   "tag": "FOCS",
   "name": "Focus",
   "default": 0,
+  "standard": 250,
   "masters": [
    0,
    500,

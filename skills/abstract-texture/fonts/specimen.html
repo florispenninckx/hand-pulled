@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tideline specimen</title>
-<meta name="description" content="The abstract-texture display faces (Tideline), made by tools/foundry.py, each with its process axis.">
+<title>abstract-texture type specimen</title>
+<meta name="description" content="The abstract-texture display faces (Halide, Sateen, Tideline), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,13 +44,31 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>abstract-texture</span><span>SIL OFL 1.1</span></div>
-    <h1>Tideline: display faces, titles only</h1>
+    <h1>Halide, Sateen, Tideline: display faces, titles only</h1>
   </header>
+  <section class="face">
+    <h2>Halide <span>GLOW 0–1000 · variable · 80 KB</span></h2>
+    <p class="note">A halation face: a wide Didone overexposed, the light of its heavy strokes spreading into the film so stems swell into soft pools and joins fill with glow while the hairlines hold.</p>
+    <p class="sample live" id="s0" style="font-family:'Halide';--v:610;font-variation-settings:'GLOW' var(--v)">reverb</p>
+    <label class="dial"><span>GLOW</span><input type="range" min="0" max="1000" value="610" data-for="s0" aria-label="Glow"><output>live</output></label>
+    <p class="alpha" style="font-family:'Halide';font-variation-settings:'GLOW' 610">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Halide';font-variation-settings:'GLOW' 0">reve</p><span>GLOW 0</span></div><div><p style="font-family:'Halide';font-variation-settings:'GLOW' 250">reve</p><span>GLOW 250</span></div><div><p style="font-family:'Halide';font-variation-settings:'GLOW' 500">reve</p><span>GLOW 500</span></div><div><p style="font-family:'Halide';font-variation-settings:'GLOW' 750">reve</p><span>GLOW 750</span></div><div><p style="font-family:'Halide';font-variation-settings:'GLOW' 1000">reve</p><span>GLOW 1000</span></div></div>
+    <p class="meta">Named instances: Dry 0, Regular 400, Bloom 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Sateen <span>FOLD 0–1000 · variable · 33 KB</span></h2>
+    <p class="note">A satin face: a wide rounded display letter printed on silk and pulled, so its strokes ripple in soft folds, from flat cloth to deep waves.</p>
+    <p class="sample" id="s1" style="font-family:'Sateen';--v:500;font-variation-settings:'FOLD' var(--v)">reverb</p>
+    <label class="dial"><span>FOLD</span><input type="range" min="0" max="1000" value="500" data-for="s1" aria-label="Fold"><output>500</output></label>
+    <p class="alpha" style="font-family:'Sateen';font-variation-settings:'FOLD' 500">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Sateen';font-variation-settings:'FOLD' 0">reve</p><span>FOLD 0</span></div><div><p style="font-family:'Sateen';font-variation-settings:'FOLD' 250">reve</p><span>FOLD 250</span></div><div><p style="font-family:'Sateen';font-variation-settings:'FOLD' 500">reve</p><span>FOLD 500</span></div><div><p style="font-family:'Sateen';font-variation-settings:'FOLD' 750">reve</p><span>FOLD 750</span></div><div><p style="font-family:'Sateen';font-variation-settings:'FOLD' 1000">reve</p><span>FOLD 1000</span></div></div>
+    <p class="meta">Named instances: Flat 0, Regular 500, Folded 1000.</p>
+  </section>
   <section class="face">
     <h2>Tideline <span>ECHO 0–1000 · variable · 96 KB</span></h2>
     <p class="note">An echo-contour face: a heavy grotesk trailed by outline copies of itself, like a shape dragged through a slow shutter. At ECHO 0 the copies hide inside the letter; as ECHO rises they fan out down and to the right, each ring thinner than the last.</p>
-    <p class="sample live" id="s0" style="font-family:'Tideline';--v:0;font-variation-settings:'ECHO' var(--v)">reverb</p>
-    <label class="dial"><span>ECHO</span><input type="range" min="0" max="1000" value="0" data-for="s0" aria-label="Echo"><output>live</output></label>
+    <p class="sample" id="s2" style="font-family:'Tideline';--v:0;font-variation-settings:'ECHO' var(--v)">reverb</p>
+    <label class="dial"><span>ECHO</span><input type="range" min="0" max="1000" value="0" data-for="s2" aria-label="Echo"><output>0</output></label>
     <p class="alpha" style="font-family:'Tideline';font-variation-settings:'ECHO' 0">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Tideline';font-variation-settings:'ECHO' 0">reve</p><span>ECHO 0</span></div><div><p style="font-family:'Tideline';font-variation-settings:'ECHO' 250">reve</p><span>ECHO 250</span></div><div><p style="font-family:'Tideline';font-variation-settings:'ECHO' 500">reve</p><span>ECHO 500</span></div><div><p style="font-family:'Tideline';font-variation-settings:'ECHO' 750">reve</p><span>ECHO 750</span></div><div><p style="font-family:'Tideline';font-variation-settings:'ECHO' 1000">reve</p><span>ECHO 1000</span></div></div>
     <p class="meta">Named instances: Still 0, Echo 500, Reverb 1000.</p>
@@ -60,9 +78,11 @@
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
+.x{font-family:'Halide'; font-variation-settings:'GLOW' 610;}
+.x{font-family:'Sateen'; font-variation-settings:'FOLD' 500;}
 .x{font-family:'Tideline'; font-variation-settings:'ECHO' 0;}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Bricolage Grotesque (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Bodoni Moda, Bricolage Grotesque, Fredoka (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {
