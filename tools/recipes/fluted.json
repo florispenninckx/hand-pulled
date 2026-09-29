@@ -2,7 +2,6 @@
  "name": "Fluted",
  "file": "fluted",
  "skill": "chrome-aurora",
- "dir": "candidates",
  "about": "A fat round display face behind fluted glass: the letter is read through vertical reeds. At REED 0 the glass is flat and the letter whole; as REED rises each reed narrows what it shows to a sliver and bends it sideways, so the letter breaks into bright bars.",
  "base": {
   "family": "Rammetto One",
@@ -14,7 +13,8 @@
  "axis": {
   "tag": "REED",
   "name": "Reed",
-  "default": 450,
+  "default": 0,
+  "standard": 0,
   "masters": [
    0,
    450,

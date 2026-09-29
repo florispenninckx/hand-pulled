@@ -1,23 +1,35 @@
-Fonts in this folder: Lull.
+Fonts in this folder: Furl, Lull, Pollen, Waver.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
+
+Furl (furl.woff2)
+  from Josefin Sans, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/josefinsans/JosefinSans[wght].ttf
+  Copyright 2010 The Josefin Sans Project Authors (https://github.com/ThomasJockin/JosefinSansFont-master), with Reserved Font Name "Josefin Sans".
 
 Lull (lull.woff2)
   from Bodoni Moda, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/bodonimoda/BodoniModa[opsz,wght].ttf
   Copyright 2020 The Bodoni Moda Project Authors (https://github.com/indestructible-type/Bodoni)
 
+Pollen (pollen.woff2)
+  from Marcellus, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/marcellus/Marcellus-Regular.ttf
+  Copyright (c) 2012, Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Names "Marcellus"
+
+Waver (waver.woff2)
+  from Instrument Serif, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/instrumentserif/InstrumentSerif-Regular.ttf
+  Copyright 2022 The Instrument Serif Project Authors (https://github.com/Instrument/instrument-serif)
+
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Lull) and use no Reserved Font Name of their bases
-(Bodoni Moda). We reserve no names for our own fonts.
+names (Furl, Lull, Pollen, Waver) and use no Reserved Font Name of their bases
+(Bodoni Moda, Instrument Serif, Josefin Sans, Marcellus). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-https://openfontlicense.org/
+http://scripts.sil.org/OFL
 
 
 -----------------------------------------------------------

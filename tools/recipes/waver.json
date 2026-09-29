@@ -2,7 +2,6 @@
  "name": "Waver",
  "file": "waver",
  "skill": "ethereal-haze",
- "dir": "candidates",
  "about": "A narrow display serif seen through rising heat: at HAZE 0 it is crisp; as HAZE rises every row sways sideways in slow waves that grow toward the top of the letter, and the tops lift a little, like a word on the far side of a hot road.",
  "base": {
   "family": "Instrument Serif",
@@ -15,6 +14,7 @@
   "tag": "HAZE",
   "name": "Haze",
   "default": 400,
+  "standard": 500,
   "masters": [
    0,
    400,

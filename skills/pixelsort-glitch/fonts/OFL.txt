@@ -1,4 +1,4 @@
-Fonts in this folder: Rowdrag.
+Fonts in this folder: Rowdrag, Slipband.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
@@ -7,11 +7,15 @@ Rowdrag (rowdrag.woff2)
   from Space Grotesk, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/spacegrotesk/SpaceGrotesk[wght].ttf
   Copyright 2020 The Space Grotesk Project Authors (https://github.com/floriankarsten/space-grotesk)
 
+Slipband (slipband.woff2)
+  from Archivo, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/archivo/Archivo[wdth,wght].ttf
+  Copyright 2020 The Archivo Project Authors (https://github.com/Omnibus-Type/Archivo)
+
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Rowdrag) and use no Reserved Font Name of their bases
-(Space Grotesk). We reserve no names for our own fonts.
+names (Rowdrag, Slipband) and use no Reserved Font Name of their bases
+(Archivo, Space Grotesk). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 

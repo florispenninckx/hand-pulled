@@ -2,7 +2,6 @@
  "name": "Contrail",
  "file": "contrail",
  "skill": "chrome-aurora",
- "dir": "candidates",
  "about": "A heavy italic dragged through the light: each letter keeps a crisp leading edge while every row behind it is pulled back into a streak, longer or shorter row by row, the same rows all along the line, like paint dragged across charcoal or a light in a long exposure. TRAL sets how far it has travelled.",
  "base": {
   "family": "Exo 2",
@@ -18,6 +17,7 @@
   "tag": "TRAL",
   "name": "Trail",
   "default": 0,
+  "standard": 400,
   "masters": [
    0,
    1000

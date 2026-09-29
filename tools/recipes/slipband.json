@@ -2,7 +2,6 @@
  "name": "Slipband",
  "file": "slipband",
  "skill": "pixelsort-glitch",
- "dir": "candidates",
  "about": "A black expanded grotesk read through a slipping scanner: the letters are cut into bands at the same heights all along the line, and as SLIP rises the bands slide sideways, open thin slits, and some leave a stuttered ghost of themselves further on.",
  "base": {
   "family": "Archivo",
@@ -19,6 +18,7 @@
   "tag": "SLIP",
   "name": "Slip",
   "default": 500,
+  "standard": 500,
   "masters": [
    0,
    500,

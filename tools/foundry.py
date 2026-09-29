@@ -1647,6 +1647,7 @@ def write_css(skill, sub=None):
     od = ROOT / 'skills' / skill / 'fonts' / (sub or '')
     rs = [load_recipe(n) for n in all_recipes()]
     rs = [r for r in rs if r['skill'] == skill and r.get('dir') == sub]
+    rs.sort(key=lambda r: r['name'] != SPECIMEN.get(skill, {}).get('main'))   # the skill's main face first
     what = f'The {skill} {sub}' if sub else f'The {skill} faces'
     lines = [f'/* {what}, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */', '']
     for r in rs:
@@ -1656,7 +1657,8 @@ def write_css(skill, sub=None):
             continue
         if len(files) == 1 and files[0].stem == r['file']:
             if r.get('variable', True):
-                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}. */")
+                std = f" Standard: font-variation-settings: '{ax['tag']}' {ax['standard']}." if 'standard' in ax else ''
+                lines.append(f"/* {r['name']}: {r['about']} Axis '{ax['tag']}' 0–1000, default {ax.get('default', 0)}.{std} */")
             else:
                 lines.append(f"/* {r['name']}: {r['about']} Static. */")
             lines.append(f"@font-face {{ font-family: '{r['name']}'; src: url('{files[0].name}') format('woff2'); font-display: swap; }}")
@@ -1711,14 +1713,14 @@ def make_proof(name, text=None, out=None):
 
 SPECIMEN = {
     'pixelsort-glitch': {'bg': '#0b0b12', 'fg': '#f2f2f2', 'dim': '#8a8fa6', 'ink': '#ff3d8b', 'panel': '#15151f',
-                         'word': 'Scanline', 'line': 'rows dragged out of the slit'},
+                         'word': 'Scanline', 'line': 'rows dragged out of the slit', 'main': 'Rowdrag'},
     'riso-cartography': {'bg': '#f4efe4', 'fg': '#1d1d1d', 'dim': '#6b665c', 'ink': '#e8413b', 'ink2': '#1f6fb2',
                          'panel': '#ebe4d4', 'word': 'Riverside', 'line': 'walk the old course of the river',
                          'stack': ['Blockplan', 'Blockplan Drop']},
     'ethereal-haze': {'bg': '#f6e7da', 'fg': '#3a1c14', 'dim': '#9a6a5a', 'ink': '#e2553f', 'panel': '#f1d9c8',
-                      'word': 'Poppy', 'line': 'the inside of a flower, too close'},
+                      'word': 'Poppy', 'line': 'the inside of a flower, too close', 'main': 'Lull'},
     'chrome-aurora': {'bg': '#07080a', 'fg': '#e9edf2', 'dim': '#7d8594', 'ink': '#9fe8ff', 'panel': '#111317',
-                      'word': 'MERCURY', 'line': 'LIQUID LIGHT ON BLACK'},
+                      'word': 'MERCURY', 'line': 'LIQUID LIGHT ON BLACK', 'main': 'Specula'},
     'abstract-texture': {'bg': '#d9d6cf', 'fg': '#141414', 'dim': '#5f5c56', 'ink': '#2b50ff', 'panel': '#cdc9c0',
                          'word': 'reverb', 'line': 'a surface seen through glass'},
     'indigo-grain': {'bg': '#1e3590', 'fg': '#f3f3ef', 'dim': '#cfd8f2', 'ink': '#f3f3ef', 'panel': '#111a4a',
@@ -1734,6 +1736,7 @@ def make_specimen(skill):
     od = ROOT / 'skills' / skill / 'fonts'
     th = SPECIMEN[skill]
     rs = [r for r in (load_recipe(n) for n in all_recipes()) if r['skill'] == skill and not r.get('dir') and face_files(od, r)]   # candidates stay off the specimen
+    rs.sort(key=lambda r: r['name'] != th.get('main'))   # the main face first: it is the live one
     faces, strips, codes = [], [], []
     for i, r in enumerate(rs):
         ax, files = r['axis'], face_files(od, r)
@@ -1741,7 +1744,7 @@ def make_specimen(skill):
         fam = r['name']
         word = th['word']
         if var:
-            tag, dflt = ax['tag'], int(ax.get('default', 0))
+            tag, dflt = ax['tag'], int(ax.get('standard', ax.get('default', 0)))   # the recipe's standard setting, else its default
             inst = ', '.join(f"{k} {v}" for k, v in ax.get('instances', {}).items())
             live = ' live' if i == 0 else ''
             faces.append(f'''  <section class="face">

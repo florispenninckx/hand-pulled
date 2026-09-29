@@ -1,7 +1,19 @@
-Fonts in this folder: Specula.
+Fonts in this folder: Contrail, Fluted, Pool, Specula.
 
 Each one is a Modified Version, made with tools/foundry.py in the hand-pulled repository:
 the base font is rasterised, processed as an image and traced back to outlines.
+
+Contrail (contrail.woff2)
+  from Exo 2, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/exo2/Exo2-Italic[wght].ttf
+  Copyright 2013 The Exo 2 Project Authors (https://github.com/googlefonts/Exo-2.0)
+
+Fluted (fluted.woff2)
+  from Rammetto One, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/rammettoone/RammettoOne-Regular.ttf
+  Copyright 2011 The Rammetto Project Authors (https://github.com/googlefonts/RammettoFont), with Reserved Font Name Rammetto.
+
+Pool (pool.woff2)
+  from Audiowide, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/audiowide/Audiowide-Regular.ttf
+  Copyright (c) 2012, Brian J. Bonislawsky DBA Astigmatic (AOETI) (astigma@astigmatic.com), with Reserved Font Names "Audiowide"
 
 Specula (specula.woff2)
   from Orbitron, google/fonts @ 23e54b51ddffbc7713c583748e3bd86f62b1fa4a, ofl/orbitron/Orbitron[wght].ttf
@@ -10,14 +22,14 @@ Specula (specula.woff2)
 Modifications copyright 2026 the hand-pulled contributors.
 
 Reserved Font Names: as the OFL requires of Modified Versions, our fonts carry our own
-names (Specula) and use no Reserved Font Name of their bases
-(Orbitron). We reserve no names for our own fonts.
+names (Contrail, Fluted, Pool, Specula) and use no Reserved Font Name of their bases
+(Audiowide, Exo 2, Orbitron, Rammetto One). We reserve no names for our own fonts.
 
 ----------------------------------------------------------------------
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
-http://scripts.sil.org/OFL
+https://openfontlicense.org
 
 
 -----------------------------------------------------------

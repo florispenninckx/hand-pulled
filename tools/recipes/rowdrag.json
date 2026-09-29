@@ -15,6 +15,7 @@
   "tag": "SORT",
   "name": "Sort",
   "default": 0,
+  "standard": 600,
   "masters": [0, 1000],
   "instances": {"Clean": 0, "Sorted": 500, "Dragged": 1000}
  },

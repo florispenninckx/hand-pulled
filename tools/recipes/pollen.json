@@ -2,7 +2,6 @@
  "name": "Pollen",
  "file": "pollen",
  "skill": "ethereal-haze",
- "dir": "candidates",
  "about": "A flared, lightly-stressed serif that sheds grain: at DUST 0 the letter is whole and clean; as DUST rises its edge thins and a cloud of round grains lifts out of it and drifts up and to the right, like pollen shaken off a petal or a grain gradient dissolving into stipple.",
  "base": {
   "family": "Marcellus",
@@ -15,6 +14,7 @@
   "tag": "DUST",
   "name": "Dust",
   "default": 400,
+  "standard": 400,
   "masters": [
    0,
    400,

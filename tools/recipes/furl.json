@@ -2,7 +2,6 @@
  "name": "Furl",
  "file": "furl",
  "skill": "ethereal-haze",
- "dir": "candidates",
  "about": "A ribbon letter: the skeleton of a geometric sans redrawn with a broad flat pen, like a satin ribbon laid along it. TURN turns the pen, so the ribbon rolls over: at 0 the verticals are wide and the crossbars thin, at 1000 the crossbars catch the width and the stems go to a hairline.",
  "base": {
   "family": "Josefin Sans",
@@ -18,6 +17,7 @@
   "tag": "TURN",
   "name": "Turn",
   "default": 0,
+  "standard": 500,
   "masters": [
    0,
    500,
