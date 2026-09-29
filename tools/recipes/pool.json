@@ -1,0 +1,61 @@
+{
+ "name": "Pool",
+ "file": "pool",
+ "skill": "chrome-aurora",
+ "about": "A rounded techno face standing on liquid metal: under the baseline each letter has its own mirror image, cut into bands that thin as they sink. At RIPL 0 the pool is still; as RIPL rises the bands narrow to slivers and ripple sideways, as a strip light does on wet chrome.",
+ "base": {
+  "family": "Audiowide",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/audiowide/Audiowide-Regular.ttf",
+  "sha256": "c7c0f2b0f6fad8c623e31772ce79f94a4edb9321ffce9fce978ea892d20ae730"
+ },
+ "axis": {
+  "tag": "RIPL",
+  "name": "Ripple",
+  "default": 0,
+  "standard": 400,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Still": 0,
+   "Ripple": 400,
+   "Wake": 1000
+  }
+ },
+ "seed": 3,
+ "track": 20,
+ "composites": false,
+ "pad": 120,
+ "ops": [
+  {
+   "op": "round",
+   "r": 6,
+   "mode": "convex"
+  }
+ ],
+ "pieces": {
+  "kind": "reflect",
+  "sy": 0.62,
+  "gap": 34,
+  "h": 30,
+  "fade": 0.09,
+  "floor": 0.22,
+  "thin": 0.45,
+  "ripple": 34,
+  "grow": 0.18,
+  "every": 4.2,
+  "jitter": 1,
+  "bleed": 1
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 3,
+  "seg": 70,
+  "bend": 4,
+  "corner": 45,
+  "min_area": 20
+ }
+}

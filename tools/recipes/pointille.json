@@ -2,7 +2,7 @@
  "name": "Pointille",
  "file": "pointille",
  "skill": "abstract-texture",
- "candidate": true,
+ "dir": "candidates",
  "about": "A halftone face: a black geometric printed through a coarse dot screen, from a solid letter with pearled edges to an out-of-focus orb of dots.",
  "base": {
   "family": "Outfit",

@@ -2,7 +2,7 @@
  "name": "Spatter",
  "file": "spatter",
  "skill": "indigo-grain",
- "candidate": true,
+ "dir": "candidates",
  "about": "An ink-spray face: a fat display letter whose edge is eaten by the spray and thrown off as grains, from a clean print to a letter dissolving into a cloud of dots.",
  "base": {
   "family": "Bowlby One",

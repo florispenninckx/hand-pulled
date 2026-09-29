@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Specula specimen</title>
-<meta name="description" content="The chrome-aurora display faces (Specula), made by tools/foundry.py, each with its process axis.">
+<title>chrome-aurora type specimen</title>
+<meta name="description" content="The chrome-aurora display faces (Specula, Contrail, Fluted, Pool), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,25 +44,55 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>chrome-aurora</span><span>SIL OFL 1.1</span></div>
-    <h1>Specula: display faces, titles only</h1>
+    <h1>Specula, Contrail, Fluted, Pool: display faces, titles only</h1>
   </header>
   <section class="face">
-    <h2>Specula <span>SHEN 0–1000 · variable · 55 KB</span></h2>
+    <h2>Specula <span>SHEN 0–1000 · variable · 65 KB</span></h2>
     <p class="note">A wide techno face with an inline: a channel of light cut along every stroke. At SHEN 0 it is a hairline glint; as SHEN rises the channel widens and slides toward the light until each stroke is a polished rim around a bright core.</p>
-    <p class="sample live" id="s0" style="font-family:'Specula';--v:300;font-variation-settings:'SHEN' var(--v)">MERCURY</p>
-    <label class="dial"><span>SHEN</span><input type="range" min="0" max="1000" value="300" data-for="s0" aria-label="Sheen"><output>live</output></label>
-    <p class="alpha" style="font-family:'Specula';font-variation-settings:'SHEN' 300">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <p class="sample live" id="s0" style="font-family:'Specula';--v:700;font-variation-settings:'SHEN' var(--v)">MERCURY</p>
+    <label class="dial"><span>SHEN</span><input type="range" min="0" max="1000" value="700" data-for="s0" aria-label="Sheen"><output>live</output></label>
+    <p class="alpha" style="font-family:'Specula';font-variation-settings:'SHEN' 700">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Specula';font-variation-settings:'SHEN' 0">MERC</p><span>SHEN 0</span></div><div><p style="font-family:'Specula';font-variation-settings:'SHEN' 250">MERC</p><span>SHEN 250</span></div><div><p style="font-family:'Specula';font-variation-settings:'SHEN' 500">MERC</p><span>SHEN 500</span></div><div><p style="font-family:'Specula';font-variation-settings:'SHEN' 750">MERC</p><span>SHEN 750</span></div><div><p style="font-family:'Specula';font-variation-settings:'SHEN' 1000">MERC</p><span>SHEN 1000</span></div></div>
-    <p class="meta">Named instances: Glint 0, Regular 300, Polished 1000.</p>
+    <p class="meta">Named instances: Glint 0, Satin 300, Sheen 700, Polished 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Contrail <span>TRAL 0–1000 · variable · 82 KB</span></h2>
+    <p class="note">A heavy italic dragged through the light: each letter keeps a crisp leading edge while every row behind it is pulled back into a streak, longer or shorter row by row, the same rows all along the line, like paint dragged across charcoal or a light in a long exposure. TRAL sets how far it has travelled.</p>
+    <p class="sample" id="s1" style="font-family:'Contrail';--v:400;font-variation-settings:'TRAL' var(--v)">MERCURY</p>
+    <label class="dial"><span>TRAL</span><input type="range" min="0" max="1000" value="400" data-for="s1" aria-label="Trail"><output>400</output></label>
+    <p class="alpha" style="font-family:'Contrail';font-variation-settings:'TRAL' 400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Contrail';font-variation-settings:'TRAL' 0">MERC</p><span>TRAL 0</span></div><div><p style="font-family:'Contrail';font-variation-settings:'TRAL' 250">MERC</p><span>TRAL 250</span></div><div><p style="font-family:'Contrail';font-variation-settings:'TRAL' 500">MERC</p><span>TRAL 500</span></div><div><p style="font-family:'Contrail';font-variation-settings:'TRAL' 750">MERC</p><span>TRAL 750</span></div><div><p style="font-family:'Contrail';font-variation-settings:'TRAL' 1000">MERC</p><span>TRAL 1000</span></div></div>
+    <p class="meta">Named instances: Fixed 0, Moving 400, Streaked 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Fluted <span>REED 0–1000 · variable · 83 KB</span></h2>
+    <p class="note">A fat round display face behind fluted glass: the letter is read through vertical reeds. At REED 0 the glass is flat and the letter whole; as REED rises each reed narrows what it shows to a sliver and bends it sideways, so the letter breaks into bright bars.</p>
+    <p class="sample" id="s2" style="font-family:'Fluted';--v:0;font-variation-settings:'REED' var(--v)">MERCURY</p>
+    <label class="dial"><span>REED</span><input type="range" min="0" max="1000" value="0" data-for="s2" aria-label="Reed"><output>0</output></label>
+    <p class="alpha" style="font-family:'Fluted';font-variation-settings:'REED' 0">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Fluted';font-variation-settings:'REED' 0">MERC</p><span>REED 0</span></div><div><p style="font-family:'Fluted';font-variation-settings:'REED' 250">MERC</p><span>REED 250</span></div><div><p style="font-family:'Fluted';font-variation-settings:'REED' 500">MERC</p><span>REED 500</span></div><div><p style="font-family:'Fluted';font-variation-settings:'REED' 750">MERC</p><span>REED 750</span></div><div><p style="font-family:'Fluted';font-variation-settings:'REED' 1000">MERC</p><span>REED 1000</span></div></div>
+    <p class="meta">Named instances: Flat 0, Reeded 450, Deep 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Pool <span>RIPL 0–1000 · variable · 97 KB</span></h2>
+    <p class="note">A rounded techno face standing on liquid metal: under the baseline each letter has its own mirror image, cut into bands that thin as they sink. At RIPL 0 the pool is still; as RIPL rises the bands narrow to slivers and ripple sideways, as a strip light does on wet chrome.</p>
+    <p class="sample" id="s3" style="font-family:'Pool';--v:400;font-variation-settings:'RIPL' var(--v)">MERCURY</p>
+    <label class="dial"><span>RIPL</span><input type="range" min="0" max="1000" value="400" data-for="s3" aria-label="Ripple"><output>400</output></label>
+    <p class="alpha" style="font-family:'Pool';font-variation-settings:'RIPL' 400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Pool';font-variation-settings:'RIPL' 0">MERC</p><span>RIPL 0</span></div><div><p style="font-family:'Pool';font-variation-settings:'RIPL' 250">MERC</p><span>RIPL 250</span></div><div><p style="font-family:'Pool';font-variation-settings:'RIPL' 500">MERC</p><span>RIPL 500</span></div><div><p style="font-family:'Pool';font-variation-settings:'RIPL' 750">MERC</p><span>RIPL 750</span></div><div><p style="font-family:'Pool';font-variation-settings:'RIPL' 1000">MERC</p><span>RIPL 1000</span></div></div>
+    <p class="meta">Named instances: Still 0, Ripple 400, Wake 1000.</p>
   </section>
 
   <section class="face">
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
-.x{font-family:'Specula'; font-variation-settings:'SHEN' 300;}</pre>
+.x{font-family:'Specula'; font-variation-settings:'SHEN' 700;}
+.x{font-family:'Contrail'; font-variation-settings:'TRAL' 400;}
+.x{font-family:'Fluted'; font-variation-settings:'REED' 0;}
+.x{font-family:'Pool'; font-variation-settings:'RIPL' 400;}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Orbitron (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Audiowide, Exo 2, Orbitron, Rammetto One (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {

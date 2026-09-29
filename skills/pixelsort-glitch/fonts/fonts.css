@@ -1,4 +1,7 @@
 /* The pixelsort-glitch faces, made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
 
-/* Rowdrag: A quantised pixel face whose rows get sorted: at SORT 0 a clean blocky grotesk on a 60-unit grid; as SORT rises, strips of pixel rows are dragged sideways into streaks and whole rows slip out of register. Axis 'SORT' 0–1000, default 0. */
+/* Rowdrag: A quantised pixel face whose rows get sorted: at SORT 0 a clean blocky grotesk on a 60-unit grid; as SORT rises, strips of pixel rows are dragged sideways into streaks and whole rows slip out of register. Axis 'SORT' 0–1000, default 0. Standard: font-variation-settings: 'SORT' 600. */
 @font-face { font-family: 'Rowdrag'; src: url('rowdrag.woff2') format('woff2'); font-display: swap; }
+
+/* Slipband: A black expanded grotesk read through a slipping scanner: the letters are cut into bands at the same heights all along the line, and as SLIP rises the bands slide sideways, open thin slits, and some leave a stuttered ghost of themselves further on. Axis 'SLIP' 0–1000, default 500. Standard: font-variation-settings: 'SLIP' 500. */
+@font-face { font-family: 'Slipband'; src: url('slipband.woff2') format('woff2'); font-display: swap; }

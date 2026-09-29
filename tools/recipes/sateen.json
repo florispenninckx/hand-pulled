@@ -30,7 +30,7 @@
  },
  "track": 10,
  "ops": [],
- "flow": {
+ "stream": {
   "mode": "fold",
   "ax": 34,
   "lx": 260,

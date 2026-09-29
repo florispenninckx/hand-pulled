@@ -2,7 +2,7 @@
  "name": "Drybrush",
  "file": "drybrush",
  "skill": "indigo-grain",
- "candidate": true,
+ "dir": "candidates",
  "about": "A brushed-emulsion face: a black Didone coated on with a dry brush, its edges breaking into horizontal hairs that trail off to the right like cyanotype emulsion dragged across paper.",
  "base": {
   "family": "Playfair Display",

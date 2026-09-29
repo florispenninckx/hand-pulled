@@ -14,9 +14,10 @@
  "axis": {
   "tag": "SHEN",
   "name": "Sheen",
-  "default": 300,
-  "masters": [0, 300, 1000],
-  "instances": {"Glint": 0, "Regular": 300, "Polished": 1000}
+  "default": 700,
+  "standard": 700,
+  "masters": [0, 300, 700, 1000],
+  "instances": {"Glint": 0, "Satin": 300, "Sheen": 700, "Polished": 1000}
  },
  "trace": 1000,
  "warp": {"sx": 1.22},

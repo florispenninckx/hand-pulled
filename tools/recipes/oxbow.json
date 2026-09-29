@@ -2,7 +2,7 @@
  "name": "Oxbow",
  "file": "oxbow",
  "skill": "riso-cartography",
- "candidate": true,
+ "dir": "candidates",
  "about": "A river-course face: a brush script reduced to its centreline and re-inked as a river whose banks swell and narrow as it floods, from a thin stream to a meandering flood plain.",
  "base": {
   "family": "Pacifico",

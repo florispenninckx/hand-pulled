@@ -1,0 +1,74 @@
+{
+ "name": "Furl",
+ "file": "furl",
+ "skill": "ethereal-haze",
+ "about": "A ribbon letter: the skeleton of a geometric sans redrawn with a broad flat pen, like a satin ribbon laid along it. TURN turns the pen, so the ribbon rolls over: at 0 the verticals are wide and the crossbars thin, at 1000 the crossbars catch the width and the stems go to a hairline.",
+ "base": {
+  "family": "Josefin Sans",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/josefinsans/JosefinSans[wght].ttf",
+  "sha256": "9255abdb5f393bc51e101abbd07a716a977fd3e15472b1b84b260f426a342bfd",
+  "location": {
+   "wght": 300
+  }
+ },
+ "axis": {
+  "tag": "TURN",
+  "name": "Turn",
+  "default": 0,
+  "standard": 500,
+  "masters": [
+   0,
+   500,
+   1000
+  ],
+  "instances": {
+   "Upright": 0,
+   "Turning": 500,
+   "Rolled": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 16,
+  "1000": 24
+ },
+ "pad": 200,
+ "ops": [
+  {
+   "op": "nib",
+   "w": 90,
+   "hair": 10,
+   "angle": {
+    "0": -8,
+    "500": 38,
+    "1000": 84
+   }
+  },
+  {
+   "op": "blur",
+   "r": 5
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  },
+  {
+   "op": "clean",
+   "min": 80,
+   "holes": 40
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 3,
+  "seg": 90,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 4,
+  "nsmooth": 10,
+  "reach": 120,
+  "min_area": 30
+ }
+}

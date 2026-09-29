@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lull specimen</title>
-<meta name="description" content="The ethereal-haze display faces (Lull), made by tools/foundry.py, each with its process axis.">
+<title>ethereal-haze type specimen</title>
+<meta name="description" content="The ethereal-haze display faces (Lull, Furl, Pollen, Waver), made by tools/foundry.py, each with its process axis.">
 <link rel="stylesheet" href="fonts.css">
 <style>
   @property --v { syntax: '<number>'; inherits: true; initial-value: 0; }
@@ -44,25 +44,55 @@
 <main>
   <header>
     <div class="kicker"><span>hand-pulled foundry</span><span>ethereal-haze</span><span>SIL OFL 1.1</span></div>
-    <h1>Lull: display faces, titles only</h1>
+    <h1>Lull, Furl, Pollen, Waver: display faces, titles only</h1>
   </header>
   <section class="face">
     <h2>Lull <span>FOCS 0–1000 · variable · 54 KB</span></h2>
     <p class="note">A thin high-contrast serif that goes out of focus: at FOCS 0 its hairlines are razor-sharp; as FOCS rises the light blooms, the hairlines thicken, the stems and serifs swell and soften, like a word photographed through a soft-focus lens.</p>
-    <p class="sample live" id="s0" style="font-family:'Lull';--v:0;font-variation-settings:'FOCS' var(--v)">Poppy</p>
-    <label class="dial"><span>FOCS</span><input type="range" min="0" max="1000" value="0" data-for="s0" aria-label="Focus"><output>live</output></label>
-    <p class="alpha" style="font-family:'Lull';font-variation-settings:'FOCS' 0">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <p class="sample live" id="s0" style="font-family:'Lull';--v:250;font-variation-settings:'FOCS' var(--v)">Poppy</p>
+    <label class="dial"><span>FOCS</span><input type="range" min="0" max="1000" value="250" data-for="s0" aria-label="Focus"><output>live</output></label>
+    <p class="alpha" style="font-family:'Lull';font-variation-settings:'FOCS' 250">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
     <div class="strip"><div><p style="font-family:'Lull';font-variation-settings:'FOCS' 0">Popp</p><span>FOCS 0</span></div><div><p style="font-family:'Lull';font-variation-settings:'FOCS' 250">Popp</p><span>FOCS 250</span></div><div><p style="font-family:'Lull';font-variation-settings:'FOCS' 500">Popp</p><span>FOCS 500</span></div><div><p style="font-family:'Lull';font-variation-settings:'FOCS' 750">Popp</p><span>FOCS 750</span></div><div><p style="font-family:'Lull';font-variation-settings:'FOCS' 1000">Popp</p><span>FOCS 1000</span></div></div>
     <p class="meta">Named instances: Sharp 0, Soft 500, Bloom 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Furl <span>TURN 0–1000 · variable · 61 KB</span></h2>
+    <p class="note">A ribbon letter: the skeleton of a geometric sans redrawn with a broad flat pen, like a satin ribbon laid along it. TURN turns the pen, so the ribbon rolls over: at 0 the verticals are wide and the crossbars thin, at 1000 the crossbars catch the width and the stems go to a hairline.</p>
+    <p class="sample" id="s1" style="font-family:'Furl';--v:500;font-variation-settings:'TURN' var(--v)">Poppy</p>
+    <label class="dial"><span>TURN</span><input type="range" min="0" max="1000" value="500" data-for="s1" aria-label="Turn"><output>500</output></label>
+    <p class="alpha" style="font-family:'Furl';font-variation-settings:'TURN' 500">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Furl';font-variation-settings:'TURN' 0">Popp</p><span>TURN 0</span></div><div><p style="font-family:'Furl';font-variation-settings:'TURN' 250">Popp</p><span>TURN 250</span></div><div><p style="font-family:'Furl';font-variation-settings:'TURN' 500">Popp</p><span>TURN 500</span></div><div><p style="font-family:'Furl';font-variation-settings:'TURN' 750">Popp</p><span>TURN 750</span></div><div><p style="font-family:'Furl';font-variation-settings:'TURN' 1000">Popp</p><span>TURN 1000</span></div></div>
+    <p class="meta">Named instances: Upright 0, Turning 500, Rolled 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Pollen <span>DUST 0–1000 · variable · 57 KB</span></h2>
+    <p class="note">A flared, lightly-stressed serif that sheds grain: at DUST 0 the letter is whole and clean; as DUST rises its edge thins and a cloud of round grains lifts out of it and drifts up and to the right, like pollen shaken off a petal or a grain gradient dissolving into stipple.</p>
+    <p class="sample" id="s2" style="font-family:'Pollen';--v:400;font-variation-settings:'DUST' var(--v)">Poppy</p>
+    <label class="dial"><span>DUST</span><input type="range" min="0" max="1000" value="400" data-for="s2" aria-label="Dust"><output>400</output></label>
+    <p class="alpha" style="font-family:'Pollen';font-variation-settings:'DUST' 400">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Pollen';font-variation-settings:'DUST' 0">Popp</p><span>DUST 0</span></div><div><p style="font-family:'Pollen';font-variation-settings:'DUST' 250">Popp</p><span>DUST 250</span></div><div><p style="font-family:'Pollen';font-variation-settings:'DUST' 500">Popp</p><span>DUST 500</span></div><div><p style="font-family:'Pollen';font-variation-settings:'DUST' 750">Popp</p><span>DUST 750</span></div><div><p style="font-family:'Pollen';font-variation-settings:'DUST' 1000">Popp</p><span>DUST 1000</span></div></div>
+    <p class="meta">Named instances: Still 0, Shed 400, Blown 1000.</p>
+  </section>
+  <section class="face">
+    <h2>Waver <span>HAZE 0–1000 · variable · 80 KB</span></h2>
+    <p class="note">A narrow display serif seen through rising heat: at HAZE 0 it is crisp; as HAZE rises every row sways sideways in slow waves that grow toward the top of the letter, and the tops lift a little, like a word on the far side of a hot road.</p>
+    <p class="sample" id="s3" style="font-family:'Waver';--v:500;font-variation-settings:'HAZE' var(--v)">Poppy</p>
+    <label class="dial"><span>HAZE</span><input type="range" min="0" max="1000" value="500" data-for="s3" aria-label="Haze"><output>500</output></label>
+    <p class="alpha" style="font-family:'Waver';font-variation-settings:'HAZE' 500">ABCDEFGHIJKLMNOPQRSTUVWXYZ<br>abcdefghijklmnopqrstuvwxyz<br>0123456789 &amp;?! «éàöç»</p>
+    <div class="strip"><div><p style="font-family:'Waver';font-variation-settings:'HAZE' 0">Popp</p><span>HAZE 0</span></div><div><p style="font-family:'Waver';font-variation-settings:'HAZE' 250">Popp</p><span>HAZE 250</span></div><div><p style="font-family:'Waver';font-variation-settings:'HAZE' 500">Popp</p><span>HAZE 500</span></div><div><p style="font-family:'Waver';font-variation-settings:'HAZE' 750">Popp</p><span>HAZE 750</span></div><div><p style="font-family:'Waver';font-variation-settings:'HAZE' 1000">Popp</p><span>HAZE 1000</span></div></div>
+    <p class="meta">Named instances: Clear 0, Haze 500, Mirage 1000.</p>
   </section>
 
   <section class="face">
     <h2>Set it</h2>
     <pre>&lt;link rel=&quot;stylesheet&quot; href=&quot;fonts/fonts.css&quot;&gt;
 
-.x{font-family:'Lull'; font-variation-settings:'FOCS' 0;}</pre>
+.x{font-family:'Lull'; font-variation-settings:'FOCS' 250;}
+.x{font-family:'Furl'; font-variation-settings:'TURN' 500;}
+.x{font-family:'Pollen'; font-variation-settings:'DUST' 400;}
+.x{font-family:'Waver'; font-variation-settings:'HAZE' 500;}</pre>
   </section>
-  <footer>Made by tools/foundry.py from Bodoni Moda (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
+  <footer>Made by tools/foundry.py from Bodoni Moda, Instrument Serif, Josefin Sans, Marcellus (SIL OFL 1.1); our faces carry their own names. See <a href="OFL.txt">OFL.txt</a>.</footer>
 </main>
 <script>
   document.querySelectorAll('.dial input').forEach(function (inp) {

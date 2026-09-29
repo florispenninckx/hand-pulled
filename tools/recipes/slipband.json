@@ -1,0 +1,65 @@
+{
+ "name": "Slipband",
+ "file": "slipband",
+ "skill": "pixelsort-glitch",
+ "about": "A black expanded grotesk read through a slipping scanner: the letters are cut into bands at the same heights all along the line, and as SLIP rises the bands slide sideways, open thin slits, and some leave a stuttered ghost of themselves further on.",
+ "base": {
+  "family": "Archivo",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/archivo/Archivo[wdth,wght].ttf",
+  "sha256": "0e094a7d3c7c4c25cf1310c4b30014f1dae9332220b1c2c88f4fa996f0b05053",
+  "location": {
+   "wght": 900,
+   "wdth": 118
+  }
+ },
+ "axis": {
+  "tag": "SLIP",
+  "name": "Slip",
+  "default": 500,
+  "standard": 500,
+  "masters": [
+   0,
+   500,
+   1000
+  ],
+  "instances": {
+   "Still": 0,
+   "Slipped": 500,
+   "Torn": 1000
+  }
+ },
+ "seed": 4,
+ "track": 8,
+ "ops": [
+  {
+   "op": "round",
+   "r": 4,
+   "mode": "convex"
+  }
+ ],
+ "pieces": {
+  "kind": "hbands",
+  "h": [
+   45,
+   150
+  ],
+  "p": 0.55,
+  "shift": 170,
+  "jitter": 0.2,
+  "gap": 16,
+  "p_double": 0.4,
+  "double": 70,
+  "ghost_sy": 0.8,
+  "bleed": 2
+ },
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 70,
+  "bend": 4,
+  "corner": 45,
+  "min_area": 60
+ }
+}
