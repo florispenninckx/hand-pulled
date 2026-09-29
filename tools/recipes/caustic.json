@@ -1,0 +1,72 @@
+{
+ "name": "Caustic",
+ "file": "caustic",
+ "skill": "indigo-grain",
+ "candidate": true,
+ "about": "A pool-light face: a fat rounded display letter under rippled water, crossed by the web of light the surface throws, from fine bright threads to a letter broken into soft blue cells.",
+ "base": {
+  "family": "Dela Gothic One",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/delagothicone/DelaGothicOne-Regular.ttf",
+  "sha256": "4ff87a0965f1b0505e5a2c58424bc6ad3cff27e56a82f21c2fc9d6b0e3857ee2"
+ },
+ "axis": {
+  "tag": "WAVE",
+  "name": "Ripple",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Still": 0,
+   "Regular": 500,
+   "Rippled": 1000
+  }
+ },
+ "trace": 0,
+ "track": {
+  "0": 10,
+  "1000": 24
+ },
+ "ops": [
+  {
+   "op": "caustic",
+   "cell": 190,
+   "w": {
+    "0": 2,
+    "1000": 12
+   },
+   "swell": {
+    "0": 1,
+    "1000": 14
+   },
+   "warp": 22,
+   "wcell": 170
+  },
+  {
+   "op": "round",
+   "r": {
+    "0": 2,
+    "1000": 8
+   },
+   "mode": "convex"
+  },
+  {
+   "op": "clean",
+   "min": 300,
+   "holes": 40
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 4,
+  "seg": 60,
+  "bend": 4,
+  "corner": 55,
+  "smooth": 3,
+  "nsmooth": 6,
+  "reach": 30
+ }
+}

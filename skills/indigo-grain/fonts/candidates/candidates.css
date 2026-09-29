@@ -1,0 +1,13 @@
+/* The indigo-grain candidate faces (on trial, not wired into the skill), made by tools/foundry.py (SIL OFL 1.1, see OFL.txt). */
+
+/* Caustic: A pool-light face: a fat rounded display letter under rippled water, crossed by the web of light the surface throws, from fine bright threads to a letter broken into soft blue cells. Axis 'WAVE' 0–1000, default 0. */
+@font-face { font-family: 'Caustic'; src: url('caustic.woff2') format('woff2'); font-display: swap; }
+
+/* Drybrush: A brushed-emulsion face: a black Didone coated on with a dry brush, its edges breaking into horizontal hairs that trail off to the right like cyanotype emulsion dragged across paper. Axis 'BRSH' 0–1000, default 0. */
+@font-face { font-family: 'Drybrush'; src: url('drybrush.woff2') format('woff2'); font-display: swap; }
+
+/* Marbler: A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath. Axis 'SWRL' 0–1000, default 400. */
+@font-face { font-family: 'Marbler'; src: url('marbler.woff2') format('woff2'); font-display: swap; }
+
+/* Spatter: An ink-spray face: a fat display letter whose edge is eaten by the spray and thrown off as grains, from a clean print to a letter dissolving into a cloud of dots. Axis 'SPRY' 0–1000, default 0. */
+@font-face { font-family: 'Spatter'; src: url('spatter.woff2') format('woff2'); font-display: swap; }

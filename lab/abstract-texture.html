@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abstract Texture faces</title>
+<meta name="description" content="Fonts wave 3 A: the abstract-texture display faces, current and four candidates, each on a poster and a site hero over the live reeded-glass surface.">
+<link rel="stylesheet" href="../skills/abstract-texture/fonts/fonts.css">
+<link rel="stylesheet" href="../skills/abstract-texture/fonts/candidates/candidates.css">
+<link rel="stylesheet" href="lab.css">
+<style>
+  :root { --bg: #111214; --fg: #e8e6e1; --dim: #9a978f; --line: rgba(232, 230, 225, .2); --panel: rgba(255, 255, 255, .04); }
+  .poster { color: #efeae0; }
+  .hero { color: #1a1414; }
+  .cta { color: #efeae0; }
+</style>
+</head>
+<body>
+<header class="top wrap">
+  <p class="kicker"><a href="index.html">← fonts wave 3 A</a><span>abstract-texture</span><span>on trial, not wired in</span></p>
+  <h1>Abstract Texture: the current face, four candidates</h1>
+  <p>Every face sets the same poster and the same site hero, over the skill's live reeded glass (surface.js, live.js, live-ui.js). Drag the slider to run the face's axis; pick keep, maybe or drop, then copy the verdict.</p>
+  <div id="verdict"></div>
+</header>
+<main id="faces" class="wrap"></main>
+<script src="../skills/abstract-texture/assets/surface.js"></script>
+<script src="../skills/abstract-texture/assets/live.js"></script>
+<script src="../skills/abstract-texture/assets/live-ui.js"></script>
+<script src="faces.js"></script>
+<script>
+  (function () {
+    const ui = Surface.ui;
+    window.LAB = {
+      style: 'abstract-texture',
+      copy: {
+        poster: { kick: 'Kiln Hall · season six', word: 'Swell', lines: ['light through reeded glass', 'six nights · from 14 Nov'] },
+        hero: { brand: 'Kiln Hall', links: ['Season', 'Nights', 'Tickets'], head: 'Slow glass', sub: 'Six nights of light through reeded glass.', cta: 'Get tickets' },
+      },
+      mount: {
+        poster: el => ui.background(el, { mode: 'reeded', palette: 'cobalt', seed: 3, grain: 0.8, own: false }),
+        hero: el => ui.background(el, { mode: 'reeded', palette: 'ember', seed: 5, own: false }),
+        button: b => ui.button(b, { palette: 'cobalt', mode: 'reeded' }),
+      },
+    };
+  })();
+</script>
+<script src="lab.js"></script>
+</body>
+</html>

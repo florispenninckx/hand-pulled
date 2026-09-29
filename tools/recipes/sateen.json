@@ -1,0 +1,49 @@
+{
+ "name": "Sateen",
+ "file": "sateen",
+ "skill": "abstract-texture",
+ "candidate": true,
+ "about": "A satin face: a wide rounded display letter printed on silk and pulled, so its strokes ripple in soft folds, from flat cloth to deep waves.",
+ "base": {
+  "family": "Fredoka",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/fredoka/Fredoka[wdth,wght].ttf",
+  "sha256": "2ba02e68b152868aef9ba28e24b3648c7d457fe6f25c761f2c2c53fb61a73fc8",
+  "location": {
+   "wght": 700,
+   "wdth": 125
+  }
+ },
+ "axis": {
+  "tag": "FOLD",
+  "name": "Fold",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Flat": 0,
+   "Regular": 500,
+   "Folded": 1000
+  }
+ },
+ "track": 10,
+ "ops": [],
+ "flow": {
+  "mode": "fold",
+  "ax": 34,
+  "lx": 260,
+  "ay": 26,
+  "ly": 340,
+  "phase": 0
+ },
+ "fit": {
+  "tol": 2.0,
+  "seg": 45,
+  "bend": 4,
+  "corner": 55,
+  "step": 3.0
+ }
+}

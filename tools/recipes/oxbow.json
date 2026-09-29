@@ -1,0 +1,71 @@
+{
+ "name": "Oxbow",
+ "file": "oxbow",
+ "skill": "riso-cartography",
+ "candidate": true,
+ "about": "A river-course face: a brush script reduced to its centreline and re-inked as a river whose banks swell and narrow as it floods, from a thin stream to a meandering flood plain.",
+ "base": {
+  "family": "Pacifico",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/pacifico/Pacifico-Regular.ttf",
+  "sha256": "5b6c0d5334a7bf77dea52b975c5a0c408878c0f7115ed5b6fb151f634b7bf701"
+ },
+ "axis": {
+  "tag": "FLOD",
+  "name": "Flood",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Low": 0,
+   "Regular": 400,
+   "Flood": 1000
+  }
+ },
+ "track": {
+  "0": 0,
+  "1000": 10
+ },
+ "ops": [
+  {
+   "op": "skeleton",
+   "r": {
+    "0": 16,
+    "400": 26,
+    "1000": 44
+   },
+   "vary": {
+    "0": 0.35,
+    "1000": 0.5
+   },
+   "vcell": 90
+  },
+  {
+   "op": "blur",
+   "r": 3
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  },
+  {
+   "op": "clean",
+   "min": 150,
+   "holes": 150
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 3,
+  "seg": 60,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 4,
+  "nsmooth": 8,
+  "reach": 30
+ }
+}

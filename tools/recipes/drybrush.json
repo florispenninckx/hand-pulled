@@ -1,0 +1,89 @@
+{
+ "name": "Drybrush",
+ "file": "drybrush",
+ "skill": "indigo-grain",
+ "candidate": true,
+ "about": "A brushed-emulsion face: a black Didone coated on with a dry brush, its edges breaking into horizontal hairs that trail off to the right like cyanotype emulsion dragged across paper.",
+ "base": {
+  "family": "Playfair Display",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/playfairdisplay/PlayfairDisplay[wght].ttf",
+  "sha256": "c40f2293766a503bc70cce9e512ef844a4ccb7cbcde792fe2ea31d191917d8d6",
+  "location": {
+   "wght": 900
+  }
+ },
+ "axis": {
+  "tag": "BRSH",
+  "name": "Brush",
+  "default": 0,
+  "masters": [
+   0,
+   1000
+  ],
+  "instances": {
+   "Coated": 0,
+   "Regular": 500,
+   "Dragged": 1000
+  }
+ },
+ "trace": 1000,
+ "track": {
+  "0": 0,
+  "1000": 20
+ },
+ "ops": [
+  {
+   "op": "noise",
+   "amp": {
+    "0": 0,
+    "1000": 0.7
+   },
+   "cell": 12,
+   "stretch": 16,
+   "octaves": 2,
+   "band": {
+    "0": 16,
+    "1000": 34
+   },
+   "seed": 5
+  },
+  {
+   "op": "level",
+   "at": 0.5,
+   "soft": 0.06
+  },
+  {
+   "op": "drip",
+   "dir": "right",
+   "len": {
+    "0": 0,
+    "1000": 95
+   },
+   "cell": 10,
+   "fade": 1.0,
+   "seed": 7
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  },
+  {
+   "op": "clean",
+   "min": 4000,
+   "holes": 2000
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 4,
+  "seg": 50,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 3,
+  "nsmooth": 6,
+  "reach": 45
+ },
+ "pad": 220
+}

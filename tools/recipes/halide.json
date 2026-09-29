@@ -1,0 +1,79 @@
+{
+ "name": "Halide",
+ "file": "halide",
+ "skill": "abstract-texture",
+ "candidate": true,
+ "about": "A halation face: a wide Didone overexposed, the light of its heavy strokes spreading into the film so stems swell into soft pools and joins fill with glow while the hairlines hold.",
+ "base": {
+  "family": "Bodoni Moda",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/bodonimoda/BodoniModa[opsz,wght].ttf",
+  "sha256": "550f5e34ee0a828d7941b1fe9bc58b34e5260d3f33a61532e6d0a0114e79a5cf",
+  "location": {
+   "wght": 700,
+   "opsz": 28
+  }
+ },
+ "axis": {
+  "tag": "GLOW",
+  "name": "Glow",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Dry": 0,
+   "Regular": 400,
+   "Bloom": 1000
+  }
+ },
+ "trace": 0,
+ "warp": {
+  "sx": 1.3
+ },
+ "track": {
+  "0": 30,
+  "1000": 40
+ },
+ "ops": [
+  {
+   "op": "bloom",
+   "r": {
+    "0": 2,
+    "400": 26,
+    "1000": 46
+   },
+   "at": {
+    "0": 0.5,
+    "400": 0.2,
+    "1000": 0.12
+   }
+  },
+  {
+   "op": "blur",
+   "r": 3
+  },
+  {
+   "op": "level",
+   "at": 0.5
+  },
+  {
+   "op": "clean",
+   "min": 100,
+   "holes": 60
+  }
+ ],
+ "fit": {
+  "mode": "spline",
+  "tol": 2.5,
+  "seg": 55,
+  "bend": 4,
+  "corner": 50,
+  "smooth": 6,
+  "nsmooth": 12,
+  "reach": 100
+ }
+}

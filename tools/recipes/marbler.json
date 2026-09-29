@@ -1,0 +1,53 @@
+{
+ "name": "Marbler",
+ "file": "marbler",
+ "skill": "indigo-grain",
+ "candidate": true,
+ "about": "A marbled face: a wide grotesk floated on size and stirred, so its strokes drift, bend and curl like combed ink in a marbling bath.",
+ "base": {
+  "family": "Syne",
+  "repo": "google/fonts",
+  "commit": "23e54b51ddffbc7713c583748e3bd86f62b1fa4a",
+  "path": "ofl/syne/Syne[wght].ttf",
+  "sha256": "ce5ac77142a65cab2248a1a2ebb740b1d4d9c20b52488877d3ff664d1356104a",
+  "location": {
+   "wght": 800
+  }
+ },
+ "axis": {
+  "tag": "SWRL",
+  "name": "Swirl",
+  "default": 400,
+  "masters": [
+   0,
+   400,
+   1000
+  ],
+  "instances": {
+   "Floated": 0,
+   "Regular": 400,
+   "Marbled": 1000
+  }
+ },
+ "track": 20,
+ "ops": [
+  {
+   "op": "round",
+   "r": 6,
+   "mode": "convex"
+  }
+ ],
+ "flow": {
+  "mode": "curl",
+  "cell": 560,
+  "amp": 220,
+  "octaves": 1
+ },
+ "fit": {
+  "tol": 2.5,
+  "seg": 45,
+  "bend": 4,
+  "corner": 55,
+  "step": 3.0
+ }
+}
