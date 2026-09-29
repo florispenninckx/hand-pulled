@@ -290,7 +290,6 @@ with `aria-hidden`, and every function returns the controller (or `{ ctl, … }`
 | loader | `const l = ui.loader(el); l.stop()` | `role=status`. A chrome bead with a lamp circling over it. It holds still under reduced motion. |
 | focus ring | `ui.focusRing()` | One ring for the page: a band of drifting chrome cut out with a CSS mask round whatever has `:focus-visible`. Keep a 1px CSS outline as well, for the fallback and for forced colours. |
 | section transition | `ui.transition(strip)` | A strip of aurora light (aurora · ember) that brightens out of black as it scrolls up, with its reflection tilting. |
-| cursor | `ui.cursor(area)` | A small lamp that trails the mouse: a bead of chrome (glass · eye), screen-blended. Its highlight swings back against the motion, and a press ripples it. The system cursor stays. It is for the mouse only, and hidden for touch, pen and reduced motion. |
 | icon | `ui.icon(span, 'lightbulb')` | An icon poured in chrome. `Mercury.iconMask(svg)` casts the SVG white on black, and that becomes the height of a film plate, so the icon is a pool of metal in its shape with oil in its folds, screen-blended. The span sets the size. Its button or label raises the lamp. `ui.ICONS` has 15 Phosphor Light icons (MIT, inlined, generated from the package, not typed). Any SVG string with `<path d>` works too. |
 
 A minimal page (copy it, then change the plate, look and the pieces):
@@ -369,6 +368,9 @@ measure in real Chrome.
 the film's oil slides, the grain is alive, and the sheen, ripples, aurora drift, scroll tilt,
 level and fill sit on top. Nothing is captured. The studio's lamps themselves stay where the
 look puts them. Moving them (a `lamp` option on `set()`) is the natural next step.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Mark: `arrow` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Verify before calling it done
 

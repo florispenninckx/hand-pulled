@@ -11,7 +11,8 @@
  *   const ui = Glitch.ui;
  *   ui.background(section);   ui.button(btn);   ui.card(el, { mode: 'wave', variant: 'ripple' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
- *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.cursor(area);   ui.icon(span, 'shuffle');
+ *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.icon(span, 'shuffle');
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can set()
  * it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -53,7 +54,6 @@
 .pg-track>input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .pg-track:has(input:focus-visible){outline:2px solid var(--pg-focus,#3fd0c9);outline-offset:2px}
 .pg-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none;image-rendering:pixelated}
-.pg-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;image-rendering:pixelated}
 .pg-icon{display:inline-block;position:relative;vertical-align:-.2em;width:1.25em;height:1.25em}
 .pg-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;image-rendering:pixelated}`;
     document.head.appendChild(s);
@@ -210,39 +210,6 @@
   }
 
   /**
-   * A slit that trails the mouse inside `area`: a short strip of sorted rows, streaking, that
-   * sits behind the pointer on the side it came from, and bursts on a press. The system cursor
-   * stays. Mouse only: hidden for touch and pen, and with reduced motion.
-   */
-  function cursor(area, opts) {
-    const o = Object.assign({ w: 120, h: 12, lag: 0.08, seed: 17 }, opts);
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'pg-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.w + 'px', height: o.h + 'px' });
-    document.body.appendChild(c);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0, dir = 1;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); if (!ctl) ctl = live(c, strip({ pixel: 1, seed: o.seed, sweep: 1, speed: 3, lo: 0.1, alive: true })); }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (ctl && e.pointerType === 'mouse') ctl.pulse(o.w / 2, o.h / 2, 1); });
-    if (RM.addEventListener) RM.addEventListener('change', () => { if (RM.matches) { on = false; show(false); } });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag), vx = tx - x;
-      x += vx * k; y += (ty - y) * k;
-      if (Math.abs(vx) > 2) dir = vx > 0 ? 1 : -1;
-      c.style.transform = `translate(${Math.round(dir > 0 ? x - o.w - 6 : x + 6)}px,${Math.round(y + 12)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
-  }
-
-  /**
    * iconMask(svg, { pad, weight }): an icon's SVG (one or more <path d>, any viewBox) as a
    * `shape` for the sorted strip: the paths fill white, and only what they cover is kept.
    * `weight` strokes the outline too (viewBox units), so light icons stay legible.
@@ -286,6 +253,113 @@
     return ctl;
   }
 
+  // ---------------------------------------------------------------- optional: a custom cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
+    return c;
+  }
+  // under what is already on `c`: shape filled and stroked `w` CSS px wide in `col` (an outline of the whole silhouette)
+  function curUnder(c, k, shape, w, col) {
+    const x = c.getContext('2d');
+    x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, 0, 0);
+    x.fillStyle = x.strokeStyle = col; x.lineWidth = w; x.lineJoin = x.lineCap = 'round';
+    x.beginPath(); shape(x); x.stroke(); x.fill();
+    x.restore(); return c;
+  }
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-pg-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-pg-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-pg-cursor'); } } };
+  }
+
+  /**
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x),
+   * each mark in white and black outlines so it reads on any ground. opts.mark picks the mark
+   * (cursor.marks lists them; an unknown name gives the default); every hover mark splits its pink and teal channels apart:
+   *   'arrow'   an arrow filled with a sorted smear, its rows spilling out to the right (the default)
+   *   'blocks'  an arrow broken into 2 px macroblocks, each one flat, two rows slipped sideways
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: seed, scene,
+   * image (smear options). Returns { destroy() }, which puts the previous cursor back.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ mark: 'arrow', seed: 17 }, opts);
+    const arrow = x => { x.moveTo(2, 2); x.lineTo(2, 22); x.lineTo(7, 17.5); x.lineTo(10.5, 25); x.lineTo(13.5, 23.6); x.lineTo(10, 16.2); x.lineTo(16.5, 16.2); x.closePath(); };
+    const smear = k => G.smear(curCanvas(k), { width: CUR * k, height: CUR * k, seed: o.seed, scene: o.scene, image: o.image, pixel: k });
+    const white = '#f4f1ea', black = '#0b0b0e', split = [[-2.5, '#ff3fa4'], [2.5, '#19e3d0']];
+    // the silhouette `shape` cut from the smear, outlined black then white; `split` puts pink and teal copies behind it
+    const cut = (k, sm, shape, over, rule) => {
+      const c = curCut(sm, k, shape, null, rule);
+      curUnder(c, k, shape, 1.6, black); curUnder(c, k, shape, 3.6, white);
+      if (over) for (const [dx, col] of split) { const x = c.getContext('2d'); x.save(); x.globalCompositeOperation = 'destination-over'; x.setTransform(k, 0, 0, k, dx * k, 0); x.beginPath(); shape(x); x.fillStyle = col; x.fill(rule || 'evenodd'); x.restore(); }
+      return c;
+    };
+    // the arrow on a 2 px grid: a block is in when its centre is, and two rows of blocks slip sideways
+    const grid = [], probe = curCanvas(1).getContext('2d');
+    probe.beginPath(); curPath(probe, CUR_ARROW);
+    for (let j = 0; j < 12; j++) for (let i = 0; i < 8; i++) {
+      const bx = 2 + 2 * i, by = 2 + 2 * j;
+      if ((i === 0 && j === 0) || probe.isPointInPath(bx + 1, by + 1)) grid.push([bx + (j === 5 ? 2 : j === 9 ? -2 : 0), by]);
+    }
+    const blocks = x => { for (const [bx, by] of grid) x.rect(bx, by, 2, 2); };
+    // each block flat, the colour of the smear at its corner: the picture as a stream of macroblocks
+    const flat = k => { const sm = smear(k), t = curCanvas(k), x = t.getContext('2d'); x.imageSmoothingEnabled = false; x.drawImage(sm, 0, 0, CUR * k, CUR * k, 0, 0, CUR / 2, CUR / 2); x.drawImage(t, 0, 0, CUR / 2, CUR / 2, 0, 0, CUR * k, CUR * k); return t; };
+    const marks = {
+      arrow: { hot: [2, 2], paint: (k, over) => {
+        const sm = smear(k), c = curCanvas(k), x = c.getContext('2d');
+        x.scale(k, k);
+        // the sorted rows run on out of the arrow, one device row each, to lengths of their own
+        for (let y = 5; y < 22; y += 2) x.drawImage(sm, 0, y * k, CUR * k, k, 9, y, 11 + (y * 37) % 11, 1);
+        x.beginPath(); arrow(x); x.lineJoin = 'round'; x.lineWidth = 2.6; x.strokeStyle = white; x.stroke();
+        if (over) for (const [dx, col] of split) { x.save(); x.translate(dx, 0); x.beginPath(); arrow(x); x.fillStyle = col; x.fill(); x.restore(); }
+        x.setTransform(1, 0, 0, 1, 0, 0);
+        x.drawImage(curCut(sm, k, arrow, q => { q.beginPath(); arrow(q); q.lineJoin = 'round'; q.lineWidth = 1; q.strokeStyle = black; q.stroke(); }), 0, 0);
+        return c;
+      } },
+      blocks: { hot: [2, 2], paint: (k, over) => cut(k, flat(k), blocks, over, 'nonzero') },
+    };
+    const m = marks[o.mark] || marks.arrow;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
+  }
+  cursor.marks = ['arrow', 'blocks'];
+
   G.iconMask = iconMask;
-  G.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS };
+  G.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

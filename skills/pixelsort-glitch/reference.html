@@ -403,7 +403,6 @@
 
   ui.transition($('.deck-strip'));
   ui.focusRing();
-  ui.cursor($('.deck'));
   document.querySelectorAll('.deck .ic').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 21 + i }));
   const screen = ui.card($('#screen'), { mode: 'smear', seed: 3, scene: SCENE, sweep: 1, clickPulse: true });
   const CLIPS = [['smear', null, 'I — smear.mov'], ['wave', 'ripple', 'II — wave.mov'], ['drip', 'dusk', 'VI — drip.mp4'], ['scan', null, 'VII — scan.tif'], ['collage', 'night', 'IV — collage.psd'], ['fall', 'ink', 'VIII — fall_ink.dng'], ['band', 'tape', 'IX — band.vhs'], ['mosh', 'melt', 'X — mosh.avi'], ['weave', 'grid', 'XI — weave_grid.mov']];

@@ -11,7 +11,8 @@
  *   ui.background(section);   ui.button(btn);   ui.card(card, { plate: 'ribbon', look: 'volt' });
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
  *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);
- *   ui.cursor(area);   ui.icon(span, 'lightbulb');   Mercury.iconMask(svg)
+ *   ui.icon(span, 'lightbulb');   Mercury.iconMask(svg)
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can
  * set() it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -61,7 +62,6 @@
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 .ma-ring>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.ma-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;mix-blend-mode:screen;display:none;border-radius:50%}
 .ma-icon{display:inline-block;position:relative;vertical-align:middle;flex:none}
 .ma-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;mix-blend-mode:screen}`;
     document.head.appendChild(s);
@@ -250,43 +250,83 @@
     return ctl;
   }
 
-  /**
-   * A small lamp that trails the mouse: a bead of chrome, screen-blended, its highlight swinging
-   * against the motion, a press rippling it. The system cursor stays. Mouse only: hidden for touch
-   * and pen, and with reduced motion. opts: size (px), lag (s).
-   */
-  function cursor(area, opts) {
-    const o = Object.assign({ size: 26, lag: 0.09, plate: 'glass', look: 'eye', seed: 9, grain: 0.02 }, opts);
-    area = area || document.documentElement;
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'ma-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, vx = 0, vy = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) { x = tx; y = ty; on = true; show(true); }
-      if (!ctl) ctl = live(c, { plate: o.plate, look: o.look, seed: o.seed, grain: o.grain, zoom: 90, drift: 0.6, pointer: 1, radius: 0.8, lag: 0.05, tilt: 0, clickPulse: false, own: false });
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (on && e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 1); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag), px = x, py = y;
-      x += (tx - x) * k; y += (ty - y) * k;
-      vx += ((x - px) / dt - vx) * 0.2; vy += ((y - py) / dt - vy) * 0.2;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-      // the lamp hangs up and to the left, and swings back against the motion
-      if (ctl) { const sw = o.size * 0.3, sp = Math.hypot(vx, vy) + 1e-6, a = Math.min(1, sp / 900);
-        ctl.point(o.size * 0.36 - vx / sp * sw * a, o.size * 0.3 - vy / sp * sw * a); }
+  // ---------------------------------------------------------------- optional: a custom cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
+    return c;
+  }
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
     });
-    return { get ctl() { return ctl; }, canvas: c };
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-ma-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-ma-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-ma-cursor'); } } };
   }
 
+  /**
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x),
+   * on the 2D path (no GL context). opts.mark picks the mark (cursor.marks lists them; an unknown
+   * name gives the default):
+   *   'arrow'  an arrow cast in chrome, bevelled (the default); hover: the arrow in titanium
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: look, seed (film
+   * plate options). Returns { destroy() }, which puts the previous cursor back.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ mark: 'arrow', look: 'oxide', seed: 4 }, opts);
+    // the film plate poured over a height of our own (white = high), so the metal takes the mark's form
+    const film = (k, h, look) => M.film(document.createElement('canvas'), { width: CUR * k, height: CUR * k, look: look || o.look, seed: o.seed, gl: false, image: h, grain: 0.02 });
+    // a height: the shape filled white on black, softened `soft` CSS px into a rounded bevel
+    const relief = (k, shape, soft) => {
+      const h = curCanvas(k), x = h.getContext('2d');
+      x.fillStyle = '#000'; x.fillRect(0, 0, h.width, h.height);
+      x.filter = `blur(${soft * k}px)`; x.scale(k, k); x.fillStyle = '#fff'; x.beginPath(); shape(x); x.fill();
+      return h;
+    };
+    const rim = 'rgba(0,0,0,.72)', edge = (x, path, w) => { x.beginPath(); path(x); x.lineJoin = 'round'; x.lineWidth = w || 0.9; x.strokeStyle = rim; x.stroke(); };
+    const marks = {
+      arrow: { hot: [2, 2], paint: (k, over) => curCut(film(k, relief(k, x => curPath(x, CUR_ARROW), 1.8), over ? 'titanium' : null), k, x => curPath(x, CUR_ARROW), x => edge(x, q => curPath(q, CUR_ARROW), 1)) },
+    };
+    const m = marks[o.mark] || marks.arrow;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
+  }
+  cursor.marks = ['arrow'];
+
   M.iconMask = iconMask;
-  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, ICONS };
+  M.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

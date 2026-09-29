@@ -461,7 +461,6 @@
   const map = ui.background(document.getElementById('room'), { seed: 4 });
   document.querySelectorAll('.job').forEach((j, i) => ui.card(j, { seed: 21 + i * 5 }));
   document.querySelectorAll('#room [data-icon]').forEach((el, i) => ui.icon(el, el.dataset.icon, { seed: 30 + i, hover: 2.5 }));
-  ui.cursor(document.getElementById('room'));
   const tl = document.getElementById('t-loupe'), tt = document.getElementById('t-trace'), sd = document.getElementById('s-drift'), od = document.getElementById('o-drift');
   ui.toggle(tl); ui.toggle(tt); ui.slider(sd);
   tl.addEventListener('change', () => map && map.set({ pointer: tl.checked ? 1 : 0 }));

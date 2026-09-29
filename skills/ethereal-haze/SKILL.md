@@ -279,6 +279,9 @@ run `handPulledLive.views[0].bench(60)` in the console (the hero, own context). 
 shader costs one texelFetch for scatter, one or two texture reads (nine with a focus pull
 under way), four grain fetches and a three-octave value noise for fog and mist.
 
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Marks: `sun` (default), `cross`. It returns `{ destroy() }`, which puts the previous cursor back.
+
 ## Credits and prior art
 
 This is an original implementation. The petals, fields, ribbons, silk, meadow, poppies,

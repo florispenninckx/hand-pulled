@@ -9,7 +9,8 @@
  *   const ui = Haze.ui;
  *   ui.background(section, { fn: 'bloom', palette: 'coral' });   ui.button(btn);   ui.card(card);
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
- *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.cursor(area);   ui.icon(span, 'flower');
+ *   const l = ui.loader(el);   ui.focusRing();   ui.transition(strip);   ui.icon(span, 'flower');
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can
  * set() it further. Icons: Phosphor Icons (light weight), MIT, Copyright (c) 2023 Phosphor Icons,
@@ -62,7 +63,6 @@
 .hz-ring.hz-ring-live :focus-visible{box-shadow:none;animation:none}
 .hz-halo{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none}
 .hz-halo>canvas{width:100%;height:100%;display:block}
-.hz-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;border-radius:50%;mix-blend-mode:screen;-webkit-mask:radial-gradient(closest-side,#000 30%,transparent);mask:radial-gradient(closest-side,#000 30%,transparent)}
 .hz-icon{display:inline-block;position:relative;vertical-align:middle;border-radius:50%;overflow:hidden}
 .hz-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}`;
     document.head.appendChild(s);
@@ -251,40 +251,6 @@
   }
 
   /**
-   * A lamp that trails the mouse inside `area`: a small sun seen through the haze, feathered
-   * round and screen-blended, so it lightens what it passes. The system cursor stays; a press
-   * blooms it. Mouse only: hidden on touch and pen, and with reduced motion.
-   */
-  function cursor(area, opts) {
-    const o = Object.assign({ size: 130, lag: 0.14, ramp: 'apricot' }, opts);
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'hz-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { on = false; show(false); return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) {
-        x = tx; y = ty; on = true; show(true);
-        if (!ctl) ctl = live(c, piece(o.ramp, 'sun', { pointer: false, breath: 0.4, mist: 0, drift: 0.6, bloom: 0.5, radius: 0.5, focus: 0.5, seed: 9 }));
-      }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && ctl) ctl.pulse(o.size / 2, o.size / 2, 0.8); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag);
-      x += (tx - x) * k; y += (ty - y) * k;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
-  }
-
-  /**
    * iconMask(svg, { size, pad, weight, ramp, ground }) — an icon's SVG (Phosphor-style: one or
    * more <path d>, any viewBox) painted as a stage for the haze: a cream ground with the glyph
    * lit in a warm ramp, stroked a little heavier (`weight`, viewBox units) so thin light icons
@@ -333,6 +299,83 @@
     return ctl;
   }
 
-  H.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, iconMask, ICONS, RAMPS };
+  // ---------------------------------------------------------------- optional: a custom cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-hz-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-hz-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-hz-cursor'); } } };
+  }
+
+  /**
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x).
+   * opts.mark picks the mark (cursor.marks lists them; an unknown name gives the default):
+   *   'sun'    a small sun cut from a grain field, with a cream rim (the default); hover: a halo round a red point
+   *   'cross'  a cross-hair of four grain strokes round the point; hover: a ring of light round them
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: seed, colors
+   * (field options). Returns { destroy() }, which puts the previous cursor back.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ mark: 'sun', seed: 9 }, opts);
+    const plate = (k, form) => H.field(document.createElement('canvas'), { width: CUR * k, height: CUR * k, form: form || 'sun', seed: o.seed, colors: o.colors });
+    const cream = '#fff6ec', edge = 'rgba(90,40,26,.45)', red = '#e2231a';
+    const rim = (x, path) => { x.lineJoin = 'round'; x.beginPath(); path(x); x.lineWidth = 2.6; x.strokeStyle = edge; x.stroke(); x.lineWidth = 1; x.strokeStyle = cream; x.stroke(); };
+    const point = (x, cx, cy, r) => { x.fillStyle = red; x.beginPath(); x.moveTo(cx + r, cy); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); };
+    const arms = x => { for (const [ax, ay, w, h] of [[3, 14.6, 8.4, 2.8], [20.6, 14.6, 8.4, 2.8], [14.6, 3, 2.8, 8.4], [14.6, 20.6, 2.8, 8.4]]) x.roundRect(ax, ay, w, h, 1.4); };
+    const marks = {
+      sun: { hot: [16, 16], paint: (k, over) => over
+        ? curCut(plate(k), k, x => { curDisc(x, 12.5); curDisc(x, 8.5); }, x => { curRing(x, 13, 1, cream); curRing(x, 8, 1, cream); curRing(x, 14, 0.8, edge); point(x, 16, 16, 1.5); })
+        : curCut(plate(k), k, x => curDisc(x, 9), x => { curRing(x, 9.5, 1, cream); curRing(x, 10.5, 0.8, edge); }) },
+      cross: { hot: [16, 16], paint: (k, over) => curCut(plate(k, 'flow'), k, x => { arms(x); if (over) { curDisc(x, 13); x.moveTo(27, 16); x.arc(16, 16, 11, 0, Math.PI * 2, true); } }, x => {
+        rim(x, arms); point(x, 16, 16, 1.3);
+        if (over) { curRing(x, 13.5, 0.8, edge); curRing(x, 10.5, 0.8, edge); }
+      }, 'nonzero') },
+    };
+    const m = marks[o.mark] || marks.sun;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
+  }
+  cursor.marks = ['sun', 'cross'];
+
+  H.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, iconMask, ICONS, RAMPS, cursor };
   H.iconMask = iconMask;
 })(typeof window !== 'undefined' ? window : globalThis);

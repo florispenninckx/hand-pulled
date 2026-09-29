@@ -11,7 +11,8 @@
  *   ui.background(section, { mode: 'reeded', palette: 'cobalt' });   ui.button(btn);   ui.card(card);
  *   ui.toggle(checkbox);   ui.slider(range);   const p = ui.progress(el); p.set(0.4);
  *   const l = ui.loader(el); l.stop();   ui.focusRing();   ui.transition(strip);
- *   ui.cursor(area);   ui.icon(span, 'flame');   Surface.iconMask(svg, { pad, weight })
+ *   ui.icon(span, 'flame');   Surface.iconMask(svg, { pad, weight })
+ *   // optional extra, only when the brief asks for a custom cursor: ui.cursor(area, { mark, hover })
  *
  * Every function returns the live controller (or a small object holding it) so a page can
  * set() it further. Icons: Phosphor Icons (light weight, @phosphor-icons/core 2.1.1), MIT,
@@ -81,7 +82,6 @@
 .at-slider{width:220px;height:22px}
 .at-mark{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:var(--at-ink,#e8e6e1);pointer-events:none}
 .at-ring{position:fixed;left:0;top:0;pointer-events:none;z-index:2147483000;display:none}
-.at-cursor{position:fixed;left:0;top:0;pointer-events:none;z-index:2147482999;display:none;border-radius:50%}
 .at-icon{display:inline-block;position:relative;width:1.25em;height:1.25em;vertical-align:-.3em;flex:none}
 .at-icon>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 @media (prefers-reduced-motion:reduce){.at-thumb{transition:none}}`;
@@ -245,43 +245,6 @@
   }
 
   /**
-   * A loupe that trails the mouse inside `area`: a ring of reeded glass (the plate drawn in the
-   * shader, its colour drifting) a little behind the pointer; a press sends an echo ring round it.
-   * The system cursor stays. Mouse only: hidden for touch and pen, and with reduced motion.
-   * opts: size (px), band (px), lag (s), and plate options (mode, palette, seed).
-   */
-  function cursor(area, opts) {
-    const o = Object.assign({ mode: 'reeded', palette: 'ember', seed: 5, size: 46, band: 6, lag: 0.1 }, opts);
-    style();
-    const c = document.createElement('canvas');
-    c.className = 'at-cursor'; c.setAttribute('aria-hidden', 'true');
-    Object.assign(c.style, { width: o.size + 'px', height: o.size + 'px' });
-    document.body.appendChild(c);
-    const ring = (ctx, w, h) => { const k = w / o.size; ctx.lineWidth = o.band * k; ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.arc(w / 2, h / 2, w / 2 - ctx.lineWidth / 2 - k, 0, Math.PI * 2); ctx.stroke(); };
-    let ctl = null, tx = 0, ty = 0, x = 0, y = 0, on = false, last = 0;
-    const show = v => { c.style.display = v ? 'block' : 'none'; };
-    area.addEventListener('pointermove', e => {
-      if (e.pointerType !== 'mouse' || RM.matches) { if (on) { on = false; show(false); } return; }
-      tx = e.clientX; ty = e.clientY;
-      if (!on) {
-        x = tx; y = ty; on = true; show(true);
-        // created once, the first time a mouse moves here
-        if (!ctl) ctl = live(c, Object.assign({}, SMALL, { mode: o.mode, palette: o.palette, seed: o.seed, drift: 1, speed: 1.6, grain: 0.5, mask: ring, hand: c }));
-      }
-    }, { passive: true });
-    area.addEventListener('pointerleave', () => { on = false; show(false); });
-    area.addEventListener('pointerdown', e => { if (ctl && on && e.pointerType === 'mouse') ctl.pulse(o.size / 2, o.size / 2, 0.9); });
-    tick(now => {
-      const dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
-      if (!on) return;
-      const k = 1 - Math.exp(-dt / o.lag);
-      x += (tx - x) * k; y += (ty - y) * k;
-      c.style.transform = `translate(${Math.round(x - o.size / 2)}px,${Math.round(y - o.size / 2)}px)`;
-    });
-    return { get ctl() { return ctl; }, canvas: c };
-  }
-
-  /**
    * An icon seen through the glass: the plate shows only through the icon's paths (iconMask).
    * At rest it is the bare warm field; hovering or focusing the control it sits in develops the
    * reeds over it, starts the colour drifting and lifts the grain. `name` is a key of ICONS or an
@@ -305,6 +268,82 @@
     return ctl;
   }
 
+  // ---------------------------------------------------------------- optional: a custom cursor
+  // A mark 32 CSS px square, painted once at 1x and 2x (paint(k) gives a 32k px canvas, or a
+  // Promise of one) and handed to CSS as `image-set(url() 1x, url() 2x) hx hy, fallback`, or the
+  // 1x url alone where `cursor` does not take image-set. The system draws it: nothing follows the
+  // mouse, nothing keeps running, and touch has no cursor to show.
+  const CUR = 32;
+  const curCanvas = k => { const c = document.createElement('canvas'); c.width = c.height = CUR * k; return c; };
+  // keep `plate` only inside shape(ctx) (filled even-odd by default, so a second circle cuts a
+  // ring; shape may also stroke), then draw lines(ctx) over it; ctx in CSS px
+  function curCut(plate, k, shape, lines, rule) {
+    const c = curCanvas(k), x = c.getContext('2d'), m = curCanvas(k), mx = m.getContext('2d');
+    mx.scale(k, k); mx.fillStyle = mx.strokeStyle = '#000'; mx.lineJoin = mx.lineCap = 'round';
+    mx.beginPath(); shape(mx); mx.fill(rule || 'evenodd');
+    x.drawImage(plate, 0, 0, c.width, c.height);
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+    x.globalCompositeOperation = 'source-over'; x.scale(k, k); if (lines) lines(x);
+    return c;
+  }
+  const curDisc = (x, r) => { x.moveTo(16 + r, 16); x.arc(16, 16, r, 0, Math.PI * 2); };
+  const curRing = (x, r, w, col) => { x.beginPath(); x.arc(16, 16, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col; x.stroke(); };
+  const curPath = (x, pts) => { x.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) x.lineTo(p[0], p[1]); x.closePath(); };
+  // the pointer arrow, its tip (the hotspot) at 2,2
+  const CUR_ARROW = [[2, 2], [2, 23], [7.4, 18.1], [11, 26.2], [14.5, 24.6], [11, 17], [18, 17]];
+  function curValue(mark, fallback) {
+    return Promise.all([mark.paint(1), mark.paint(2)]).then(([a, b]) => {
+      const u = c => `url("${c.toDataURL('image/png')}")`, hot = ` ${mark.hot[0]} ${mark.hot[1]}, ${fallback}`;
+      const set = `image-set(${u(a)} 1x, ${u(b)} 2x)` + hot, ok = v => !!(root.CSS && CSS.supports && CSS.supports('cursor', v));
+      return ok(set) ? set : ok('-webkit-' + set) ? '-webkit-' + set : u(a) + hot;
+    });
+  }
+  let cursors = 0;
+  function nativeCursor(area, opts, base, hover) {
+    area = area || document.documentElement;
+    const o = opts || {}, id = String(++cursors), prev = area.style.cursor, at = `[data-at-cursor="${id}"]`;
+    let sheet = null, dead = false;
+    Promise.all([curValue(base, 'auto'), o.hover ? curValue(hover, 'pointer') : null]).then(([b, h]) => {
+      if (dead) return;
+      area.style.cursor = b;
+      area.setAttribute('data-at-cursor', id);
+      // text fields keep their I-beam; with hover, links and controls take the second mark (the
+      // doubled attribute outranks a page's own `.nav button { cursor: pointer }`)
+      sheet = document.createElement('style');
+      sheet.textContent = `${at}${at} :is(textarea,[contenteditable=""],[contenteditable="true"],input:not([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset],[type=color],[type=file],[type=image])){cursor:text}`
+        + (h ? `${at}${at} :is(a[href],button,summary,select,label,[role=button],[role=link],[role=switch],[role=tab],input:is([type=checkbox],[type=radio],[type=range],[type=button],[type=submit],[type=reset])):not(:disabled){cursor:${h}}` : '');
+      document.head.appendChild(sheet);
+    }).catch(() => {});   // no mark: the system cursor stays
+    return { destroy() { dead = true; if (sheet) { sheet.remove(); area.style.cursor = prev; area.removeAttribute('data-at-cursor'); } } };
+  }
+
+  /**
+   * Optional extra, not one of the pieces: a custom cursor for `area`, only when the brief asks
+   * for one. The system cursor is the default, and the live background is how the style answers
+   * the pointer. A native CSS cursor, painted once through the still engine at 32 px (1x and 2x).
+   * opts.mark picks the mark (cursor.marks lists them; an unknown name gives the default):
+   *   'ring'    a ring of reeded glass round the pointer (the default); hover: the whole lens
+   *   'fluted'  an arrow cut from the fluted glass; hover: the arrow in aurora light
+   * opts.hover: true gives links and controls inside `area` the hover mark. opts: palette, seed
+   * (reeded plate options). Returns { destroy() }, which puts the previous cursor back.
+   */
+  function cursor(area, opts) {
+    const o = Object.assign({ mark: 'ring', palette: 'ember', seed: 5 }, opts);
+    // a plate printed at 48k px (more reeds to the mark than at 32k)
+    const plate = (k, kind, pal) => Promise.resolve(S[kind || 'reeded'](document.createElement('canvas'), { width: 48 * k, height: 48 * k, palette: pal || o.palette, seed: o.seed, text: false }));
+    const ink = 'rgba(24,14,10,.85)', dot = (x, r) => { x.fillStyle = '#1a0f0a'; x.beginPath(); curDisc(x, r); x.fill(); };
+    const edge = (x, path, w) => { x.beginPath(); path(x); x.lineJoin = 'round'; x.lineWidth = w || 1; x.strokeStyle = ink; x.stroke(); };
+    const marks = {
+      ring: { hot: [16, 16], paint: (k, over) => plate(k).then(p => over
+        ? curCut(p, k, x => curDisc(x, 12), x => { curRing(x, 12.5, 1, ink); dot(x, 1.4); })
+        : curCut(p, k, x => { curDisc(x, 11); curDisc(x, 5.5); }, x => { curRing(x, 11.5, 1, ink); curRing(x, 5, 1, ink); dot(x, 1.2); })) },
+      fluted: { hot: [2, 2], paint: (k, over) => plate(k, over ? 'aurora' : 'reeded', over ? 'north' : null).then(p => curCut(p, k, x => curPath(x, CUR_ARROW), x => edge(x, q => curPath(q, CUR_ARROW), 1.1))) },
+    };
+    const m = marks[o.mark] || marks.ring;
+    return nativeCursor(area, o, { hot: m.hot, paint: k => m.paint(k, false) }, { hot: m.hot, paint: k => m.paint(k, true) });
+  }
+  cursor.marks = ['ring', 'fluted'];
+
   S.iconMask = iconMask;
-  S.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, cursor, icon, iconMask, ICONS };
+  S.ui = { background, button, card, toggle, slider, progress, loader, focusRing, transition, icon, iconMask, ICONS, cursor };
 })(typeof window !== 'undefined' ? window : globalThis);

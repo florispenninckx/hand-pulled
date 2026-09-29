@@ -241,7 +241,6 @@ Bloom's own `radius` is a still option, which is why the comb's size is called `
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | `role="status"`; a small sheet stirred fast with a drop every beat |
 | focus ring | `ui.focusRing(opts)` | one per page: a band of live paint round whatever has `:focus-visible`; keep a CSS outline too |
 | section transition | `ui.transition(strip, opts)` | a strip between sections poured down as it scrolls up the viewport |
-| cursor | `ui.cursor(area, opts)` | a wet ring of paint trailing the mouse inside `area` (`size` 40, `band` 5, `lag` 0.09 s), swelling over anything clickable, a drop on press; the system cursor stays; mouse only, hidden on touch, pen and reduced motion |
 | icon | `ui.icon(span, name, opts)` | a small live sheet cut to an icon with a CSS mask: pours in on first view, wakes while its button, link or label is hovered or focused (`rest` wet 0.25, `hover` 1.4, `weight` 6 viewBox units of extra outline); size it with CSS (default 1.25em); without WebGL2 the plain shape in `currentColor` |
 
 `ui.ICONS` holds Phosphor Light icons (MIT, inlined, never fetched): `drop`, `drop-half`,
@@ -290,6 +289,9 @@ silicon over http: native modes 2.0–2.3 ms synchronous, 1.2–1.5 ms pipelined
 is most of it, and is skipped while `τ` stands still); a flat field and the captured modes
 3.0–3.2 ms synchronous, under 0.2 ms pipelined. The budget is 4 ms. A native sheet also no
 longer shows the stair-steps a captured marble could tear into at its vein saddles when very wet.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Mark: `ring` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## What makes it authentic
 

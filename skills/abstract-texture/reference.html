@@ -400,7 +400,6 @@
   ui.button($('logit'), { palette: 'cobalt', mode: 'reeded' });
   // icons seen through the glass, and a loupe of reeded glass trailing the mouse over the app
   document.querySelectorAll('.app [data-icon]').forEach(el => ui.icon(el, el.dataset.icon, el.dataset.palette ? { palette: el.dataset.palette } : {}));
-  ui.cursor(document.querySelector('.app'));
   let run = null, n = 121;
   $('start').addEventListener('click', () => {
     if (run) return;

@@ -365,7 +365,6 @@ that climbed regardless of content, so do not trust them.
 | loader | `ui.loader(el)` | a small pool of light orbiting under the grain |
 | focus ring | `ui.focusRing(opts)` | an exposed band around `:focus-visible` elements, transparent elsewhere |
 | section transition | `ui.transition(strip)` | paper darkening into the next section as it scrolls |
-| cursor | `ui.cursor(area)` | a soft screen-blended spot trailing the mouse; off for touch and reduced motion |
 | icon | `ui.icon(el, name)` | a Phosphor light icon exposed like a botanical; lights on hover |
 
 Every piece keeps the native element and its semantics; the canvas sits under it with
@@ -373,6 +372,9 @@ Every piece keeps the native element and its semantics; the canvas sits under it
 (path `d`s only) into an `objects` mask for `print`, so your own icons go through the same
 process. `ui.ICONS` carries eleven Phosphor Light paths (sun, image, drop, sliders, play,
 pause, aperture, flower, butterfly, clock, lightning), inlined; nothing is fetched.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Mark: `fern` (default). It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 

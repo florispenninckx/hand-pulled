@@ -272,7 +272,7 @@ than any frame (1.5–3 s at 2880×1800), so reprint rarely and keep motion in `
 **Rules.**
 
 - `prefers-reduced-motion`: every canvas shows its still. There is no drift, re-ink, grain,
-  feed, trace, loupe, stamp or cursor. `set()` still changes state (a toggle still slides its
+  feed, trace, loupe or stamp. `set()` still changes state (a toggle still slides its
   drum) but jumps rather than animates.
 - Offscreen canvases pause (IntersectionObserver), and a hidden tab stops the loop.
 - DPR is capped at 2, captures are capped at `maxField` pixels, and only one print runs at a time.
@@ -301,7 +301,6 @@ the board's blue plus fluorescent pink; `ink` and `seed` override them.
 | loader | `ui.loader(el)` → `{ ctl, stop() }` | a small plate with the press running: drums wandering, contours traced fast in pink; `role="status"` |
 | focus ring | `ui.focusRing()` | pink and blue hairlines out of register around the `:focus-visible` element, multiplied over the page. Keep a 1px CSS outline too |
 | section transition | `ui.transition(strip)` | blue contours over a pink tint, fed through as the strip scrolls past |
-| cursor | `ui.cursor(area, { size, inks })` | a registration mark (ring and cross hairs) in blue and pink, out of register, trailing the mouse on a multiplied overlay; the drums wander and a click stamps it. The system cursor stays. Mouse only: off for touch, pen and reduced motion |
 | icon | `ui.icon(el, name, { ink, key, weight })` | the icon on two drums, a grain of blue and a pink hairline, multiplied onto a pale ground; pointing at or focusing its control slips the drums apart. The element sets the size |
 
 Helpers: `ui.mapLayers({ ink, tintInk, seed, levels, lo, hi })` returns tint and contour layers
@@ -313,8 +312,11 @@ butterfly, clock, lightning. Never type an icon's path by hand; copy it from the
 
 A made-up app built from these pieces is "The Drum Room" in `reference.html`: toggles and a
 slider drive a live background, a button starts a run, and a progress bar, a loader and job
-cards follow it; icons head the desk, the proof button and the cards, and the cursor is the
-registration mark. Copy its structure, not its names.
+cards follow it; icons head the desk, the proof button and the cards, and the pointer is the
+system's own. Copy its structure, not its names.
+
+**Optional extra: custom cursor.** `ui.cursor(area, { mark, inks, hover })`, only when the brief asks for one; the system cursor is the default. A native CSS cursor painted once through the still engine at 32 px (1x and 2x); `hover: true` gives links and controls a second mark.
+Marks: `register` (default), `crop`, `arrow`. It returns `{ destroy() }`, which puts the previous cursor back.
 
 ## Tells that it was generated — avoid all of them
 
