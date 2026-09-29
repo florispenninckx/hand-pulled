@@ -74,8 +74,21 @@ SHOT=../bigbrain/tools/shot.mjs tools/check.sh
 This validates the plugin manifests and every SKILL.md frontmatter (the name matches the
 folder, the description is at most 1024 characters), resolves the relative links on every
 page, and loads each page headless at 1440 × 900 and 390 × 844. A page fails if it logs
-a console error or scrolls sideways on a phone. `SHOT` points at a headless-Chrome
-screenshot script.
+a console error or scrolls sideways on a phone. It also checks that every `fonts/` folder
+has its OFL.txt and working `url()`s, and that every live page draws, keeps moving, matches
+its still on frame 0 and holds still under reduced motion. `SHOT` points at a
+headless-Chrome screenshot script.
+
+## Dev tools
+
+None of these are needed to use the skills.
+
+- `tools/foundry.py` (fontTools) makes the repo's own fonts: it takes an OFL base font, runs a
+  process from `tools/recipes/<face>.json` on its glyphs, traces them back and writes
+  `.woff2` files (variable where the recipe allows) with their OFL.txt.
+- `tools/grab.mjs` saves every plate of a reference page as a PNG, and `tools/match.py`
+  (PIL + numpy) measures those plates against a folder of reference images
+  (`pins-ref/<board>/`, not in this repository) and lists the images no plate comes near.
 
 ## Credits
 
